@@ -25,7 +25,9 @@ Production: https://perkusi.com
 
 GitHub `main` → Cloudflare Pages Git integration → `perkusi.com`.
 
-Cloudflare Pages project: `perkusi-com`. Production branch: `main`. Build command: `npm run build`. Build output: `dist`. Repository root is the build root. Every push to `main` triggers a production deployment through the Git integration; do not replace this with manual uploads. The existing Cloudflare zone and nameservers are retained. `www.perkusi.com` redirects to the canonical apex through a Cloudflare redirect rule.
+Cloudflare Pages project: `perkusi-com`. Production branch: `main`. Build command: `npm run build`. Build output: `dist`. Repository root is the build root. Every push to `main` triggers a production deployment through the Git integration; do not replace this with manual uploads. The existing Cloudflare zone and nameservers are retained. Both apex and www have proxied CNAME records pointing to `perkusi-com.pages.dev`. The zone rule `Canonical www to perkusi.com` redirects `http*://www.perkusi.com/*` to `https://perkusi.com/${2}` with HTTP 301 and preserves the query string. HTTP and HTTPS www redirects were verified with a nested path and query.
+
+The existing Cloudflare Workers and Pages GitHub app uses **Only select repositories**. `perkusi-com` is included. New repositories must be explicitly added to this selection before their automatic deploys can work; listing a public repository in the Pages import screen alone does not grant webhook access.
 
 `vite.config.js` writes `version.json` using Cloudflare's `CF_PAGES_COMMIT_SHA` and `CF_PAGES_BRANCH`. Compare `https://perkusi.com/version.json` with `git rev-parse HEAD` when verifying a deployment. Local builds report `local`.
 
@@ -43,3 +45,5 @@ The public GA4 Measurement ID is `G-G9ETDLX4XP` and lives in `src/analytics.js` 
 - `scripts/social-card.py`: optional Pillow script to regenerate the social image; not required by the build.
 
 Keep upcoming tools visibly labeled until they exist. Test widths 360, 390, 430, 1280, 1440, and 1920px; menu click, Escape, and section navigation; no horizontal overflow; console errors; and production analytics requests. Deployments must have the canonical `https://perkusi.com/` metadata.
+
+Foundation QA on October 5, 2026: clean `npm ci`, lint, and production build passed; npm audit reported zero vulnerabilities. Local and production layouts passed the six widths above without horizontal overflow. The production mobile menu, Escape key, and section navigation worked. GA4 Realtime received the correct homepage title and `page_view`, `first_visit`, `session_start`, and `user_engagement` events. Ignored `qa-artifacts/` holds local screenshots and verification evidence; it is not deployed or committed.
