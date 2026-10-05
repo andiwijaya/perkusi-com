@@ -12,6 +12,7 @@ npm run dev
 npm run lint
 npm run build
 npm run preview
+npm run format
 ```
 
 `npm run check` runs lint and the production build. The application uses semantic HTML, CSS, and vanilla JavaScript with Vite. Fonts are bundled locally. No server or database is required. No TypeScript typecheck applies.
@@ -30,7 +31,7 @@ Cloudflare Pages project: `perkusi-com`. Production branch: `main`. Build comman
 
 ## Analytics
 
-The public GA4 Measurement ID is `G-G9ETDLX4XP` and lives in `src/analytics.js` (stream: Perkusi.com Web, ID `16043040251`). Reporting uses Asia/Jakarta and IDR. Analytics loads only for a production build served on `perkusi.com` or `www.perkusi.com`, keeping local and preview visits out of production data. Google signals and advertising personalization are disabled. The privacy page describes collection and opt-out options. Analytics blocking must not affect navigation or rendering.
+The public GA4 Measurement ID is `G-G9ETDLX4XP` and lives in `src/analytics.js` (property: Perkusi.com, ID `557373402`; stream: Perkusi.com Web, ID `16043040251`). Reporting uses Asia/Jakarta and IDR. Analytics loads only for a production build served on `perkusi.com` or `www.perkusi.com`, keeping local and preview visits out of production data. Google signals and advertising personalization are disabled. The privacy page describes collection and opt-out options. Analytics blocking must not affect navigation or rendering.
 
 ## Files and maintenance
 

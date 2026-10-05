@@ -1,9 +1,9 @@
-import js from '@eslint/js';
-import globals from 'globals';
+import js from "@eslint/js";
+import globals from "globals";
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**', 'qa-artifacts/**'] },
+  { ignores: ["dist/**", "node_modules/**", "qa-artifacts/**"] },
   js.configs.recommended,
-  { files: ['src/**/*.js'], languageOptions: { globals: globals.browser } },
-  { files: ['*.config.js'], languageOptions: { globals: globals.node } },
+  { files: ["src/**/*.js"], languageOptions: { globals: globals.browser } },
+  { files: ["*.config.js"], languageOptions: { globals: globals.node } },
 ];
