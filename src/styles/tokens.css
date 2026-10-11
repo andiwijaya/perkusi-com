@@ -1,0 +1,10 @@
+:root {
+  --color-text: #e9eae1;
+  --color-background: #121513;
+  --color-accent: #c3f36b;
+  --color-muted: #a4aba2;
+  --color-line: #323730;
+  --font-body: "DM Sans Variable", sans-serif;
+  --font-display: "Space Grotesk Variable", sans-serif;
+  --touch-target: 44px;
+}

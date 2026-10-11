@@ -1,29 +1,11 @@
 import { initAnalytics } from "./analytics.js";
+import { initNavigation } from "./app/navigation.js";
+import { initLocalization } from "./app/localization.js";
 
-const toggle = document.querySelector(".menu-toggle");
-const navigation = document.querySelector("#navigation");
-
-function closeMenu() {
-  toggle.setAttribute("aria-expanded", "false");
-}
-
-toggle.addEventListener("click", () => {
-  toggle.setAttribute(
-    "aria-expanded",
-    String(toggle.getAttribute("aria-expanded") !== "true"),
-  );
-});
-navigation.addEventListener("click", (event) => {
-  if (event.target.closest("a")) closeMenu();
-});
-document.addEventListener("keydown", (event) => {
-  if (
-    event.key === "Escape" &&
-    toggle.getAttribute("aria-expanded") === "true"
-  ) {
-    closeMenu();
-    toggle.focus();
-  }
-});
+initLocalization();
+initNavigation();
 document.querySelector("#year").textContent = String(new Date().getFullYear());
 initAnalytics();
+if (document.body.dataset.page === "beatbox") {
+  import("./beatbox/main.js").then(({ initBeatbox }) => initBeatbox());
+}

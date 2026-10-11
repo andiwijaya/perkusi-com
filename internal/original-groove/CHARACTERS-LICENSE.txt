@@ -1,0 +1,14 @@
+Six original Perkusi.com characters — Bumi, Sabet, Cicik, Dum, Luma, Tara.
+Original SVG paths, renderer and state animation CSS authored for Perkusi.com
+by Codex on 2026-10-11. No external artwork, icon set, bitmap model, reference
+character or third-party design was imported. Shapes are original geometric
+creatures distinguished by silhouette and contrast, not color alone.
+
+Generated SVG artwork, src/characters/characters.js and characters.css are
+dedicated under CC0 1.0 Universal, with its fallback license where required.
+Commercial use, modification, and raw SVG redistribution are permitted.
+Attribution is optional. No trademark, patent or endorsement rights granted.
+Standard terms: CC0-LEGALCODE.txt in the parent folder.
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+See characters/provenance.json for original source/derived hashes and states.

@@ -1,15 +1,16 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/dm-sans";
+@import "./styles/tokens.css";
 
 :root {
-  font-family: "DM Sans Variable", sans-serif;
-  color: #e9eae1;
-  background: #121513;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-background);
   font-synthesis: none;
-  --green: #c3f36b;
-  --muted: #a4aba2;
-  --line: #323730;
-  --display: "Space Grotesk Variable", sans-serif;
+  --green: var(--color-accent);
+  --muted: var(--color-muted);
+  --line: var(--color-line);
+  --display: var(--font-display);
   color-scheme: dark;
 }
 * {
@@ -192,6 +193,10 @@ em {
 .hero-note span {
   font-size: 20px;
   color: var(--green);
+}
+.hero-note span[data-i18n] {
+  font-size: inherit;
+  color: inherit;
 }
 .rhythm-art {
   margin: 0;
@@ -540,6 +545,68 @@ h3 {
   font-size: 16px;
   color: var(--green);
 }
+.card-bottom span[data-i18n] {
+  font-size: inherit;
+  color: inherit;
+}
+.card-bottom a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.language-switch {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.language-switch a {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.language-switch a[aria-current="true"] {
+  background: var(--green);
+  color: var(--color-background);
+  border-radius: 4px;
+  font-weight: 700;
+}
+.document-page {
+  padding-block: 60px 80px;
+  min-height: 60vh;
+  max-width: 900px;
+}
+.document-page h1 {
+  font-size: clamp(36px, 6vw, 60px);
+  letter-spacing: -2px;
+  overflow-wrap: anywhere;
+}
+.document-page p {
+  line-height: 1.8;
+  max-width: 70ch;
+}
+.document-page p a {
+  display: inline-block;
+  min-height: var(--touch-target);
+  padding-block: 8px;
+  color: var(--green);
+  text-decoration: underline;
+}
+.muted {
+  color: var(--muted);
+}
 .tools-note {
   font-size: 11px;
   color: var(--muted);
@@ -696,6 +763,13 @@ h3 {
   .site-header {
     min-height: 82px;
     position: relative;
+    flex-wrap: wrap;
+    row-gap: 12px;
+    padding-block: 16px;
+  }
+  .header-controls {
+    margin-left: auto;
+    gap: 8px;
   }
   .brand {
     font-size: 25px;
@@ -743,7 +817,7 @@ h3 {
   .site-header nav .nav-cta {
     justify-content: space-between;
   }
-  .menu-toggle[aria-expanded="true"] + nav {
+  .site-header nav.is-open {
     display: flex;
   }
   .hero {
@@ -931,5 +1005,20 @@ h3 {
   *::before,
   *::after {
     transition: none !important;
+    animation: none !important;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .site-header {
+    flex-wrap: wrap;
+    padding-block: 16px;
+    gap: 12px;
+  }
+  .header-controls {
+    margin-left: auto;
+  }
+  .site-header nav {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

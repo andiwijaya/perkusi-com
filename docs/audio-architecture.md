@@ -1,0 +1,35 @@
+# Shared audio foundation — S2 local prototype
+
+The public product remains the accepted S1 foundation. `/internal/audio/` is a local engineering prototype, not a promoted Beatbox feature. Normal `npm run build` excludes its entry, audio code and WAV assets. `npm run build:audio-prototype` builds the prototype and foundation together under ignored `qa-artifacts/s2-2026-10-11/prototype-dist`. Run `npm run dev` and open `/internal/audio/?lang=id` for local interaction, or run `npm run test:audio` after both normal and prototype builds. No deploy, Actions, server, login or microphone is required.
+
+## Clock and graph
+
+One lazy `AudioEngine` owns one `AudioContext`, one master gain and one sample bank. `play()` creates/resumes the context synchronously from the caller's click, before awaiting fetch/decode. UI code does not create an audio context on page load. Both future Playground and Studio should consume this domain rather than maintain separate clocks.
+
+`Transport` maps musical beats to an absolute `AudioContext.currentTime` origin. At 96 BPM, a beat is 0.625 seconds, a bar 2.5 seconds and each two-bar fixture 5 seconds. Pause freezes the musical position; resume maps that position onto a fresh audio-clock origin with 50 ms start lead. Reset clears the selection and returns to the downbeat.
+
+`AudioBufferSourceNode` loops run in the audio renderer. All stems start at the same timestamp and resume at the same musical phase. The source's playback rate compensates only the at-most-two-sample file/decode rounding accepted by the bank. This is not arbitrary tempo stretching. The normal loop does not allocate a new source every bar, so background timer delay does not shift its timebase.
+
+A single 25 ms scheduler examines a 120 ms lookahead window. Layer changes target the next bar with 15 ms safety lead. Repeated toggles are last-intent-wins. Future gain fades can be canceled; source stops are deferred until a mute fade has rendered. Future enabled sources can be canceled before their start. If an unscheduled change misses its deadline, it waits for a later bar instead of starting late. Changes are recorded in a bounded 256-event diagnostic ring.
+
+Four-millisecond gain ramps protect start, pause, reset and layer changes. Master changes use a short AudioParam target ramp. Ended/unused source and gain nodes are disconnected. Master is capped at 0.75; before playback/retry the sum of decoded per-stem peaks × trim × maximum master must be below 0.95. This conservative bound provides headroom without hiding an unsafe pack behind a limiter. It does not prove perceived balance or absence of audible artifacts.
+
+## Assets and lifecycle
+
+S2 repair: each voice owns a piecewise linear gain envelope. An interrupted attack, repeated fade or overlapping cancellation holds the gain actually reached before the next ramp. Feature-detected `cancelAndHoldAtTime` holds native automation; the owned envelope then normalizes the hold by restoring still-future prefix endpoints and the truncated ramp endpoint. This also handles missing or throwing APIs, and prevents a native future hold from changing an earlier attack. A set-value event alone would erase the preceding trajectory. Times clamp to the current audio clock; stop/disconnection follows the new ramp endpoint. Native rendered-sample regressions cover available, missing and throwing hold APIs. This does not certify Safari.
+
+The sample bank's logical deadline covers fetch, response-body reading, decode and validation. Timeout settles the logical promise with no buffer, publishes a recoverable per-role error, invalidates its generation and clears timer/controller/request references. Cancellation and disposal settle immediately too. Native decode can finish after abort, so every continuation checks request ownership, generation and the absolute deadline before publishing. Fresh retry can win before old completion; late results and rejections cannot replace it. This bounds application waiting, not transient native decode memory or background timer-delivery latency. Suspend completion also checks operation/context ownership before changing status or clearing nodes, so an older suspend cannot erase a newer play.
+
+`SampleBank` validates identity, meter, bar count, provenance references and gain bounds, then lazily fetches each stem. The logical load has a deadline; AbortController cancels abortable fetch work. Failed stems expose their own retry state while available siblings can play. Each request/decode has a generation token, preventing canceled or old work from overwriting a later retry. Encoded files are limited to 4 MiB each; retained decoded bank memory is limited to 32 MiB. Silent, non-finite, clipped or incompatible-duration buffers are rejected. Decoded buffers are reused until disposal.
+
+`idle → loading → playing → paused/ready` describes application transport. Native `suspended`/`interrupted` states stop the scheduler, freeze phase and release sources; recovery requires another user gesture. Unexpected context closure is an error and the next gesture recreates the graph. No failed start is displayed as playing. Dispose aborts work, cancels scheduling, disconnects nodes/capture outputs, stops capture tracks, clears decoded buffers, detaches context listeners and closes the context. The internal page suspends on hidden visibility and disposes its engine/visual diagnostic timer on pagehide.
+
+Capture uses `createMediaStreamDestination()` connected to this graph; it requires no microphone and cannot record the user's environment. Browser QA records locally using supported `MediaRecorder` MIME types. The internal QA offline renderer shares `createLoopVoice`, trim and master gain with live playback. It is evidence tooling, not the V1.1 export UI or its acceptance gate.
+
+## Verification bounds and next integration
+
+Unit clocks/state mocks test deterministic transitions and native browser tests exercise actual decode, scheduling, controls and resource cleanup. Real-time graph capture plus offline signal analysis support technical synchronization; human listening, physical output routing, Bluetooth/lock-screen behavior and actual Safari iOS remain separate manual gates. Firefox/WebKit availability is checked rather than assumed. Headless Chromium cannot certify iPhone Safari or music quality.
+
+S3 must supply six distinct mouth-like roles and two compatible variants each. Add variation replacement at the same quantized transition and share this domain with the gameplay session. S6/S7 can build versioned composition/event models and export/sequencer behavior without creating a second engine. Those features are not implemented here.
+
+Technical references checked 2026-10-11: [W3C Web Audio source/clock contract](https://www.w3.org/TR/webaudio/), [lookahead scheduling](https://web.dev/articles/audio-scheduling), and [cancelAndHoldAtTime availability](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam/cancelAndHoldAtTime), and [context state/interruption behavior](https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/state).

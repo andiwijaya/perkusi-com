@@ -1,0 +1,102 @@
+.character {
+  border: 2px solid #655681;
+  border-radius: 24px;
+  background: #fff7e9;
+  color: #243248;
+  padding: 12px;
+  min-height: 204px;
+  min-width: 44px;
+  width: 100%;
+  cursor: pointer;
+  position: relative;
+}
+.character svg {
+  width: min(100%, 144px);
+  display: block;
+  margin: auto;
+}
+.character .char-body {
+  transform-origin: 50% 85%;
+  animation: character-idle 3.7s ease-in-out infinite;
+}
+.character .char-mouth {
+  transform-origin: 52% 55%;
+}
+.character .char-hand {
+  transform-origin: 50% 65%;
+}
+.character .char-status,
+.character .char-loading,
+.character .char-error {
+  display: none;
+}
+.character[data-selected="true"] {
+  border-color: #243248;
+  box-shadow: inset 0 0 0 2px #243248;
+}
+.character[data-state="active"] {
+  background: #eadcff;
+}
+.character[data-state="active"] .char-body {
+  animation: none;
+  transform: translateY(calc(var(--pulse, 0) * -5px));
+}
+.character[data-state="active"] .char-mouth {
+  transform: scaleY(calc(1 + var(--pulse, 0) * 0.45));
+}
+.character[data-state="active"] .char-hand {
+  transform: rotate(calc(var(--pulse, 0) * 4deg));
+}
+.character[data-state="loading"] .char-status,
+.character[data-state="loading"] .char-loading {
+  display: initial;
+}
+.character[data-state="loading"] .char-loading {
+  transform-origin: 116px 116px;
+  animation: character-loading 1.4s linear infinite;
+}
+.character[data-state="error"] {
+  border-style: dashed;
+}
+.character[data-state="error"] .char-status,
+.character[data-state="error"] .char-error {
+  display: initial;
+}
+.character:focus-visible,
+.character[data-focus-preview="true"] {
+  outline: 4px solid #ffcf65;
+  outline-offset: 4px;
+}
+.character-name {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.character-role {
+  display: block;
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+@keyframes character-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+}
+@keyframes character-loading {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .character *,
+  .character[data-state="active"] .char-body,
+  .character[data-state="active"] .char-mouth,
+  .character[data-state="active"] .char-hand {
+    animation: none !important;
+    transform: none !important;
+  }
+}

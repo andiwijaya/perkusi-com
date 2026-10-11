@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Uji Audio S2 · Perkusi.com</title>
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <main class="prototype wrap">
+      <div class="prototype-language" aria-label="Bahasa">
+        <button type="button" data-locale="id">ID</button>
+        <button type="button" data-locale="en">EN</button>
+      </div>
+      <h1 data-copy="heading">Prototype audio internal</h1>
+      <p data-copy="note"></p>
+      <p data-copy="steps"></p>
+      <p id="status" role="status" aria-live="polite"></p>
+      <div class="prototype-controls">
+        <button type="button" id="play" data-copy="play"></button>
+        <button type="button" id="pause" data-copy="pause"></button>
+        <button type="button" id="reset" data-copy="reset"></button>
+        <button type="button" id="suspend" data-copy="suspend"></button>
+        <button type="button" id="dispose" data-copy="dispose"></button>
+      </div>
+      <div id="stems" class="prototype-stems"></div>
+      <label
+        ><span data-copy="master"></span>
+        <input
+          id="volume"
+          type="range"
+          min="0"
+          max="0.75"
+          step="0.01"
+          value="0.65"
+      /></label>
+      <p><a id="home" data-copy="back" href="/?lang=id"></a></p>
+      <details>
+        <summary data-copy="diagnostics"></summary>
+        <pre id="diagnostics"></pre>
+      </details>
+    </main>
+  </body>
+</html>

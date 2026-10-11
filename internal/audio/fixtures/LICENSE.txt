@@ -1,0 +1,14 @@
+S2 technical fixture audio and generator — CC0 1.0 Universal
+
+Original deterministic synthesis created for the Perkusi.com project by Codex
+on 2026-10-11. No human recordings, third-party samples, voice models or
+dataset material were used. The project dedicates the generated WAV assets
+and scripts/make-audio-fixtures.py to the public domain under CC0 1.0, or grants
+the CC0 fallback license wherever a public-domain dedication is unavailable.
+Commercial use and redistribution of the raw WAV assets are permitted.
+Attribution is optional. No endorsement, trademark or patent rights are granted.
+
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+These are technical DSP fixtures, NOT an accepted musical/vocal Beatbox V1 pack.
+See provenance.json for exact hashes, origin, method and usage status.

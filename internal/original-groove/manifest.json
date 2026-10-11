@@ -1,0 +1,1355 @@
+{
+  "schemaVersion": 1,
+  "packId": "original-groove",
+  "version": "0.1.0-candidate",
+  "bpm": 96,
+  "meter": [
+    4,
+    4
+  ],
+  "beatsPerBar": 4,
+  "bars": 2,
+  "key": "D minor",
+  "roleOrder": [
+    "kick",
+    "snare",
+    "hat",
+    "vocal-bass",
+    "hum",
+    "percussion-fx"
+  ],
+  "initialSelection": {
+    "kick": 1,
+    "snare": 1,
+    "hat": 1,
+    "vocal-bass": 1,
+    "hum": 1,
+    "percussion-fx": 1
+  },
+  "qualityStatus": "candidate; listening/musicality UNVERIFIED",
+  "supplyRoute": "original source/filter synthesis, no imported audio or voice model",
+  "licenseId": "CC0-1.0",
+  "production": false,
+  "assets": [
+    {
+      "id": "kick-1",
+      "role": "kick",
+      "variant": 1,
+      "assetPath": "audio/kick-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/kick-1.wav",
+      "masterSha256": "542adc720d8c9b1af1020212aacf46024ce51784ad088e2c7b55715166bebfc3",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101101,
+      "events": [
+        {
+          "beat": 0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 1
+        },
+        {
+          "beat": 1.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 2.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 4,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 1
+        },
+        {
+          "beat": 5.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 7,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "buh",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "b28cc4a63b386affa9ee1333e7a5eda0aec3db4b0da7319c4affcc483da050e9",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.42,
+      "peak": 0.65,
+      "rms": 0.04349475617285743,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.32905522169823953,
+        "masterNormalizationMultiplier": 0.33015913690800663
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "snare-1",
+      "role": "snare",
+      "variant": 1,
+      "assetPath": "audio/snare-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/snare-1.wav",
+      "masterSha256": "8ac2eb4f8d4d9467ac56e39039310372a3d74ad1106493547f22f7963f1c252e",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101118,
+      "events": [
+        {
+          "beat": 1,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.18,
+          "velocity": 1
+        },
+        {
+          "beat": 3,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.18,
+          "velocity": 1
+        },
+        {
+          "beat": 5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.18,
+          "velocity": 1
+        },
+        {
+          "beat": 7,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.18,
+          "velocity": 1
+        },
+        {
+          "beat": 2.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.1,
+          "velocity": 0.27
+        },
+        {
+          "beat": 6.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "pf",
+          "durationSeconds": 0.1,
+          "velocity": 0.27
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "ce06268b213fcf17ab0fbe0628b25843f2059c3fa59a92cab288c0f5763961bd",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.3,
+      "peak": 0.5,
+      "rms": 0.030912397500400167,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 1.0001362040460868,
+        "masterNormalizationMultiplier": 0.6955992563670552
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "hat-1",
+      "role": "hat",
+      "variant": 1,
+      "assetPath": "audio/hat-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/hat-1.wav",
+      "masterSha256": "eeaf399e0070fdb649afc65071d1d9ca1496c9051f68d39ccbe81859b1c71ac0",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101135,
+      "events": [
+        {
+          "beat": 0.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 0.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 1.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 1.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 2.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 2.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 3.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 3.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 4.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 4.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 5.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 5.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 6.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 6.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 7.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 7.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ts",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "1e89035ddf982df39a55fdd0efbf2d4912a0e8610d42cde9a6574f82236460a9",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.25,
+      "peak": 0.35,
+      "rms": 0.02824570774312405,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.6866104410040961,
+        "masterNormalizationMultiplier": 0.5384525129355634
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "vocal-bass-1",
+      "role": "vocal-bass",
+      "variant": 1,
+      "assetPath": "audio/vocal-bass-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/vocal-bass-1.wav",
+      "masterSha256": "fdb9a9681cfaf569544e434beb293098ccc0e9b980bcec9f92c2db62d169c6ba",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101152,
+      "events": [
+        {
+          "beat": 0,
+          "offsetSeconds": 0.001,
+          "noteMidi": 38,
+          "syllable": "doum",
+          "durationSeconds": 0.5625,
+          "velocity": 1
+        },
+        {
+          "beat": 1.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": 33,
+          "syllable": "doum",
+          "durationSeconds": 0.34375,
+          "velocity": 1
+        },
+        {
+          "beat": 3,
+          "offsetSeconds": 0.001,
+          "noteMidi": 41,
+          "syllable": "doum",
+          "durationSeconds": 0.375,
+          "velocity": 1
+        },
+        {
+          "beat": 4,
+          "offsetSeconds": 0.002,
+          "noteMidi": 38,
+          "syllable": "doum",
+          "durationSeconds": 0.75,
+          "velocity": 1
+        },
+        {
+          "beat": 6,
+          "offsetSeconds": 0.001,
+          "noteMidi": 36,
+          "syllable": "doum",
+          "durationSeconds": 0.4375,
+          "velocity": 1
+        },
+        {
+          "beat": 7,
+          "offsetSeconds": 0.002,
+          "noteMidi": 33,
+          "syllable": "doum",
+          "durationSeconds": 0.34375,
+          "velocity": 1
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "f865c2d97c5f74299dedea9ebcfdd042f283c30190c525979754ac1e6d2463c3",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.38,
+      "peak": 0.6,
+      "rms": 0.1336356860494233,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 1.204633113847287,
+        "masterNormalizationMultiplier": 1.240877168226941
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "hum-1",
+      "role": "hum",
+      "variant": 1,
+      "assetPath": "audio/hum-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/hum-1.wav",
+      "masterSha256": "2348b30e8810f884a37d81dbd3b338e27962a94a6aa9917c8ae04f257aba8a12",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101169,
+      "events": [
+        {
+          "beat": 0.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": 62,
+          "syllable": "mm",
+          "durationSeconds": 0.75,
+          "velocity": 1
+        },
+        {
+          "beat": 2,
+          "offsetSeconds": 0.002,
+          "noteMidi": 65,
+          "syllable": "mm",
+          "durationSeconds": 0.6875,
+          "velocity": 1
+        },
+        {
+          "beat": 4.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": 57,
+          "syllable": "mm",
+          "durationSeconds": 0.75,
+          "velocity": 1
+        },
+        {
+          "beat": 6.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": 65,
+          "syllable": "mm",
+          "durationSeconds": 0.6875,
+          "velocity": 1
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "686881407e7bcfe44046d6a1df9e2bd8f5b41667a2353b20fc59a6ddb8eae6da",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.28,
+      "peak": 0.45,
+      "rms": 0.11932517118112938,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.18920665922339502,
+        "masterNormalizationMultiplier": 0.19007170816396834
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "percussion-fx-1",
+      "role": "percussion-fx",
+      "variant": 1,
+      "assetPath": "audio/percussion-fx-1.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/percussion-fx-1.wav",
+      "masterSha256": "5321a36a9b1d4d9dcca3841376b27c4c9bbe5cf19ccdd39190b11993854988a5",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101186,
+      "events": [
+        {
+          "beat": 0.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 1
+        },
+        {
+          "beat": 2.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 0.65
+        },
+        {
+          "beat": 3.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 1
+        },
+        {
+          "beat": 5.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 0.65
+        },
+        {
+          "beat": 6.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 1
+        },
+        {
+          "beat": 7.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "ka-tik",
+          "durationSeconds": 0.105,
+          "velocity": 0.65
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "9520dc94339034d735fceb6962acc11786207267a690250f72835b1b70e234e5",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.2,
+      "peak": 0.42,
+      "rms": 0.013672717309161976,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.8214003367613512,
+        "masterNormalizationMultiplier": 0.9288947082764271
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "kick-2",
+      "role": "kick",
+      "variant": 2,
+      "assetPath": "audio/kick-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/kick-2.wav",
+      "masterSha256": "30af0a6d1c962fe831d15d92d641fa9aba8c7a1da7632b8b3d068d9ba24f5ad4",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101102,
+      "events": [
+        {
+          "beat": 0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 1
+        },
+        {
+          "beat": 1.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 3.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 4,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 1
+        },
+        {
+          "beat": 5.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 6.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        },
+        {
+          "beat": 7.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "bup",
+          "durationSeconds": 0.21,
+          "velocity": 0.75
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "a9d4f637969299508ba2d934afb15ee2c79637f8b97d0082b8df1c641c65c424",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.42,
+      "peak": 0.65,
+      "rms": 0.04722518685672867,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.41788863606653365,
+        "masterNormalizationMultiplier": 0.4178988769788828
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "snare-2",
+      "role": "snare",
+      "variant": 2,
+      "assetPath": "audio/snare-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/snare-2.wav",
+      "masterSha256": "ba494014f4eda3d75ed2431408e2654f0892e0a4e465410773a4fb33dfe152a8",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101119,
+      "events": [
+        {
+          "beat": 1,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.22,
+          "velocity": 1
+        },
+        {
+          "beat": 3,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.22,
+          "velocity": 1
+        },
+        {
+          "beat": 5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.22,
+          "velocity": 1
+        },
+        {
+          "beat": 7,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.22,
+          "velocity": 1
+        },
+        {
+          "beat": 0.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.1,
+          "velocity": 0.27
+        },
+        {
+          "beat": 4.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "psh",
+          "durationSeconds": 0.1,
+          "velocity": 0.27
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "9f2579e32cf0cf287010d3aba30ddca0ac210c5bc0e99fa806507ecb6615246b",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.3,
+      "peak": 0.5,
+      "rms": 0.025012280937439475,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.7885942658206688,
+        "masterNormalizationMultiplier": 0.721316879641375
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "hat-2",
+      "role": "hat",
+      "variant": 2,
+      "assetPath": "audio/hat-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/hat-2.wav",
+      "masterSha256": "8a0f703e2189ca0bcd75fc59d5f4caaade297f93b84a18f1edefe404f5eadac0",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101136,
+      "events": [
+        {
+          "beat": 0.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 0.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 0.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 0.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 1.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 1.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 1.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 1.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 2.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 2.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 2.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 2.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 3.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 3.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 3.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 3.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 4.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 4.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 4.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 4.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 5.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 5.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 5.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 5.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 6.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 6.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 6.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 6.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 7.0,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 1
+        },
+        {
+          "beat": 7.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        },
+        {
+          "beat": 7.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.13,
+          "velocity": 1
+        },
+        {
+          "beat": 7.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tsh",
+          "durationSeconds": 0.052,
+          "velocity": 0.6
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "e71c7dddfe5fe17c09bf62d9d242484e16c2ed2cb63e449aa050a48e8df2d8e2",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.25,
+      "peak": 0.35,
+      "rms": 0.031914868916392634,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.6422525188307916,
+        "masterNormalizationMultiplier": 0.5663867704479867
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "vocal-bass-2",
+      "role": "vocal-bass",
+      "variant": 2,
+      "assetPath": "audio/vocal-bass-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/vocal-bass-2.wav",
+      "masterSha256": "ad0085546c44303113d40a9bbd88431b7672724f6de662e3d28539cc0639dcf5",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101153,
+      "events": [
+        {
+          "beat": 0,
+          "offsetSeconds": 0.001,
+          "noteMidi": 38,
+          "syllable": "woum",
+          "durationSeconds": 0.5625,
+          "velocity": 1
+        },
+        {
+          "beat": 1.5,
+          "offsetSeconds": 0.002,
+          "noteMidi": 41,
+          "syllable": "woum",
+          "durationSeconds": 0.375,
+          "velocity": 1
+        },
+        {
+          "beat": 2.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": 33,
+          "syllable": "woum",
+          "durationSeconds": 0.40625,
+          "velocity": 1
+        },
+        {
+          "beat": 4,
+          "offsetSeconds": 0.002,
+          "noteMidi": 38,
+          "syllable": "woum",
+          "durationSeconds": 0.6875,
+          "velocity": 1
+        },
+        {
+          "beat": 5.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": 36,
+          "syllable": "woum",
+          "durationSeconds": 0.4375,
+          "velocity": 1
+        },
+        {
+          "beat": 7,
+          "offsetSeconds": 0.002,
+          "noteMidi": 33,
+          "syllable": "woum",
+          "durationSeconds": 0.3125,
+          "velocity": 1
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "2754617045344237eaa3f865b1e239a71be97b08a3537f57d1f0afc869d94ee3",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.38,
+      "peak": 0.6,
+      "rms": 0.13877691108826834,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 2.070111515506154,
+        "masterNormalizationMultiplier": 2.0101531824975285
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "hum-2",
+      "role": "hum",
+      "variant": 2,
+      "assetPath": "audio/hum-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/hum-2.wav",
+      "masterSha256": "924cc5824a7a512c162e5085bb68072ca2de30935a04789979693f2796d15b09",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101170,
+      "events": [
+        {
+          "beat": 0.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": 65,
+          "syllable": "ng",
+          "durationSeconds": 0.75,
+          "velocity": 1
+        },
+        {
+          "beat": 2.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": 69,
+          "syllable": "ng",
+          "durationSeconds": 0.5625,
+          "velocity": 1
+        },
+        {
+          "beat": 4.5,
+          "offsetSeconds": 0.001,
+          "noteMidi": 62,
+          "syllable": "ng",
+          "durationSeconds": 0.75,
+          "velocity": 1
+        },
+        {
+          "beat": 6.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": 65,
+          "syllable": "ng",
+          "durationSeconds": 0.6875,
+          "velocity": 1
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "aea1a8e303e9e40e6caef9458b6a2d0750d74f161996e665293ce2cdf3e267a9",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.28,
+      "peak": 0.45000000000000007,
+      "rms": 0.10138384028713636,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 0.1895734116548777,
+        "masterNormalizationMultiplier": 0.18966245481289687
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    },
+    {
+      "id": "percussion-fx-2",
+      "role": "percussion-fx",
+      "variant": 2,
+      "assetPath": "audio/percussion-fx-2.wav",
+      "sourceMaster": "qa-artifacts/s3-2026-10-11/full/masters-48k/percussion-fx-2.wav",
+      "masterSha256": "3d662f38ffd7663b09d4ac5e6dfd725e221f58bd74bf030c958531a816c33b9d",
+      "sourceRecipe": "scripts/make-original-groove.py",
+      "sourceRecipeSha256": "f4bb15448e3c8a343e93f885fc825e125f5d1cbc773b6f378daa8c0ea3421d08",
+      "seed": 2026101187,
+      "events": [
+        {
+          "beat": 0.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 1
+        },
+        {
+          "beat": 2.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 0.65
+        },
+        {
+          "beat": 3.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 1
+        },
+        {
+          "beat": 5.25,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 0.65
+        },
+        {
+          "beat": 6.75,
+          "offsetSeconds": 0.001,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 1
+        },
+        {
+          "beat": 7.75,
+          "offsetSeconds": 0.002,
+          "noteMidi": null,
+          "syllable": "tok-r",
+          "durationSeconds": 0.145,
+          "velocity": 0.65
+        }
+      ],
+      "sourceType": "original-procedural-mouth-synthesis",
+      "author": "Perkusi.com project / Codex",
+      "createdAt": "2026-10-11",
+      "licenseId": "CC0-1.0",
+      "licensePath": "LICENSE.txt",
+      "commercialUse": true,
+      "rawRedistribution": true,
+      "attributionRequired": false,
+      "sha256": "d42a3b153cfdd1e4759ff9afa8bfa117e41068cac141abdf3440b6b342ffd315",
+      "bytes": 320044,
+      "sampleRate": 32000,
+      "channels": 1,
+      "frames": 160000,
+      "durationSeconds": 5.0,
+      "loopStart": 0,
+      "loopEnd": 5.0,
+      "gainTrim": 0.2,
+      "peak": 0.42,
+      "rms": 0.01720003356809412,
+      "derivation": {
+        "method": "render original source/filter score directly at the target rate; peak scaling; DC correction per articulation; 4ms file-edge fades; mono PCM16",
+        "normalizationMultiplier": 1.1938574622093616,
+        "masterNormalizationMultiplier": 0.9489243555874489
+      },
+      "listening": "UNVERIFIED",
+      "production": false,
+      "acceptedVocalBeatbox": false
+    }
+  ]
+}

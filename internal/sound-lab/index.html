@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Perkusi — Lab Suara</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a id="home" href="/?lang=id">Perkusi.com</a>
+        <div class="languages" aria-label="Bahasa">
+          <button data-locale="id" type="button">ID</button
+          ><button data-locale="en" type="button">EN</button>
+        </div>
+      </header>
+      <p class="eyebrow">Original Groove · 96 BPM · D minor</p>
+      <h1 data-copy="title"></h1>
+      <p class="notice" data-copy="notice"></p>
+      <section class="controls" aria-label="Transport">
+        <button id="play" data-copy="play" type="button"></button
+        ><button id="pause" data-copy="pause" type="button"></button
+        ><button id="reset" data-copy="reset" type="button"></button
+        ><label
+          ><span data-copy="volume"></span
+          ><input
+            id="volume"
+            type="range"
+            min="0"
+            max="0.75"
+            value="0.65"
+            step="0.01"
+        /></label>
+      </section>
+      <p id="status" role="status" aria-live="polite"></p>
+      <p data-copy="variantsHint"></p>
+      <section id="cast" class="cast"></section>
+      <details>
+        <summary data-copy="statesTitle"></summary>
+        <div id="states" class="state-controls"></div>
+        <p data-copy="statesHint"></p>
+      </details>
+      <details>
+        <summary data-copy="diagnostics"></summary>
+        <pre id="diagnostics"></pre>
+      </details>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
