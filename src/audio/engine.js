@@ -1,4 +1,14 @@
 import { Transport } from "./transport.js";
+import { secondsPerBeat } from "./transport.js";
+import { validateProject } from "../project/schema.js";
+import {
+  createTrackMixer,
+  scheduleShot,
+  sequenceEvents,
+  stepBeat,
+  stepIndexAtBeat,
+  nextStepIndex,
+} from "./sequencing.js";
 import { SampleBank } from "./sample-bank.js";
 import {
   createLoopVoice,
@@ -16,6 +26,7 @@ export class AudioEngine {
       bankOptions,
       variantPacks = [],
       outputStageFactory = null,
+      sequenceCatalog = null,
       timers = {
         setInterval: (...args) => globalThis.setInterval(...args),
         clearInterval: (...args) => globalThis.clearInterval(...args),
@@ -25,6 +36,12 @@ export class AudioEngine {
     } = {},
   ) {
     this.pack = pack;
+    this.sequenceCatalog = sequenceCatalog;
+    this.sequence = null;
+    this.mixer = null;
+    this.nextStep = 0;
+    this.passedStep = -1;
+    this.arrangement = false;
     if (outputStageFactory !== null && typeof outputStageFactory !== "function")
       throw new TypeError("Invalid output stage factory");
     this.outputStageFactory = outputStageFactory;
@@ -106,6 +123,7 @@ export class AudioEngine {
     this.disposePromise = null;
     this.onContextState = () => {
       if (this.context.state !== "running") {
+        this.rememberSequencePosition(this.context.currentTime);
         if (this.transport.running)
           this.transport.pause(this.context.currentTime);
         this.clearTimer();
@@ -204,6 +222,8 @@ export class AudioEngine {
     if (!this.context || this.context.state === "closed") {
       this.context?.removeEventListener("statechange", this.onContextState);
       this.outputStage?.dispose();
+      this.mixer?.dispose();
+      this.mixer = null;
       this.outputStage = null;
       this.master?.disconnect();
       this.context = this.contextFactory();
@@ -222,6 +242,14 @@ export class AudioEngine {
         this.outputStage = stage;
         this.output = this.outputStage?.output || this.master;
         this.output.connect(this.context.destination);
+        if (this.sequence) {
+          this.mixer = createTrackMixer(
+            this.context,
+            this.master,
+            this.sequence.tracks,
+          );
+          this.mixer.update(this.sequence.tracks, 0, true);
+        }
       } catch (error) {
         this.master.disconnect();
         this.outputStage?.dispose();
@@ -271,7 +299,16 @@ export class AudioEngine {
         this.transport.start(when);
         this.status = "playing";
         ++this.stats.starts;
-        for (const stem of available)
+        if (this.sequence) {
+          if (available.length !== this.pack.stems.length)
+            throw new Error("no-assets-ready");
+          this.nextStep = Math.max(
+            this.passedStep + 1,
+            nextStepIndex(this.transport.position, this.sequence.timing.swing),
+          );
+          this.pump();
+        }
+        for (const stem of this.sequence ? [] : available)
           if (this.enabled.get(stem.id)) {
             this.addVoice(stem.id, when);
             this.applied.set(stem.id, true);
@@ -424,6 +461,7 @@ export class AudioEngine {
   }
   pump() {
     if (!this.transport.running || this.context?.state !== "running") return;
+    if (this.sequence) return this.pumpSequence();
     ++this.stats.ticks;
     const now = this.context.currentTime;
     for (const voice of [...this.voices])
@@ -471,8 +509,149 @@ export class AudioEngine {
       }
     }
   }
+  configureSequence(project, variant = 1, force = false) {
+    const next = validateProject(project, this.sequenceCatalog);
+    const musical = (p) =>
+      p
+        ? JSON.stringify([
+            p.pack,
+            p.timing.bpm,
+            p.timing.swing,
+            p.patterns.map((a) => [a.id, a.steps]),
+            p.activePattern,
+            p.chain,
+          ])
+        : "";
+    const reschedule = force || musical(next) !== musical(this.sequence);
+    const changedKit =
+      this.selectedVariant.get(this.pack.stems[0].id) !== variant;
+    if (![1, 2].includes(variant)) throw new Error("Unknown kit");
+    if (changedKit) this.pause();
+    const now = this.context?.currentTime || 0,
+      running = this.transport.running;
+    const beat = this.transport.beatsAt(now);
+    if (running && reschedule) {
+      this.rememberSequencePosition(now);
+      for (const v of [...this.voices]) if (v.when > now) this.removeVoice(v);
+      this.transport.pause(now);
+    }
+    this.sequence = next;
+    for (const stem of this.pack.stems)
+      this.selectedVariant.set(stem.id, variant);
+    this.transport.beatSeconds = secondsPerBeat(next.timing.bpm);
+    this.setVolume(next.master.volume);
+    this.mixer?.update(next.tracks);
+    if (running && reschedule) {
+      this.transport.position = beat;
+      this.transport.start(now);
+      this.nextStep = Math.max(
+        this.passedStep + 1,
+        nextStepIndex(beat, next.timing.swing),
+      );
+      this.pump();
+    }
+  }
+  sequenceStepAt(time) {
+    const swing = this.sequence.timing.swing;
+    let index = stepIndexAtBeat(this.transport.beatsAt(time), swing);
+    // Compare absolute times too, including pre-start lead and inverse-rounding.
+    if (this.transport.timeAt(stepBeat(index, swing)) > time) index--;
+    if (this.transport.timeAt(stepBeat(index + 1, swing)) <= time) index++;
+    return index;
+  }
+  rememberSequencePosition(time) {
+    if (this.sequence && this.transport.running)
+      this.passedStep = Math.max(this.passedStep, this.sequenceStepAt(time));
+  }
+  nextSequenceStep(time, minimumLead) {
+    const threshold = time + minimumLead,
+      swing = this.sequence.timing.swing;
+    let index = nextStepIndex(this.transport.beatsAt(threshold), swing);
+    // Avoid losing an exactly eligible boundary to floating-point inversion.
+    if (
+      index > 0 &&
+      this.transport.timeAt(stepBeat(index - 1, swing)) >= threshold
+    )
+      index--;
+    if (this.transport.timeAt(stepBeat(index, swing)) < threshold) index++;
+    return index;
+  }
+  pumpSequence() {
+    ++this.stats.ticks;
+    const now = this.context.currentTime;
+    for (const v of [...this.voices]) if (v.endTime <= now) this.removeVoice(v);
+    this.rememberSequencePosition(now);
+    // Stale callbacks skip expired steps on the swung clock, never burst them.
+    const eligible = this.nextSequenceStep(now, 0.002);
+    if (this.nextStep < eligible) {
+      this.record("sequence-gap", { from: this.nextStep, to: eligible });
+      this.nextStep = eligible;
+    }
+    while (true) {
+      const index = this.nextStep,
+        when = this.transport.timeAt(
+          stepBeat(index, this.sequence.timing.swing),
+        );
+      if (when > now + this.lookahead) break;
+      this.nextStep++;
+      if (when < now + 0.002) continue;
+      for (const e of sequenceEvents(this.sequence, index, this.arrangement))
+        this.addShot(e.role, when, e.velocity, { index, ...e });
+    }
+  }
+  addShot(id, when, velocity = 1, detail = {}) {
+    const entry = this.playableEntry(id);
+    if (!entry || !this.mixer || this.voices.size >= 64) return;
+    const prior = [...this.voices]
+      .filter((v) => v.id === id && v.when <= when)
+      .sort((a, b) => b.when - a.when)[0];
+    const voice = scheduleShot(
+      this.context,
+      this.mixer,
+      entry,
+      when,
+      velocity,
+      prior,
+    );
+    this.voices.add(voice);
+    ++this.stats.created;
+    voice.source.onended = () => this.removeVoice(voice);
+    this.record("shot", { id, when, velocity, ...detail });
+    return voice;
+  }
+  async triggerPad(id) {
+    if (!this.sequence || this.disposed) return;
+    const context = this.ensureContext(),
+      operation = this.operation;
+    // A cached pad on a running clock can schedule in this gesture. A no-op
+    // native resume promise can otherwise consume a short upcoming-step window.
+    if (context.state !== "running") await context.resume();
+    if (!this.playableEntry(id))
+      await this.variants
+        .get(id)
+        .get(this.selectedVariant.get(id))
+        .bank.load(id, context);
+    if (
+      this.disposed ||
+      operation !== this.operation ||
+      context.state !== "running"
+    )
+      return;
+    const now = context.currentTime;
+    let when = now + 0.005;
+    if (this.transport.running && this.sequence.timing.quantize) {
+      const index = this.nextSequenceStep(now, 0.005);
+      when = this.transport.timeAt(stepBeat(index, this.sequence.timing.swing));
+    }
+    if (!this.playableEntry(id)) {
+      this.error = "asset-failed";
+      return;
+    }
+    return this.addShot(id, when, 1, { pad: true });
+  }
   pause() {
     if (this.disposed) return;
+    this.rememberSequencePosition(this.context?.currentTime || 0);
     ++this.operation;
     for (const bank of this.banks) bank.cancelLoading();
     // Permit a new gesture while an aborted decode/resume is still settling.
@@ -484,10 +663,16 @@ export class AudioEngine {
     if (!this.disposed) this.status = "paused";
     this.record("pause", { beat: this.transport.position });
   }
-  reset() {
+  rewind() {
     if (this.disposed) return;
     this.pause();
     this.transport.reset();
+    this.passedStep = -1;
+    this.nextStep = 0;
+  }
+  reset() {
+    if (this.disposed) return;
+    this.rewind();
     for (const id of this.enabled.keys()) this.enabled.set(id, false);
     this.selectedVariant = new Map(this.defaultVariants);
     this.status = "ready";
@@ -585,6 +770,16 @@ export class AudioEngine {
       },
       stats: { ...this.stats },
       events: this.events.map((event) => ({ ...event })),
+      sequence: this.sequence
+        ? {
+            nextStep: this.nextStep,
+            passedStep: this.passedStep,
+            playhead: this.transport.running
+              ? this.sequenceStepAt(this.context.currentTime)
+              : -1,
+            arrangement: this.arrangement,
+          }
+        : null,
     };
   }
   dispose() {
@@ -605,6 +800,7 @@ export class AudioEngine {
     if (fade) await new Promise((resolve) => setTimeout(resolve, 8));
     this.clearVoices();
     this.master?.disconnect();
+    this.mixer?.dispose();
     this.outputStage?.dispose();
     if (this.context && this.context.state !== "closed")
       await this.context.close();

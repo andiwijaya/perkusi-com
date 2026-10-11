@@ -9,14 +9,16 @@ export class ProjectStore {
     catalog,
     storage = () => globalThis.localStorage,
     makeId = () => globalThis.crypto.randomUUID(),
+    keys = { projects: PROJECTS_KEY, draft: DRAFT_KEY },
   ) {
     this.catalog = catalog;
     this.storage = storage;
     this.makeId = makeId;
+    this.keys = keys;
   }
   read() {
     try {
-      const text = this.storage().getItem(PROJECTS_KEY);
+      const text = this.storage().getItem(this.keys.projects);
       if (!text) return [];
       if (new TextEncoder().encode(text).length > MAX_STORE_BYTES)
         throw Error();
@@ -53,7 +55,7 @@ export class ProjectStore {
     if (new TextEncoder().encode(text).length > MAX_STORE_BYTES)
       throw new ProjectError("storageFull");
     try {
-      this.storage().setItem(PROJECTS_KEY, text);
+      this.storage().setItem(this.keys.projects, text);
     } catch {
       throw new ProjectError("storageUnavailable");
     }
@@ -86,7 +88,7 @@ export class ProjectStore {
   }
   readDraft() {
     try {
-      const text = this.storage().getItem(DRAFT_KEY);
+      const text = this.storage().getItem(this.keys.draft);
       return text ? parseProject(text, this.catalog) : null;
     } catch {
       throw new ProjectError("storageUnavailable");
@@ -95,7 +97,7 @@ export class ProjectStore {
   saveDraft(project) {
     try {
       this.storage().setItem(
-        DRAFT_KEY,
+        this.keys.draft,
         JSON.stringify(validateProject(project, this.catalog)),
       );
     } catch {

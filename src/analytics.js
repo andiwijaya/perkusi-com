@@ -11,6 +11,7 @@ const events = new Set([
   "project_saved",
   "export_succeeded",
   "export_failed",
+  "studio_open",
 ]);
 const exportFailureCategories = new Set([
   "empty_mix",

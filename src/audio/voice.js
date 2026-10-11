@@ -1,6 +1,48 @@
 export const MICROFADE = 0.004;
 export const MASTER_MAX = 0.75;
 
+// Same envelope/cleanup contract for live sequence, pads and offline arrangement.
+export function createOneShotVoice(context, output, entry, when, velocity = 1) {
+  if (
+    !entry.buffer ||
+    !Number.isFinite(velocity) ||
+    velocity < 0 ||
+    velocity > 1
+  )
+    throw new Error("Invalid one-shot");
+  const source = context.createBufferSource(),
+    gain = context.createGain();
+  const trim = entry.stem.gainTrim * velocity,
+    endTime = when + entry.buffer.duration;
+  source.buffer = entry.buffer;
+  source.loop = false;
+  source.playbackRate.value = 1;
+  gain.gain.setValueAtTime(0, when);
+  gain.gain.linearRampToValueAtTime(trim, when + 0.0006);
+  gain.gain.setValueAtTime(trim, Math.max(when + 0.0006, endTime - MICROFADE));
+  gain.gain.linearRampToValueAtTime(0, endTime);
+  source.connect(gain);
+  gain.connect(output);
+  source.start(when);
+  return {
+    context,
+    source,
+    gain,
+    id: entry.stem.id,
+    when,
+    phase: 0,
+    ratio: 1,
+    trim,
+    endTime,
+    envelope: [
+      { time: when, value: 0 },
+      { time: when + 0.0006, value: trim },
+      { time: endTime - MICROFADE, value: trim },
+      { time: endTime, value: 0 },
+    ],
+  };
+}
+
 // Both live and QA offline rendering use this sample/phase/gain contract.
 export function createLoopVoice(
   context,

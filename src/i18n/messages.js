@@ -26,12 +26,12 @@ const pairs = {
     "Beatbox preview: six original characters, two sound variations, and one shared audio clock.",
   ],
   "meta.studio.title": [
-    "Studio Musik — Segera Hadir | Perkusi.com",
-    "Music Studio — Coming Soon | Perkusi.com",
+    "Rhythm Studio - Bikin Beat dan Ekspor WAV | Perkusi.com",
+    "Rhythm Studio - Make Beats and Export WAV | Perkusi.com",
   ],
   "meta.studio.description": [
-    "Studio Musik sedang dikembangkan. Sequencer dan mixer belum tersedia.",
-    "Music Studio is in development. The sequencer and mixer are not available yet.",
+    "Buat beat dengan sequencer 8 track, dua kit orisinal, mixer, rantai pola, dan WAV lokal.",
+    "Build beats with an eight-track sequencer, two original kits, a mixer, pattern chains, and local WAV export.",
   ],
   "meta.notFound.title": [
     "Halaman Tidak Ditemukan — Perkusi.com",
@@ -54,6 +54,7 @@ const pairs = {
   "common.tools": ["Alat Musik", "Music tools"],
   "common.approach": ["Pendekatan Kami", "Our approach"],
   "common.find": ["Main Sekarang", "Play Now"],
+  "common.studio": ["Buka Studio", "Open Studio"],
   "common.playable": ["Bisa Dimainkan", "Playable"],
   "common.footer": [
     "Perkusi.com. Dibuat untuk musik.",
@@ -94,14 +95,14 @@ const pairs = {
   "home.toolsEyebrow": ["SESI BERIKUTNYA", "THE NEXT SESSION"],
   "home.toolsTitle": ["Alat untuk iramamu.", "A toolkit for your groove."],
   "home.toolsIntro": [
-    "Mulai di Beatbox Playground. Studio dan alat berikutnya masih dikembangkan.",
-    "Start in Beatbox Playground. Studio and the next tools are in development.",
+    "Mainkan Beatbox atau susun ketukan rinci di Rhythm Studio.",
+    "Play Beatbox or build detailed beats in Rhythm Studio.",
   ],
   "home.card1.meta": ["01 / PERKUSI", "01 / PERCUSSION"],
-  "home.card1.title": ["Looper Drum & Perkusi", "Drum & Percussion Looper"],
+  "home.card1.title": ["Rhythm Studio", "Rhythm Studio"],
   "home.card1.copy": [
-    "Mulai dengan satu ketukan. Susun perkusi menjadi groove yang mengalun bersamamu.",
-    "Start with a beat. Layer percussion into grooves that move with you.",
+    "Delapan track, dua kit orisinal, mixer, dan rantai pola. Buat beat dan unduh WAV.",
+    "Eight tracks, two original kits, a mixer, and pattern chains. Make a beat and download WAV.",
   ],
   "home.card1.foot": ["TEMUKAN GROOVE", "FIND THE POCKET"],
   "home.card2.meta": ["02 / LAPISAN SUARA", "02 / LAYERING"],
@@ -129,8 +130,8 @@ const pairs = {
   ],
   "home.card4.foot": ["RASAKAN KETUKAN", "FEEL THE TIME"],
   "home.toolsNote": [
-    "Beatbox dapat dimainkan. Studio, looper, dan alat latihan menyusul.",
-    "Beatbox is playable. Studio, loopers and practice tools are coming next.",
+    "Beatbox dan Rhythm Studio dapat dimainkan. Looper multi-instrumen dan alat latihan menyusul.",
+    "Beatbox and Rhythm Studio are playable. Multi-instrument loopers and practice tools are coming next.",
   ],
   "home.why": ["MENGAPA PERKUSI?", "WHY PERKUSI?"],
   "home.approach1": ["Idemu.", "Your idea."],

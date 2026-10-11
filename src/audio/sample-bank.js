@@ -16,6 +16,13 @@ export function validatePack(pack) {
   const ids = new Set();
   for (const stem of pack.stems) {
     if (
+      pack.kind === "one-shot" &&
+      (!Number.isFinite(stem.durationSeconds) ||
+        stem.durationSeconds <= 0 ||
+        stem.durationSeconds > 2)
+    )
+      throw new Error("Invalid one-shot geometry");
+    if (
       !/^[a-z0-9-]+$/.test(stem.id) ||
       ids.has(stem.id) ||
       !stem.url ||
@@ -171,13 +178,17 @@ export class SampleBank {
           throw new Error("Asset size limit");
         let buffer = await context.decodeAudioData(bytes);
         if (!live()) return;
-        let metrics = inspectBuffer(buffer, this.duration);
+        const duration =
+          this.pack.kind === "one-shot"
+            ? entry.stem.durationSeconds
+            : this.duration;
+        let metrics = inspectBuffer(buffer, duration);
         if (this.prepareBuffer) {
           // Validate both original and prepared PCM, then admit the final metrics.
           // Preparation is synchronous and happens once per fresh decode, never
           // per voice/start/variant switch. Cached geometry and memory stay fixed.
           buffer = this.prepareBuffer(buffer, entry.stem);
-          metrics = inspectBuffer(buffer, this.duration);
+          metrics = inspectBuffer(buffer, duration);
         }
         const used = [...this.entries.values()].reduce(
           (sum, item) => sum + (item.metrics?.bytes || 0),

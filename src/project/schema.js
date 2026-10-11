@@ -1,4 +1,5 @@
 import { MASTER_MAX } from "../audio/voice.js";
+import { validateStudioProject } from "./studio-model.js";
 
 export const PROJECT_FORMAT = "perkusi-project";
 export const PROJECT_VERSION = 1;
@@ -38,6 +39,8 @@ function object(value, keys) {
 
 // Explicit version dispatch: unknown/future formats never silently lose fields.
 export function migrateProject(value, catalog) {
+  if (value?.schemaVersion === 0 && catalog?.kind === "studio")
+    throw new ProjectError("unsupportedMode");
   if (value?.schemaVersion === 0) {
     object(value, [
       "format",
@@ -73,6 +76,10 @@ export function migrateProject(value, catalog) {
 export function validateProject(value, catalog) {
   if (!value || value.format !== PROJECT_FORMAT)
     throw new ProjectError("invalidProject");
+  if (value.schemaVersion === 2) {
+    if (value.mode !== "studio") throw new ProjectError("unsupportedVersion");
+    return validateStudioProject(value, catalog);
+  }
   if (value.schemaVersion !== PROJECT_VERSION)
     throw new ProjectError("unsupportedVersion");
   object(value, [
@@ -87,6 +94,7 @@ export function validateProject(value, catalog) {
     "export",
   ]);
   if (value.mode !== "beatbox") throw new ProjectError("unsupportedMode");
+  if (catalog?.kind === "studio") throw new ProjectError("unsupportedMode");
   object(value.pack, ["id", "version"]);
   if (
     value.pack.id !== catalog.packId ||

@@ -197,21 +197,23 @@ test("static metadata is localized, canonical excludes query, 404 is noindex", (
       );
     }
 });
-test("unavailable tools stay honest, no playable controls or audio imports", () => {
-  for (const locale of ["id", "en"])
-    for (const page of ["studio"]) {
-      const html = renderDocument(page, locale);
-      assert(html.includes(messages[locale]["common.comingSoon"]));
-      assert(!html.includes("<audio") && !html.includes("audio-packs"));
-      assert(!html.includes("cta.startAudio"));
-    }
+test("playable Studio has honest localized metadata and initialization-guarded controls without autoplay", () => {
+  for (const locale of ["id", "en"]) {
+    const html = renderDocument("studio", locale);
+    assert(html.includes(messages[locale]["meta.studio.title"]));
+    assert(!html.includes(messages[locale]["common.comingSoon"]));
+    assert(html.includes('id="st-play"') && html.includes("disabled"));
+    assert.equal([...html.matchAll(/data-st-step=/g)].length, 128);
+    assert(!html.includes("<audio") && !html.includes("AudioContext"));
+  }
 });
-test("homepage promotes the localized playable Beatbox while future tools remain upcoming", () => {
+test("homepage promotes localized playable Beatbox and Studio while other future tools remain upcoming", () => {
   for (const locale of ["id", "en"]) {
     const html = renderDocument("home", locale);
     assert(html.includes(messages[locale]["home.explore"]));
     assert.equal([...html.matchAll(/data-route="beatbox"/g)].length, 3);
-    assert.equal([...html.matchAll(/data-i18n="common.upcoming"/g)].length, 3);
+    assert.equal([...html.matchAll(/data-i18n="common.upcoming"/g)].length, 2);
+    assert.equal([...html.matchAll(/data-route="studio"/g)].length, 2);
     assert(html.includes('data-i18n="common.playable"'));
     assert(!html.includes("AudioContext") && !html.includes(".wav"));
   }

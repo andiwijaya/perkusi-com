@@ -1,0 +1,8 @@
+Perkusi.com Ruang and Arus Studio one-shot kits (2026-10-11).
+Original deterministic code synthesis; no third-party samples, voice cloning,
+paid API, proprietary tool or external DSP library. Source recipe:
+scripts/make-studio-kits.py. Each original asset and its original synthesis recipe
+is dedicated under CC0-1.0. Commercial use, modification and redistribution
+including raw WAV files are permitted. Attribution is optional.
+CC0 legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+This dedication covers these original assets only, not fonts or other software.
