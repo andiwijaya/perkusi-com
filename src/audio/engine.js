@@ -15,6 +15,7 @@ export class AudioEngine {
       contextFactory = () => new AudioContext({ latencyHint: "interactive" }),
       bankOptions,
       variantPacks = [],
+      outputStageFactory = null,
       timers = {
         setInterval: (...args) => globalThis.setInterval(...args),
         clearInterval: (...args) => globalThis.clearInterval(...args),
@@ -24,6 +25,9 @@ export class AudioEngine {
     } = {},
   ) {
     this.pack = pack;
+    if (outputStageFactory !== null && typeof outputStageFactory !== "function")
+      throw new TypeError("Invalid output stage factory");
+    this.outputStageFactory = outputStageFactory;
     const guardedBankOptions = {
       ...bankOptions,
       validateCandidate: (entry, metrics) => {
@@ -76,6 +80,8 @@ export class AudioEngine {
     this.tickMs = tickMs;
     this.context = null;
     this.master = null;
+    this.output = null;
+    this.outputStage = null;
     this.volume = 0.65;
     this.status = "idle";
     this.error = null;
@@ -197,11 +203,34 @@ export class AudioEngine {
     if (this.disposed) throw new Error("Engine disposed");
     if (!this.context || this.context.state === "closed") {
       this.context?.removeEventListener("statechange", this.onContextState);
+      this.outputStage?.dispose();
+      this.outputStage = null;
       this.master?.disconnect();
       this.context = this.contextFactory();
       this.master = this.context.createGain();
       this.master.gain.value = this.volume;
-      this.master.connect(this.context.destination);
+      this.output = null;
+      try {
+        const stage = this.outputStageFactory?.(this.context, this.master);
+        if (
+          this.outputStageFactory &&
+          (!stage?.output ||
+            typeof stage.output.connect !== "function" ||
+            typeof stage.dispose !== "function")
+        )
+          throw new TypeError("Invalid output stage");
+        this.outputStage = stage;
+        this.output = this.outputStage?.output || this.master;
+        this.output.connect(this.context.destination);
+      } catch (error) {
+        this.master.disconnect();
+        this.outputStage?.dispose();
+        this.outputStage = null;
+        this.output = null;
+        // A retry must build a complete graph, never reuse a silent partial one.
+        void this.context.close().catch(() => {});
+        throw error;
+      }
       this.context.addEventListener("statechange", this.onContextState);
     }
     return this.context;
@@ -507,13 +536,13 @@ export class AudioEngine {
     if (!this.context || this.disposed)
       throw new Error("Audio not initialized");
     const destination = this.context.createMediaStreamDestination();
-    this.master.connect(destination);
+    this.output.connect(destination);
     const capture = {
       stream: destination.stream,
       dispose: () => {
         if (!this.captures.delete(capture)) return;
         try {
-          this.master.disconnect(destination);
+          this.output.disconnect(destination);
         } catch {
           /* Graph already closed. */
         }
@@ -576,6 +605,7 @@ export class AudioEngine {
     if (fade) await new Promise((resolve) => setTimeout(resolve, 8));
     this.clearVoices();
     this.master?.disconnect();
+    this.outputStage?.dispose();
     if (this.context && this.context.state !== "closed")
       await this.context.close();
     this.transport.reset();

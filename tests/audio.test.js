@@ -115,6 +115,17 @@ class Context extends EventTarget {
   createBufferSource() {
     return this.node();
   }
+  createMediaStreamDestination() {
+    const node = this.node();
+    node.track = {
+      stopped: false,
+      stop() {
+        this.stopped = true;
+      },
+    };
+    node.stream = { getTracks: () => [node.track] };
+    return node;
+  }
   async decodeAudioData() {
     return buffer();
   }
@@ -162,6 +173,135 @@ const deferred = () => {
 const flush = async () => {
   for (let i = 0; i < 12; i++) await Promise.resolve();
 };
+test("optional mastering is gesture-owned; captures share the final output and disposal releases the stage", async () => {
+  let created = 0,
+    disposed = 0;
+  const { engine, context } = fixture({
+    outputStageFactory(ctx, input) {
+      created++;
+      const output = ctx.createGain();
+      input.connect(output);
+      return {
+        output,
+        dispose() {
+          disposed++;
+          output.disconnect();
+        },
+      };
+    },
+  });
+  assert.equal(created, 0);
+  assert.equal(engine.snapshot().contextState, "absent");
+  await engine.play();
+  assert.equal(created, 1);
+  assert.notEqual(engine.output, engine.master);
+  assert.ok(engine.output.connections.has(context.destination));
+  const capture = engine.createCapture();
+  const destination = context.nodes.at(-1);
+  assert.ok(engine.output.connections.has(destination));
+  assert.ok(!engine.master.connections.has(destination));
+  capture.dispose();
+  capture.dispose();
+  assert.ok(destination.track.stopped);
+  assert.ok(!engine.output.connections.has(destination));
+  assert.equal(engine.volume, 0.65);
+  assert.throws(() => engine.setVolume(0.76), /Unsafe master volume/);
+  await engine.dispose();
+  assert.equal(disposed, 1);
+  assert.equal(engine.output.connections.size, 0);
+  assert.equal(engine.master.connections.size, 0);
+});
+
+test("shared engine without Beatbox mastering preserves its output; malformed configured stage fails closed", async () => {
+  const normal = fixture();
+  await normal.engine.play();
+  assert.equal(normal.engine.output, normal.engine.master);
+  await normal.engine.dispose();
+  const invalid = fixture({ outputStageFactory: () => ({}) });
+  await invalid.engine.play();
+  assert.equal(invalid.engine.status, "error");
+  assert.equal(invalid.engine.voices.size, 0);
+  assert.ok(
+    !invalid.engine.master.connections.has(invalid.context.destination),
+  );
+  await invalid.engine.dispose();
+});
+
+test("failed mastering construction closes its partial context and retry creates a complete output graph", async () => {
+  const contexts = [];
+  let fail = true;
+  const { engine } = fixture({
+    contextFactory() {
+      const context = new Context();
+      contexts.push(context);
+      return context;
+    },
+    outputStageFactory(context, input) {
+      if (fail) throw new Error("controlled mastering construction failure");
+      const output = context.createGain();
+      input.connect(output);
+      return {
+        output,
+        dispose() {
+          output.disconnect();
+        },
+      };
+    },
+  });
+  await engine.play();
+  assert.equal(engine.status, "error");
+  assert.equal(contexts[0].state, "closed");
+  assert.equal(engine.output, null);
+  assert.equal(engine.voices.size, 0);
+  fail = false;
+  await engine.play();
+  assert.equal(contexts.length, 2);
+  assert.equal(engine.status, "playing");
+  assert.ok(engine.output.connections.has(contexts[1].destination));
+  await engine.dispose();
+});
+
+test("buffer preparation cannot disguise unsafe raw PCM and cannot admit unsafe prepared PCM", async () => {
+  for (const rawUnsafe of [true, false]) {
+    let prepared = 0;
+    const ctx = new Context();
+    ctx.decodeAudioData = async () => buffer(rawUnsafe ? 0.96 : 0.1);
+    const bank = new SampleBank(pack(), {
+      fetcher: okFetch,
+      prepareBuffer() {
+        prepared++;
+        return buffer(rawUnsafe ? 0.1 : 0.96);
+      },
+    });
+    await bank.load("a", ctx);
+    assert.equal(bank.get("a").state, "error");
+    assert.equal(bank.get("a").buffer, null);
+    assert.equal(prepared, rawUnsafe ? 0 : 1);
+    bank.dispose();
+  }
+});
+
+test("prepared PCM is validated and cached once, with final metrics included in shared headroom admission", async () => {
+  let prepared = 0;
+  const { engine, context } = fixture({
+    bankOptions: {
+      fetcher: okFetch,
+      prepareBuffer() {
+        prepared++;
+        return buffer(0.8);
+      },
+    },
+  });
+  await engine.play();
+  assert.equal(prepared, 3);
+  assert.equal(engine.bank.get("a").state, "ready");
+  assert.equal(engine.bank.get("b").state, "error");
+  assert.equal(engine.bank.get("c").state, "error");
+  assert.ok(engine.cacheBounds().peak <= 0.95);
+  await engine.bank.load("a", context);
+  assert.equal(prepared, 3);
+  await engine.dispose();
+});
 for (const failure of ["all", "selected-only", "partial-selected"]) {
   test(`playback analytics: ${failure} failure, retry boundary and pause/resume are deterministic`, async () => {
     let fail = true;

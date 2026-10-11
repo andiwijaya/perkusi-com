@@ -5,6 +5,8 @@ import { beatboxMessages } from "./messages.js";
 import { initFocusVisibility } from "./focus-visibility.js";
 import { trackEvent } from "../analytics.js";
 import { createPlaybackMilestones } from "./playback-milestones.js";
+import { createBeatboxOutputStage } from "./output-stage.js";
+import { prepareBumiBuffer } from "./bumi-presence.js";
 import "../characters/characters.css";
 import "./style.css";
 
@@ -14,6 +16,8 @@ export function initBeatbox() {
   let lastError = "";
   const engine = new AudioEngine(originalGroovePack(1), {
     variantPacks: [originalGroovePack(2)],
+    outputStageFactory: createBeatboxOutputStage,
+    bankOptions: { prepareBuffer: prepareBumiBuffer },
   });
   const roles = characterDefinitions.map((c) => c.role);
   roles.forEach((id) => engine.setLayer(id, false));

@@ -67,6 +67,7 @@ export class SampleBank {
       timeoutMs = 10000,
       now = () => performance.now(),
       validateCandidate = () => {},
+      prepareBuffer = null,
       timers = {
         setTimeout: (...args) => globalThis.setTimeout(...args),
         clearTimeout: (...args) => globalThis.clearTimeout(...args),
@@ -80,6 +81,9 @@ export class SampleBank {
       throw new Error("Invalid load deadline");
     this.now = now;
     this.validateCandidate = validateCandidate;
+    if (prepareBuffer !== null && typeof prepareBuffer !== "function")
+      throw new TypeError("Invalid buffer preparation");
+    this.prepareBuffer = prepareBuffer;
     this.timers = timers;
     this.entries = new Map(
       pack.stems.map((stem) => [
@@ -165,9 +169,16 @@ export class SampleBank {
         if (!live()) return;
         if (!bytes.byteLength || bytes.byteLength > 4 * 1024 * 1024)
           throw new Error("Asset size limit");
-        const buffer = await context.decodeAudioData(bytes);
+        let buffer = await context.decodeAudioData(bytes);
         if (!live()) return;
-        const metrics = inspectBuffer(buffer, this.duration);
+        let metrics = inspectBuffer(buffer, this.duration);
+        if (this.prepareBuffer) {
+          // Validate both original and prepared PCM, then admit the final metrics.
+          // Preparation is synchronous and happens once per fresh decode, never
+          // per voice/start/variant switch. Cached geometry and memory stay fixed.
+          buffer = this.prepareBuffer(buffer, entry.stem);
+          metrics = inspectBuffer(buffer, this.duration);
+        }
         const used = [...this.entries.values()].reduce(
           (sum, item) => sum + (item.metrics?.bytes || 0),
           0,
