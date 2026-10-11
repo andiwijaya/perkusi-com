@@ -8,7 +8,31 @@ const events = new Set([
   "three_layers_reached",
   "language_changed",
   "audio_error",
+  "project_saved",
+  "export_succeeded",
+  "export_failed",
 ]);
+const exportFailureCategories = new Set([
+  "empty_mix",
+  "memory",
+  "asset",
+  "output",
+  "busy",
+  "render",
+  "other",
+]);
+export function exportFailureCategory(code) {
+  return (
+    {
+      emptyMix: "empty_mix",
+      exportLimit: "memory",
+      assetFailed: "asset",
+      unsafeOutput: "output",
+      exportBusy: "busy",
+      exportFailed: "render",
+    }[code] || "other"
+  );
+}
 // Narrow payload contract: no arbitrary parameters, patterns, assets or identifiers.
 export function createEventTracker(enabled, send) {
   return (name, locale) => {
@@ -19,7 +43,13 @@ export function createEventTracker(enabled, send) {
         name,
         name === "language_changed" && ["id", "en"].includes(locale)
           ? { language: locale }
-          : {},
+          : name === "export_failed"
+            ? {
+                category: exportFailureCategories.has(locale)
+                  ? locale
+                  : "other",
+              }
+            : {},
       );
     } catch {
       /* Analytics must never own application control flow. */

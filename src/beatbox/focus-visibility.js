@@ -22,7 +22,7 @@ export function initFocusVisibility(root) {
     const target = document.activeElement;
     if (
       !root.contains(target) ||
-      !target.matches("button,input,a,summary") ||
+      !target.matches("button,input,select,a,summary") ||
       !target.matches(":focus-visible") ||
       panel.contains(target)
     )

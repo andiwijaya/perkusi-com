@@ -1,6 +1,10 @@
 import { AudioEngine } from "../audio/engine.js";
 import { characterDefinitions } from "../characters/characters.js";
-import { originalGroovePack, originalCatalog } from "./pack.js";
+import {
+  originalGroovePack,
+  originalCatalog,
+  originalGrooveSelectionPack,
+} from "./pack.js";
 import { beatboxMessages } from "./messages.js";
 import { initFocusVisibility } from "./focus-visibility.js";
 import { trackEvent } from "../analytics.js";
@@ -9,6 +13,9 @@ import { createBeatboxOutputStage } from "./output-stage.js";
 import { prepareBumiBuffer } from "./bumi-presence.js";
 import "../characters/characters.css";
 import "./style.css";
+import "../project/style.css";
+import { OfflineWavExporter } from "../audio/exporter.js";
+import { initProjectControls } from "../project/controller.js";
 
 export function initBeatbox() {
   trackEvent("playground_open");
@@ -67,8 +74,10 @@ export function initBeatbox() {
       text(document.querySelector("#bb-" + id), copy[id]);
     render();
   }
+  let projects;
   function render() {
     if (disposed) return;
+    projects?.update();
     const s = engine.snapshot();
     for (const c of characterDefinitions) {
       const state = s.stems[c.role],
@@ -278,6 +287,7 @@ export function initBeatbox() {
   });
   function dispose() {
     disposed = true;
+    projects?.dispose();
     disposeFocusVisibility();
     cancelAnimationFrame(frame);
     engine.dispose();
@@ -296,10 +306,31 @@ export function initBeatbox() {
     frame = requestAnimationFrame(animate);
   }
   localize();
+  projects = initProjectControls({
+    engine,
+    catalog: originalCatalog,
+    onChange: render,
+    trackEvent,
+    exporter: new OfflineWavExporter({
+      catalog: originalCatalog,
+      packForSelection: originalGrooveSelectionPack,
+      prepareBuffer: prepareBumiBuffer,
+      outputStageFactory: createBeatboxOutputStage,
+      retainedBytes: () =>
+        Math.max(
+          engine.cacheBounds().bytes,
+          originalCatalog.assets.length *
+            5 *
+            (engine.context?.sampleRate || 48000) *
+            4,
+        ),
+    }),
+  });
   frame = requestAnimationFrame(animate);
   if (["localhost", "127.0.0.1"].includes(location.hostname))
     window.perkusiBeatbox = {
       engine,
+      projects,
       catalog: originalCatalog,
       render,
       dispose,

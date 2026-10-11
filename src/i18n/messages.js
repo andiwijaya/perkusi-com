@@ -14,8 +14,8 @@ const pairs = {
   ],
   "meta.privacy.title": ["Privasi — Perkusi.com", "Privacy - Perkusi.com"],
   "meta.privacy.description": [
-    "Cara Perkusi.com menggunakan Google Analytics dan menyimpan pilihan bahasa di browser.",
-    "How Perkusi.com uses Google Analytics and stores your language preference in your browser.",
+    "Cara Perkusi.com menggunakan analytics dan menyimpan bahasa serta proyek secara lokal.",
+    "How Perkusi.com uses analytics and stores language preferences and projects locally.",
   ],
   "meta.beatbox.title": [
     "Beatbox Playground | Perkusi.com",
@@ -197,6 +197,10 @@ const pairs = {
     "Jika kamu mengganti bahasa, pilihan itu disimpan di browser pada perangkat ini. Kamu dapat menghapusnya melalui pengaturan penyimpanan situs di browser. Pengunjung baru selalu mendapatkan Bahasa Indonesia. Bahasa pada URL yang dipilih secara eksplisit didahulukan.",
     "When you switch languages, your preference is saved in the browser on this device. You can remove it through your browser's site storage settings. New visitors always receive Bahasa Indonesia. An explicitly chosen URL language takes priority.",
   ],
+  "privacy.projects": [
+    "Proyek tersimpan dan pemulihan edit memakai penyimpanan lokal di browser ini. Nama dan pola tetap di perangkatmu; hapus proyek melalui tombol Hapus atau hapus semua data situs melalui pengaturan browser. File impor dibaca lokal. WAV dibuat lokal. Saat kamu memilih Bagikan, file diserahkan ke layanan atau aplikasi yang kamu pilih; kebijakan mereka berlaku.",
+    "Saved projects and edit recovery use local storage in this browser. Names and patterns stay on your device; delete projects with Delete or remove all site data in browser settings. Imported project files are read locally. WAV files are rendered locally. When you choose Share, the file is handed to your selected service or app; its policy applies.",
+  ],
   "privacy.block": [
     "Kamu dapat memblokir analytics lewat pengaturan privasi browser, pemblokir konten, atau add-on opt-out Google Analytics.",
     "You can block analytics using your browser privacy settings, a content blocker, or Google's Analytics opt-out add-on.",
@@ -207,8 +211,8 @@ const pairs = {
   ],
   "privacy.policy": ["Kebijakan privasi Google", "Google's privacy policy"],
   "privacy.unavailable": [
-    "Beatbox memuat suara dari situs ini dan memainkannya di browser. Tidak ada mikrofon, upload audio, atau pengiriman komposisi. Event analytics hanya mencatat pembukaan playground, audio mulai, layer pertama, tiga layer, perubahan bahasa, dan kesalahan audio; tanpa pola atau nama suara.",
-    "Beatbox loads sounds from this site and plays them in your browser. There is no microphone, audio upload or composition transmission. Analytics events count playground visits, audio starts, the first layer, three layers, language changes and audio errors; without patterns or sound names.",
+    "Beatbox memuat suara dari situs ini dan memainkannya di browser. Tidak ada mikrofon, upload audio, atau pengiriman komposisi. Event analytics hanya mencatat pembukaan playground, audio mulai, layer pertama, tiga layer, perubahan bahasa, kesalahan audio, keberhasilan menyimpan proyek, dan hasil ekspor; tanpa nama proyek, isi file, pola, atau nama suara.",
+    "Beatbox loads sounds from this site and plays them in your browser. There is no microphone, audio upload or composition transmission. Analytics events count playground visits, audio starts, the first layer, three layers, language changes, audio errors, successful project saves and export outcomes; without project names, file content, patterns or sound names.",
   ],
   "soon.beatbox.heading": ["Beatbox Playground", "Beatbox Playground"],
   "soon.beatbox.copy": [

@@ -7,6 +7,12 @@ const urls = import.meta.glob("../../internal/original-groove/audio/*.wav", {
   import: "default",
 });
 export const originalCatalog = manifest;
+export const originalGrooveSelectionPack = (selection) =>
+  createPackFromCatalog(
+    manifest,
+    selection,
+    (path) => urls[`../../internal/original-groove/${path}`],
+  );
 export const originalGroovePack = (variant) =>
   createPackFromCatalog(
     manifest,

@@ -1,0 +1,132 @@
+.project-panel {
+  margin: 28px 0;
+  padding: 28px;
+  border: 1px solid var(--border, #454c38);
+  border-radius: 24px;
+  background: #1b2119;
+  scroll-margin-bottom: 180px;
+}
+.project-panel h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.3;
+  margin: 0 0 10px;
+}
+.project-panel h3 {
+  font-size: 1.1rem;
+  margin: 0 0 18px;
+}
+.project-panel p {
+  line-height: 1.65;
+}
+.project-panel header > p {
+  color: #d5e2ba;
+}
+.project-note {
+  font-size: 0.83rem;
+  color: #c0c9b8;
+  margin: 10px 0 18px;
+}
+.project-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+  margin: 26px 0 10px;
+}
+.project-grid > div {
+  min-width: 0;
+}
+.project-panel label {
+  display: block;
+  font-size: 0.85rem;
+  margin: 16px 0 8px;
+}
+.project-panel input,
+.project-panel select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #899775;
+  border-radius: 10px;
+  background: #11170f;
+  color: #f5f8ed;
+  font: inherit;
+}
+.project-panel input[type="file"] {
+  font-size: 0.8rem;
+}
+.project-panel input::file-selector-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: #c3f16c;
+  color: #15210b;
+  margin-right: 10px;
+  font: inherit;
+  padding: 8px;
+}
+.project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 22px;
+}
+.project-panel button:not(.character) {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 14px;
+  font-size: 0.83rem;
+  white-space: normal;
+}
+.project-panel :focus-visible {
+  outline: 3px solid #c5f770;
+  outline-offset: 4px;
+}
+.project-panel progress {
+  display: block;
+  width: 100%;
+  height: 12px;
+  accent-color: #c5f770;
+  margin: 20px 0;
+}
+.project-panel [hidden] {
+  display: none !important;
+}
+#project-status,
+#project-storage-warning {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #11170f;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+#project-status[role="alert"],
+#project-storage-warning {
+  border: 1px solid #ecb974;
+  color: #ffe2b9;
+}
+#project-filename {
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+@media (max-width: 680px) {
+  .project-panel {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .project-audio {
+    border-top: 1px solid #454c38;
+    padding-top: 24px;
+  }
+  .project-actions {
+    gap: 8px;
+  }
+  .project-panel button:not(.character) {
+    flex: 1 1 125px;
+  }
+}
