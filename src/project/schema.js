@@ -1,4 +1,12 @@
 import { MASTER_MAX } from "../audio/voice.js";
+import {
+  validateComposition,
+  fromStudio,
+  fromBeatbox,
+  toBeatbox,
+} from "./composition-model.js";
+import { compositionRegistry } from "./studio-registry.js";
+import { originalRegistry } from "./original-registry.js";
 import { validateStudioProject } from "./studio-model.js";
 
 export const PROJECT_FORMAT = "perkusi-project";
@@ -39,6 +47,29 @@ function object(value, keys) {
 
 // Explicit version dispatch: unknown/future formats never silently lose fields.
 export function migrateProject(value, catalog) {
+  if (
+    catalog?.kind === "studio" &&
+    catalog.composition &&
+    [0, 1].includes(value?.schemaVersion)
+  )
+    return validateComposition(
+      fromBeatbox(migrateProject(value, originalRegistry)),
+      catalog,
+    );
+  if (
+    catalog?.kind === "studio" &&
+    catalog.composition &&
+    value?.schemaVersion === 2
+  )
+    return validateComposition(
+      fromStudio(validateStudioProject(value, catalog)),
+      catalog,
+    );
+  if (catalog?.kind !== "studio" && value?.schemaVersion === 3)
+    return validateProject(
+      toBeatbox(validateComposition(value, compositionRegistry)),
+      catalog,
+    );
   if (value?.schemaVersion === 0 && catalog?.kind === "studio")
     throw new ProjectError("unsupportedMode");
   if (value?.schemaVersion === 0) {
@@ -76,6 +107,7 @@ export function migrateProject(value, catalog) {
 export function validateProject(value, catalog) {
   if (!value || value.format !== PROJECT_FORMAT)
     throw new ProjectError("invalidProject");
+  if (value.schemaVersion === 3) return validateComposition(value, catalog);
   if (value.schemaVersion === 2) {
     if (value.mode !== "studio") throw new ProjectError("unsupportedVersion");
     return validateStudioProject(value, catalog);
@@ -167,5 +199,6 @@ export function parseProject(text, catalog) {
   return migrateProject(value, catalog);
 }
 export function serializeProject(project, catalog) {
-  return JSON.stringify(validateProject(project, catalog), null, 2) + "\n";
+  const valid = validateProject(project, catalog);
+  return JSON.stringify(valid, null, valid.schemaVersion === 3 ? 0 : 2) + "\n";
 }

@@ -12,6 +12,7 @@ const events = new Set([
   "export_succeeded",
   "export_failed",
   "studio_open",
+  "beatbox_to_studio",
 ]);
 const exportFailureCategories = new Set([
   "empty_mix",

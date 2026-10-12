@@ -1,13 +1,27 @@
+import "../project/mode-transfer.css";
 import "./style.css";
 import { AudioEngine } from "../audio/engine.js";
 import { StudioWavExporter } from "../audio/studio-exporter.js";
 import { createBeatboxOutputStage } from "../beatbox/output-stage.js";
-import { studioCatalog, studioPack } from "./pack.js";
+import { originalGroovePack } from "../beatbox/pack.js";
+import {
+  CompositionPlayback,
+  compositionExportExtras,
+} from "../audio/composition.js";
+import {
+  newComposition,
+  compositionDemo,
+} from "../project/composition-model.js";
+import {
+  initCompositionPanel,
+  compositionMessages,
+} from "./composition-panel.js";
+import { initModeTransfer } from "../project/mode-transfer.js";
+import { CompositionStore } from "../project/composition-store.js";
+import { studioCatalog, studioPack, instrumentPack } from "./pack.js";
 import { studioMessages, studioRoleNames } from "./messages.js";
 import {
   ProjectHistory,
-  newStudioProject,
-  studioDemo,
   emptyPattern,
   STUDIO_ROLES,
   MAX_PATTERNS,
@@ -19,7 +33,6 @@ import {
   ProjectError,
   cleanTitle,
 } from "../project/schema.js";
-import { ProjectStore } from "../project/store.js";
 import {
   FileDelivery,
   readProjectFile,
@@ -32,22 +45,29 @@ export function initStudio() {
   const root = document.querySelector(".studio-page"),
     $ = (id) => root.querySelector("#st-" + id);
   const engine = new AudioEngine(studioPack(1), {
-    variantPacks: [studioPack(2)],
+    variantPacks: [studioPack(2), studioPack(3)],
     sequenceCatalog: studioCatalog,
     outputStageFactory: createBeatboxOutputStage,
   });
-  const history = new ProjectHistory(newStudioProject(), (p) =>
+  engine.arrangement = true;
+  $("chain-mode").checked = true;
+  const playback = new CompositionPlayback(engine, {
+    loopPack: originalGroovePack,
+    instrumentPack,
+  });
+  const history = new ProjectHistory(newComposition(), (p) =>
     validateProject(p, studioCatalog),
   );
-  const keys = {
-    projects: "perkusi.projects.studio.v2",
-    draft: "perkusi.draft.studio.v2",
-  };
-  const store = new ProjectStore(studioCatalog, undefined, undefined, keys),
+  const store = new CompositionStore(studioCatalog),
     delivery = new FileDelivery();
   const exporter = new StudioWavExporter({
     catalog: studioCatalog,
-    packForKit: (id) => studioPack(id === "ruang" ? 1 : 2),
+    packForKit: (id) =>
+      studioPack(studioCatalog.kits.findIndex((k) => k.id === id) + 1),
+    extensions: compositionExportExtras({
+      loopPack: originalGroovePack,
+      instrumentPack,
+    }),
     outputStageFactory: createBeatboxOutputStage,
     retainedBytes: () => engine.cacheBounds().bytes,
   });
@@ -57,6 +77,7 @@ export function initStudio() {
     disposed = false,
     busy = false,
     reading = false,
+    receiving = false,
     readyFile = null,
     selectedSave = "",
     projectStatus = "idle",
@@ -110,11 +131,11 @@ export function initStudio() {
       select.add(new Option(item.project.title, item.id));
     select.value = selectedSave;
     selectedSave = select.value;
-    $("load").disabled = busy || reading || !selectedSave;
-    $("saved-delete").disabled = busy || reading || !selectedSave;
+    $("load").disabled = busy || reading || receiving || !selectedSave;
+    $("saved-delete").disabled = busy || reading || receiving || !selectedSave;
   }
   function saveDraft() {
-    if (!draftAllowed || disposed) return;
+    if (!draftAllowed || disposed || receiving) return;
     try {
       store.saveDraft(current());
     } catch {
@@ -124,11 +145,11 @@ export function initStudio() {
   }
   function changed() {
     clearTimeout(draftTimer);
-    draftTimer = setTimeout(saveDraft, 250);
+    if (!receiving) draftTimer = setTimeout(saveDraft, 250);
     sync();
   }
   function edit(fn) {
-    if (reading) return;
+    if (reading || receiving) return;
     try {
       if (history.edit(fn)) {
         changed();
@@ -139,8 +160,11 @@ export function initStudio() {
     }
   }
   function apply(p) {
+    const valid = validateProject(p, studioCatalog);
     engine.rewind();
-    history.replace(p);
+    engine.arrangement = true;
+    $("chain-mode").checked = true;
+    history.replace(valid);
     readyFile = null;
     $("result").hidden = true;
     $("title").value = current().title;
@@ -152,7 +176,11 @@ export function initStudio() {
     const p = current(),
       pattern = p.patterns.find((a) => a.id === p.activePattern);
     if (document.activeElement !== $("title")) $("title").value = p.title;
-    engine.configureSequence(p, p.pack.id === "ruang" ? 1 : 2);
+    playback.configure(
+      p,
+      studioCatalog.kits.findIndex((k) => k.id === p.pack.id) + 1,
+    );
+    compositionPanel.update();
     $("kit").value = p.pack.id;
     $("bpm").value = p.timing.bpm;
     $("swing").value = p.timing.swing;
@@ -165,11 +193,13 @@ export function initStudio() {
     );
     $("pattern").value = p.activePattern;
     $("pattern-name").value = pattern.name;
-    $("undo").disabled = !history.past.length || busy || reading;
-    $("redo").disabled = !history.future.length || busy || reading;
-    $("new").disabled = p.patterns.length >= MAX_PATTERNS || busy || reading;
+    $("undo").disabled = !history.past.length || busy || reading || receiving;
+    $("redo").disabled = !history.future.length || busy || reading || receiving;
+    $("new").disabled =
+      p.patterns.length >= MAX_PATTERNS || busy || reading || receiving;
     $("duplicate").disabled = $("new").disabled;
-    $("delete-pattern").disabled = p.patterns.length <= 1 || busy || reading;
+    $("delete-pattern").disabled =
+      p.patterns.length <= 1 || busy || reading || receiving;
     for (const [i, role] of STUDIO_ROLES.entries()) {
       for (let s = 0; s < 16; s++) {
         const el = root.querySelector(`[data-st-step="${role}:${s}"]`),
@@ -224,7 +254,7 @@ export function initStudio() {
           "aria-label",
           `${c.removeChain} · ${c.chainSlot} ${index + 1}`,
         );
-        button.disabled = p.chain.length <= 1 || busy || reading;
+        button.disabled = p.chain.length <= 1 || busy || reading || receiving;
         slot.append(label, button);
         return slot;
       }),
@@ -237,7 +267,8 @@ export function initStudio() {
         preventScroll: true,
       });
     }
-    $("add-chain").disabled = p.chain.length >= MAX_CHAIN || busy || reading;
+    $("add-chain").disabled =
+      p.chain.length >= MAX_CHAIN || busy || reading || receiving;
     text(
       $("duration"),
       ((p.chain.length * 4 * 60) / p.timing.bpm).toFixed(2) + " s",
@@ -298,7 +329,7 @@ export function initStudio() {
   function localize() {
     locale = document.documentElement.lang === "en" ? "en" : "id";
     c = studioMessages[locale];
-    errors = projectMessages[locale];
+    errors = { ...projectMessages[locale], ...compositionMessages[locale] };
     root
       .querySelectorAll("[data-st-copy]")
       .forEach((el) => text(el, c[el.dataset.stCopy]));
@@ -307,8 +338,12 @@ export function initStudio() {
       .forEach((el) =>
         text(el, studioRoleNames[locale][Number(el.dataset.stRole)]),
       );
-    for (const id of ["kit"])
-      for (const option of $(id).options) text(option, c[option.value]);
+    for (const id of ["kit", "demo-kind"])
+      for (const option of $(id).options)
+        text(
+          option,
+          c[option.value] || compositionMessages[locale][option.value],
+        );
     root.querySelector(".st-guide").setAttribute("aria-label", c.quick);
     root
       .querySelector(".st-grid-scroll")
@@ -367,7 +402,7 @@ export function initStudio() {
       importLocks.clear();
     }
     busy = value;
-    $("render").disabled = busy || reading;
+    $("render").disabled = busy || reading || receiving;
     $("cancel").hidden = !busy;
     $("progress").hidden = !busy;
     for (const id of [
@@ -377,11 +412,12 @@ export function initStudio() {
       "import",
       "project-download",
     ])
-      $(id).disabled = busy || reading;
+      $(id).disabled = busy || reading || receiving;
     updateSaves();
-    $("undo").disabled = !history.past.length || busy || reading;
-    $("redo").disabled = !history.future.length || busy || reading;
+    $("undo").disabled = !history.past.length || busy || reading || receiving;
+    $("redo").disabled = !history.future.length || busy || reading || receiving;
     if (reading) for (const el of importLocks.keys()) el.disabled = true;
+    compositionPanel.update();
   }
   function ownFocus() {
     const el = document.activeElement;
@@ -402,7 +438,7 @@ export function initStudio() {
       target.focus({ focusVisible: true });
   }
   async function renderWav() {
-    if (busy || reading) return;
+    if (busy || reading || receiving) return;
     let p;
     try {
       p = project();
@@ -410,6 +446,7 @@ export function initStudio() {
       fail(e);
       return;
     }
+    if (!engine.arrangement && !window.confirm(c.previewExport)) return;
     ownFocus();
     readyFile = null;
     $("result").hidden = true;
@@ -456,7 +493,7 @@ export function initStudio() {
     const form = event.target.closest(
       "input,textarea,select,[contenteditable=true]",
     );
-    if (form) return;
+    if (form || document.querySelector("dialog[open]")) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
       event.preventDefault();
       if (
@@ -574,13 +611,26 @@ export function initStudio() {
           $("desktop").hidden = true;
           break;
         case "st-demo":
-          edit((p) => Object.assign(p, studioDemo($("demo-kind").value)));
+          if (
+            history.past.length &&
+            !window.confirm(
+              locale === "en"
+                ? "Replace this arrangement? You can undo to restore it."
+                : "Ganti susunan ini? Gunakan Urungkan untuk mengembalikannya.",
+            )
+          )
+            break;
+          edit((p) => Object.assign(p, compositionDemo($("demo-kind").value)));
+          engine.rewind();
+          engine.arrangement = true;
+          $("chain-mode").checked = true;
           $("title").value = current().title;
           break;
         case "st-clear":
           edit((p) => {
             const a = p.patterns.find((a) => a.id === p.activePattern);
             a.steps = emptyPattern().steps;
+            a.notes = Array(16).fill(null);
           });
           break;
         case "st-new":
@@ -594,7 +644,7 @@ export function initStudio() {
                   ? structuredClone(
                       p.patterns.find((a) => a.id === p.activePattern),
                     )
-                  : emptyPattern();
+                  : { ...emptyPattern(), notes: Array(16).fill(null) };
             a.id = id;
             a.name = id.toUpperCase();
             p.patterns.push(a);
@@ -637,7 +687,15 @@ export function initStudio() {
           trackEvent("project_saved");
           break;
         case "st-load":
-          apply(store.load(selectedSave));
+          if (
+            !history.past.length ||
+            window.confirm(
+              locale === "en"
+                ? "Load this project? Your current draft will be replaced. Download it first if you want to keep it."
+                : "Muat proyek ini? Draft saat ini akan diganti. Unduh dulu untuk menyimpannya.",
+            )
+          )
+            apply(store.load(selectedSave));
           break;
         case "st-saved-delete":
           if (window.confirm(c.deleteConfirm)) {
@@ -714,9 +772,9 @@ export function initStudio() {
     if (el.id === "st-quantize") edit((p) => (p.timing.quantize = el.checked));
     if (el.id === "st-chain-mode") {
       engine.arrangement = el.checked;
-      engine.configureSequence(
+      playback.configure(
         current(),
-        current().pack.id === "ruang" ? 1 : 2,
+        studioCatalog.kits.findIndex((k) => k.id === current().pack.id) + 1,
         true,
       );
     }
@@ -727,7 +785,7 @@ export function initStudio() {
     if (el.id === "st-file") {
       const file = el.files?.[0];
       el.value = "";
-      if (!file || busy || reading) return;
+      if (!file || busy || reading || receiving) return;
       restoreFocus =
         keyboard && document.activeElement === $("import") ? $("import") : null;
       reading = true;
@@ -735,7 +793,16 @@ export function initStudio() {
       message("loading");
       try {
         const valid = await readProjectFile(file, studioCatalog);
-        if (!disposed) apply(valid);
+        if (
+          !disposed &&
+          (!history.past.length ||
+            window.confirm(
+              locale === "en"
+                ? "Import this project? Your current draft will be replaced. Download it first if you want to keep it."
+                : "Impor proyek ini? Draft saat ini akan diganti. Unduh dulu untuk menyimpannya.",
+            ))
+        )
+          apply(valid);
       } catch (e) {
         if (!disposed) fail(e);
       } finally {
@@ -766,10 +833,12 @@ export function initStudio() {
     importLocks.clear();
     cancelAnimationFrame(frame);
     life.abort();
+    transfer.dispose();
+    compositionPanel.dispose();
     exporter.dispose();
     delivery.dispose();
     readyFile = null;
-    void engine.dispose();
+    void engine.dispose({ immediate: true });
   }
   listen(window, "pagehide", dispose);
   function tick(time) {
@@ -779,6 +848,21 @@ export function initStudio() {
       renderStatus();
     }
     frame = requestAnimationFrame(tick);
+  }
+  const compositionPanel = initCompositionPanel({
+    root,
+    current,
+    edit,
+    engine,
+    locked: () => busy || reading || receiving || disposed,
+  });
+  for (const kind of ["kit", "demo-kind"]) {
+    $(kind).replaceChildren(
+      ...(kind === "kit"
+        ? ["ruang", "arus", "fusion"]
+        : ["fusion", "malam", "bumi", "ruang", "arus"]
+      ).map((id) => new Option(id, id)),
+    );
   }
   root
     .querySelectorAll("button,input,select")
@@ -793,6 +877,27 @@ export function initStudio() {
     message("recoveryError", true);
   }
   if (!storeAvailable) message("storageUnavailable", true);
+  const transfer = initModeTransfer({
+    root,
+    mode: "studio",
+    beforeNavigate: async () => {
+      engine.pause();
+      await new Promise((resolve) => setTimeout(resolve, 8));
+    },
+    current: project,
+    onReceiving(value) {
+      receiving = value;
+      if (value) clearTimeout(draftTimer);
+      $("title").disabled = value;
+      sync();
+    },
+    apply: (p) => {
+      draftAllowed = true;
+      apply(p);
+    },
+    delivery,
+    locked: () => busy || reading || receiving || disposed,
+  });
   root.dataset.ready = "true";
   trackEvent("studio_open");
   frame = requestAnimationFrame(tick);

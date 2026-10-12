@@ -21,6 +21,7 @@ export function initProjectControls({
     busy = false,
     sharing = false,
     loading = false,
+    receiving = false,
     file = null,
     status = "ready",
     isError = false,
@@ -68,7 +69,8 @@ export function initProjectControls({
     if (
       keyboardFocus &&
       ((active === el("cancel") && (!busy || status === "cancelling")) ||
-        ([el("render"), el("bars")].includes(active) && (busy || loading)))
+        ([el("render"), el("bars")].includes(active) &&
+          (busy || loading || receiving)))
     )
       focusReturn = {
         owner: active,
@@ -97,10 +99,11 @@ export function initProjectControls({
       "import",
       "list",
     ])
-      el(id).disabled = loading;
-    for (const id of ["render", "bars"]) el(id).disabled = busy || loading;
-    el("load").disabled = loading || !el("list").value;
-    el("delete").disabled = loading || !el("list").value;
+      el(id).disabled = loading || receiving;
+    for (const id of ["render", "bars"])
+      el(id).disabled = busy || loading || receiving;
+    el("load").disabled = loading || receiving || !el("list").value;
+    el("delete").disabled = loading || receiving || !el("list").value;
     el("result").hidden = !file;
     el("filename").textContent = file?.name || "";
     el("download").disabled = !file;
@@ -137,7 +140,7 @@ export function initProjectControls({
     render();
   }
   function update() {
-    if (disposed) return;
+    if (disposed || receiving) return;
     let project;
     try {
       project = current();
@@ -190,12 +193,13 @@ export function initProjectControls({
       render();
     }
   }
+  let ready = Promise.resolve();
   localize();
   try {
     refreshList();
     const draft = store.readDraft();
     if (draft) {
-      void guarded(() => apply(draft, "recovered"));
+      ready = guarded(() => apply(draft, "recovered"));
     }
   } catch {
     warning = true;
@@ -340,7 +344,7 @@ export function initProjectControls({
   listen(document, "perkusi:locale", localize);
   function dispose() {
     if (disposed) return;
-    if (draftEnabled) {
+    if (draftEnabled && !receiving) {
       try {
         store.saveDraft(current());
       } catch {
@@ -355,6 +359,20 @@ export function initProjectControls({
     listeners.forEach((remove) => remove());
   }
   return {
+    current,
+    ready,
+    setReceiving(value) {
+      receiving = value;
+      if (value) clearTimeout(draftTimer);
+      el("title").disabled = value;
+      render();
+    },
+    applyTransferred(project) {
+      draftEnabled = true;
+      warning = false;
+      return apply(project, "loaded");
+    },
+    apply: (project) => apply(project, "loaded"),
     update,
     dispose,
     store,
@@ -362,7 +380,7 @@ export function initProjectControls({
     delivery,
     snapshot: () => ({
       busy,
-      loading,
+      loading: loading || receiving,
       sharing,
       status,
       fileName: file?.name || null,

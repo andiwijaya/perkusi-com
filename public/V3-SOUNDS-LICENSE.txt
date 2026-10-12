@@ -1,0 +1,8 @@
+CC0 1.0 Universal
+Perkusi.com dedicates this original recipe and generated audio to the public domain under CC0-1.0. Commercial use and raw redistribution permitted; no attribution required.
+License: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Python runtime license: https://docs.python.org/3/license.html (PSF); standard library only. No external recordings, paid tools, model-generated sounds or third-party samples.
+
+Existing Ruang / Arus: original sixteen CC0-1.0 one-shots, recipe scripts/make-studio-kits.py; manifest internal/studio-kits/manifest.json. Existing notice /STUDIO-KITS-LICENSE.txt retained.
+Original Groove: original twelve CC0-1.0 procedural vocal loops, recipe scripts/make-original-groove.py; provenance internal/original-groove/manifest.json and LICENSE.txt. Bumi presence-v1 processing is shared with the original player.
+The new Fusion/Bilah sounds are not traditional recordings or authentic regional tuning claims. Listening quality remains UNVERIFIED; a native waveform/export check is not a listening review.

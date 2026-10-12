@@ -30,8 +30,8 @@ const pairs = {
     "Rhythm Studio - Make Beats and Export WAV | Perkusi.com",
   ],
   "meta.studio.description": [
-    "Buat beat dengan sequencer 8 track, dua kit orisinal, mixer, rantai pola, dan WAV lokal.",
-    "Build beats with an eight-track sequencer, two original kits, a mixer, pattern chains, and local WAV export.",
+    "Gabungkan loop Beatbox, sequencer 8 track, tiga kit orisinal, instrumen Bilah, dan WAV lokal.",
+    "Combine Beatbox loops, an eight-track sequencer, three original kits, the Bilah instrument, and local WAV export.",
   ],
   "meta.notFound.title": [
     "Halaman Tidak Ditemukan — Perkusi.com",
@@ -101,8 +101,8 @@ const pairs = {
   "home.card1.meta": ["01 / PERKUSI", "01 / PERCUSSION"],
   "home.card1.title": ["Rhythm Studio", "Rhythm Studio"],
   "home.card1.copy": [
-    "Delapan track, dua kit orisinal, mixer, dan rantai pola. Buat beat dan unduh WAV.",
-    "Eight tracks, two original kits, a mixer, and pattern chains. Make a beat and download WAV.",
+    "Delapan track, tiga kit orisinal, loop Beatbox, dan instrumen Bilah. Susun musik dan unduh WAV.",
+    "Eight tracks, three original kits, Beatbox loops, and the Bilah instrument. Build music and download WAV.",
   ],
   "home.card1.foot": ["TEMUKAN GROOVE", "FIND THE POCKET"],
   "home.card2.meta": ["02 / LAPISAN SUARA", "02 / LAYERING"],

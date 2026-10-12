@@ -283,7 +283,11 @@ export class AudioEngine {
     this.error = null;
     const promise = (async () => {
       try {
-        await Promise.all([resumed, this.loadSelection(context, operation)]);
+        await Promise.all([
+          resumed,
+          this.loadSelection(context, operation),
+          this.composition?.load(context),
+        ]);
         if (this.disposed || operation !== this.operation)
           return this.snapshot();
         if (context.state !== "running") throw new Error("context-not-running");
@@ -299,6 +303,7 @@ export class AudioEngine {
         this.transport.start(when);
         this.status = "playing";
         ++this.stats.starts;
+        this.composition?.start(when);
         if (this.sequence) {
           if (available.length !== this.pack.stems.length)
             throw new Error("no-assets-ready");
@@ -525,7 +530,8 @@ export class AudioEngine {
     const reschedule = force || musical(next) !== musical(this.sequence);
     const changedKit =
       this.selectedVariant.get(this.pack.stems[0].id) !== variant;
-    if (![1, 2].includes(variant)) throw new Error("Unknown kit");
+    if (!this.variants.get(this.pack.stems[0].id).has(variant))
+      throw new Error("Unknown kit");
     if (changedKit) this.pause();
     const now = this.context?.currentTime || 0,
       running = this.transport.running;
@@ -579,7 +585,8 @@ export class AudioEngine {
   pumpSequence() {
     ++this.stats.ticks;
     const now = this.context.currentTime;
-    for (const v of [...this.voices]) if (v.endTime <= now) this.removeVoice(v);
+    for (const v of [...this.voices])
+      if (v.endTime !== null && v.endTime <= now) this.removeVoice(v);
     this.rememberSequencePosition(now);
     // Stale callbacks skip expired steps on the swung clock, never burst them.
     const eligible = this.nextSequenceStep(now, 0.002);
@@ -595,6 +602,7 @@ export class AudioEngine {
       if (when > now + this.lookahead) break;
       this.nextStep++;
       if (when < now + 0.002) continue;
+      this.composition?.step(index, when);
       for (const e of sequenceEvents(this.sequence, index, this.arrangement))
         this.addShot(e.role, when, e.velocity, { index, ...e });
     }
@@ -782,16 +790,18 @@ export class AudioEngine {
         : null,
     };
   }
-  dispose() {
-    if (!this.disposePromise) this.disposePromise = this.releaseResources();
+  dispose({ immediate = false } = {}) {
+    if (!this.disposePromise)
+      this.disposePromise = this.releaseResources(immediate);
     return this.disposePromise;
   }
-  async releaseResources() {
+  async releaseResources(immediate = false) {
     if (this.disposed) return;
     this.disposed = true;
     ++this.operation;
     this.clearTimer();
-    const fade = this.context?.state === "running" && this.voices.size > 0;
+    const fade =
+      !immediate && this.context?.state === "running" && this.voices.size > 0;
     this.clearVoices(fade);
     this.pending.clear();
     for (const bank of this.banks) bank.dispose();
@@ -802,6 +812,7 @@ export class AudioEngine {
     this.master?.disconnect();
     this.mixer?.dispose();
     this.outputStage?.dispose();
+    this.composition?.dispose();
     if (this.context && this.context.state !== "closed")
       await this.context.close();
     this.transport.reset();

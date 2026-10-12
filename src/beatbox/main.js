@@ -1,3 +1,5 @@
+import { initModeTransfer } from "../project/mode-transfer.js";
+import "../project/mode-transfer.css";
 import { AudioEngine } from "../audio/engine.js";
 import { characterDefinitions } from "../characters/characters.js";
 import {
@@ -78,7 +80,8 @@ export function initBeatbox() {
   function render() {
     if (disposed) return;
     projects?.update();
-    const s = engine.snapshot();
+    const s = engine.snapshot(),
+      blocked = !!projects?.snapshot().loading;
     for (const c of characterDefinitions) {
       const state = s.stems[c.role],
         el = root.querySelector(`[data-role="${c.role}"]`);
@@ -174,7 +177,12 @@ export function initBeatbox() {
       s.status === "idle" ? copy.start : copy.play,
     );
     document.querySelector("#bb-play").disabled =
-      s.status === "loading" || s.status === "playing";
+      blocked || s.status === "loading" || s.status === "playing";
+    root
+      .querySelectorAll(
+        ".bb-cast button,#bb-pause,#bb-reset,#bb-demo,#bb-volume",
+      )
+      .forEach((el) => (el.disabled = blocked));
     text(
       document.querySelector("#bb-position"),
       `${copy.bar} ${Math.floor(s.beat / 4) + 1} · ${copy.beat} ${Math.floor(s.beat % 4) + 1}`,
@@ -192,6 +200,7 @@ export function initBeatbox() {
       .style.setProperty("--bar-progress", String((s.beat % 4) / 4));
   }
   const run = (action) => {
+    if (projects?.snapshot().loading) return;
     try {
       const pending = action();
       render();
@@ -271,6 +280,7 @@ export function initBeatbox() {
       event.altKey ||
       event.metaKey ||
       event.repeat ||
+      document.querySelector("dialog[open]") ||
       /INPUT|TEXTAREA|SELECT/.test(event.target.tagName) ||
       event.target.isContentEditable
     )
@@ -287,10 +297,11 @@ export function initBeatbox() {
   });
   function dispose() {
     disposed = true;
+    transfer?.dispose();
     projects?.dispose();
     disposeFocusVisibility();
     cancelAnimationFrame(frame);
-    engine.dispose();
+    engine.dispose({ immediate: true });
   }
   window.addEventListener("pagehide", dispose);
   window.addEventListener("pageshow", (event) => {
@@ -325,6 +336,26 @@ export function initBeatbox() {
             4,
         ),
     }),
+  });
+  const transfer = initModeTransfer({
+    root,
+    mode: "beatbox",
+    beforeNavigate: async () => {
+      engine.pause();
+      await new Promise((resolve) => setTimeout(resolve, 8));
+    },
+    current: () => projects.current(),
+    beforeReceive: () => projects.ready,
+    onReceiving: (value) => {
+      projects.setReceiving(value);
+      render();
+    },
+    apply: (p) => projects.applyTransferred(p),
+    delivery: projects.delivery,
+    locked: () => {
+      const s = projects.snapshot();
+      return s.busy || s.loading || s.sharing;
+    },
   });
   frame = requestAnimationFrame(animate);
   if (["localhost", "127.0.0.1"].includes(location.hostname))

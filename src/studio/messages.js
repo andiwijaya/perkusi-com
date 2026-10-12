@@ -82,8 +82,8 @@ const pairs = {
     "Save in this browser or download .perkusi.json for backup. No uploads. Beatbox saves remain separate and safe.",
   ],
   fileHint: [
-    "Impor proyek Studio .perkusi.json, maksimal 64 KB. Untuk proyek Beatbox, buka Playground; konversi lintas mode belum tersedia.",
-    "Import a Studio .perkusi.json project, up to 64 KB. Open Beatbox projects in Playground; cross-mode conversion is not available yet.",
+    "Impor .perkusi.json Beatbox atau Studio, maksimal 64 KB. Proyek lama dibuka sebagai salinan V3; file asal tetap aman. Loop Beatbox tetap 96 BPM.",
+    "Import a Beatbox or Studio .perkusi.json file, up to 64 KB. Older projects open as V3 copies; the original file is kept. Beatbox loops stay at 96 BPM.",
   ],
   save: ["Simpan proyek baru", "Save a new project"],
   choose: ["Pilih proyek tersimpan", "Choose a saved project"],
@@ -91,7 +91,7 @@ const pairs = {
   remove: ["Hapus simpanan", "Delete saved"],
   downloadProject: ["Unduh proyek", "Download project"],
   importProject: ["Impor proyek", "Import project"],
-  file: ["Pilih proyek Studio", "Choose a Studio project"],
+  file: ["Pilih file proyek", "Choose a project file"],
   render: ["Buat WAV rantai", "Make chain WAV"],
   cancel: ["Batalkan", "Cancel"],
   download: ["Unduh WAV", "Download WAV"],
@@ -139,6 +139,10 @@ const pairs = {
     "Ekspor dibatalkan. Sesi tetap ada.",
     "Export cancelled. Your session remains.",
   ],
+  previewExport: [
+    "Playback sedang mempratinjau satu pola. WAV memakai seluruh rantai dari awal, dengan fade akhir singkat. Buat WAV rantai?",
+    "Playback is previewing one pattern. WAV uses the whole chain from the start, with a short end fade. Render the chain WAV?",
+  ],
   exportReady: [
     "WAV siap. Unduh atau bagikan hasilnya.",
     "WAV ready. Download or share the result.",
@@ -168,10 +172,7 @@ const pairs = {
     "1–8: pad · Spasi di luar kontrol: Putar/Jeda · Ctrl/Cmd+Z: Undo · Ctrl/Cmd+Shift+Z: Redo. Input teks memakai pintasan normalnya.",
     "1–8: pads · Space outside controls: Play/Pause · Ctrl/Cmd+Z: Undo · Ctrl/Cmd+Shift+Z: Redo. Text inputs retain their normal shortcuts.",
   ],
-  sounds: [
-    "Suara orisinal Ruang & Arus · CC0 · Lisensi",
-    "Original Ruang & Arus sounds · CC0 · License",
-  ],
+  sounds: ["Suara orisinal · CC0 · Lisensi", "Original sounds · CC0 · License"],
   back: ["Main Beatbox", "Play Beatbox"],
   jsRequired: [
     "Aktifkan JavaScript untuk memainkan Studio.",

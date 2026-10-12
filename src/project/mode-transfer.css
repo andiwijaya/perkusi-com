@@ -1,0 +1,63 @@
+.mode-transfer {
+  margin-block: 24px;
+  padding: 24px;
+  border: 1px solid #526461;
+  border-radius: 18px;
+  background: #152623;
+  color: #e7f3ed;
+}
+.mode-transfer button,
+.mode-dialog button {
+  min-height: 44px;
+  padding: 10px 16px;
+  margin: 6px 8px 6px 0;
+  border-radius: 9px;
+  border: 1px solid #738782;
+  background: #203a34;
+  color: #e7f3ed;
+  font: inherit;
+  cursor: pointer;
+}
+.mode-transfer button:hover,
+.mode-dialog button:hover {
+  background: #2a4c43;
+}
+.mode-dialog {
+  max-width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #8fab9f;
+  border-radius: 18px;
+  background: #152623;
+  color: #e7f3ed;
+}
+.mode-dialog::backdrop {
+  background: #07130bd9;
+}
+.mode-transfer [hidden] {
+  display: none;
+}
+.mode-dialog h2 {
+  margin-top: 0;
+}
+.mode-dialog p,
+.mode-dialog li {
+  line-height: 1.6;
+}
+.mode-transfer button:focus-visible,
+.mode-dialog button:focus-visible {
+  outline: 3px solid #c3ef90;
+  outline-offset: 3px;
+}
+
+.mode-transfer select {
+  max-width: 100%;
+  min-height: 44px;
+  margin-right: 8px;
+  background: #203a34;
+  color: #e7f3ed;
+  border: 1px solid #738782;
+  border-radius: 8px;
+  padding: 8px;
+}

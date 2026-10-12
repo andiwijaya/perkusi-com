@@ -1,3 +1,4 @@
+import { mixedStudioView } from "../project/composition-model.js";
 import { SampleBank } from "./sample-bank.js";
 import { encodeWav, throwIfCancelled } from "./wav.js";
 import { ProjectError, validateProject } from "../project/schema.js";
@@ -9,13 +10,20 @@ import {
 } from "./sequencing.js";
 import { disconnectVoice } from "./voice.js";
 
-export function studioExportBudget(project, catalog, retainedBytes = 0) {
+export function studioExportBudget(
+  project,
+  catalog,
+  retainedBytes = 0,
+  extra = { decode: 0, audible: false },
+) {
   const valid = validateProject(project, catalog),
     seconds = (valid.chain.length * 4 * 60) / valid.timing.bpm;
   const frames = Math.round(seconds * 48000);
+  const mixed = valid.schemaVersion === 3 ? mixedStudioView(valid) : valid;
   const kit = catalog.kits.find((k) => k.id === valid.pack.id);
   const decode = kit.assets.reduce((s, a) => s + a.frames * 4, 0);
-  const bytes = frames * 12 + decode + retainedBytes + 4096;
+  const bytes =
+    frames * 12 + decode + (extra.decode || 0) + retainedBytes + 4096;
   if (
     !Number.isFinite(retainedBytes) ||
     retainedBytes < 0 ||
@@ -25,15 +33,16 @@ export function studioExportBudget(project, catalog, retainedBytes = 0) {
     throw new ProjectError("exportLimit");
   if (
     valid.master.volume === 0 ||
-    !arrangementEvents(valid).some(
-      (e) =>
-        trackGain(
-          valid.tracks.find((t) => t.role === e.role),
-          valid.tracks,
-        ) *
-          e.velocity >
-        0,
-    )
+    (!extra.audible &&
+      !arrangementEvents(mixed).some(
+        (e) =>
+          trackGain(
+            mixed.tracks.find((t) => t.role === e.role),
+            mixed.tracks,
+          ) *
+            e.velocity >
+          0,
+      ))
   )
     throw new ProjectError("emptyMix");
   return { valid, frames, seconds, bytes };
@@ -45,6 +54,7 @@ export class StudioWavExporter {
     outputStageFactory,
     retainedBytes = () => 0,
     bankOptions,
+    extensions = null,
     contextFactory = (frames) => new OfflineAudioContext(2, frames, 48000),
   }) {
     Object.assign(this, {
@@ -54,6 +64,7 @@ export class StudioWavExporter {
       retainedBytes,
       bankOptions,
       contextFactory,
+      extensions,
     });
     this.active = null;
     this.disposed = false;
@@ -68,11 +79,12 @@ export class StudioWavExporter {
         project,
         this.catalog,
         this.retainedBytes(),
+        this.extensions?.budget(project),
       ),
       controller = new AbortController();
     this.active = controller;
     const { signal } = controller;
-    let context, bank, master, stage, mixer;
+    let context, bank, master, stage, mixer, extras;
     const voices = [],
       last = new Map(),
       decodes = new Set();
@@ -106,12 +118,22 @@ export class StudioWavExporter {
         }),
       );
       throwIfCancelled(signal);
+      extras = await this.extensions?.prepare(
+        decodeContext,
+        budget.valid,
+        signal,
+      );
+      throwIfCancelled(signal);
       master = context.createGain();
       master.gain.value = budget.valid.master.volume;
       stage = this.outputStageFactory(context, master);
       stage.output.connect(context.destination);
-      mixer = createTrackMixer(context, master, budget.valid.tracks);
-      mixer.update(budget.valid.tracks, 0, true);
+      const tracks =
+        budget.valid.schemaVersion === 3
+          ? mixedStudioView(budget.valid).tracks
+          : budget.valid.tracks;
+      mixer = createTrackMixer(context, master, tracks);
+      mixer.update(tracks, 0, true);
       for (const e of arrangementEvents(budget.valid)) {
         const v = scheduleShot(
           context,
@@ -124,6 +146,7 @@ export class StudioWavExporter {
         voices.push(v);
         last.set(e.role, v);
       }
+      this.extensions?.schedule(context, master, budget.valid, extras, voices);
       // Exact arrangement length; fade the end rather than append hidden tail bars.
       master.gain.setValueAtTime(
         budget.valid.master.volume,
@@ -155,6 +178,7 @@ export class StudioWavExporter {
       master?.disconnect();
       stage?.dispose();
       bank?.dispose();
+      this.extensions?.dispose(extras);
       await Promise.allSettled([...decodes]);
       this.active = null;
     }

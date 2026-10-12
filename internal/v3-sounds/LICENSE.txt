@@ -1,0 +1,4 @@
+CC0 1.0 Universal
+Perkusi.com dedicates this original recipe and generated audio to the public domain under CC0-1.0. Commercial use and raw redistribution permitted; no attribution required.
+License: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Python runtime license: https://docs.python.org/3/license.html (PSF); standard library only. No external recordings, paid tools, model-generated sounds or third-party samples.
