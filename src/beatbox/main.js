@@ -109,8 +109,30 @@ export function initBeatbox() {
           : !state.active
             ? copy.pendingOn
             : copy.pendingVariant;
-      if (state.state === "loading") label = copy.loading;
-      if (state.state === "error") label = copy.assetError;
+      if (state.state === "loading") {
+        const progress = state.progress;
+        label =
+          progress?.phase === "queued"
+            ? copy.queued
+            : progress?.phase === "headers"
+              ? copy.connecting
+              : progress?.phase === "decoding"
+                ? copy.decoding
+                : progress?.phase === "body"
+                  ? `${copy.downloading} ${progress.total ? Math.min(100, Math.floor((progress.loaded / progress.total) * 10) * 10) + "%" : Math.ceil(progress.loaded / 1024) + " " + copy.kbReceived}`
+                  : copy.loading;
+        if (state.active) label += " " + copy.oldStillPlays;
+      }
+      if (state.state === "error")
+        label =
+          state.error === "body-stalled" || state.error === "headers-timeout"
+            ? copy.downloadStalled
+            : state.error === "decode-timeout"
+              ? copy.decodeFailed
+              : state.error === "total-timeout" ||
+                  state.error === "queue-timeout"
+                ? copy.loadDeadline
+                : copy.assetError;
       if (state.active && state.variant !== state.appliedVariant)
         label += ` ${copy.current} ${state.appliedVariant === 1 ? "A" : "B"}. ${copy.chosen} ${state.variant === 1 ? "A" : "B"}.`;
       if (state.state === "error" && state.active)
@@ -121,7 +143,7 @@ export function initBeatbox() {
         `${c.name} — ${copy.roles[c.role]}. ${label}`,
       );
       root.querySelector(`[data-retry="${c.role}"]`).hidden =
-        state.state !== "error";
+        !state.enabled || state.state !== "error";
       root
         .querySelectorAll(`[data-variant-role="${c.role}"]`)
         .forEach((button) =>
@@ -160,11 +182,14 @@ export function initBeatbox() {
             .join("|");
     if (errorState && errorState !== lastError) trackEvent("audio_error");
     lastError = errorState;
+    const selected = Object.values(s.stems).filter((stem) => stem.enabled),
+      loading = selected.filter((stem) => stem.state === "loading").length,
+      failed = selected.filter((stem) => stem.state === "error").length;
     const status =
       s.status === "loading"
-        ? `${copy.waiting} ${Object.values(s.stems).filter((stem) => stem.state === "ready").length}/6 ${copy.loadingProgress}`
+        ? `${copy.waiting} ${selected.filter((stem) => stem.state === "ready").length}/${selected.length} ${copy.loadingProgress}`
         : s.status === "playing"
-          ? `${active} ${copy.playing}`
+          ? `${active} ${copy.playing}${loading ? "; " + loading + " " + copy.stillLoading : ""}${failed ? "; " + failed + " " + copy.partial : ""}`
           : copy[s.status] ||
             (s.status === "error"
               ? typeof window.AudioContext === "function"

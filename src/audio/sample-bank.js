@@ -1,4 +1,5 @@
 import { secondsPerBeat } from "./transport.js";
+import { contextLoadQueue } from "./load-queue.js";
 
 export function validatePack(pack) {
   if (pack.schemaVersion !== 1 || !/^[a-z0-9-]+$/.test(pack.id))
@@ -67,11 +68,15 @@ export function inspectBuffer(buffer, expectedDuration) {
 }
 
 export class SampleBank {
-  constructor(
-    pack,
-    {
+  constructor(pack, options = {}) {
+    const {
       fetcher = (...args) => globalThis.fetch(...args),
-      timeoutMs = 10000,
+      timeoutMs,
+      totalTimeoutMs = timeoutMs ?? 60000,
+      headerTimeoutMs = 10000,
+      idleTimeoutMs = 10000,
+      decodeTimeoutMs = 10000,
+      queueTimeoutMs = timeoutMs ?? 60000,
       now = () => performance.now(),
       validateCandidate = () => {},
       prepareBuffer = null,
@@ -79,13 +84,22 @@ export class SampleBank {
         setTimeout: (...args) => globalThis.setTimeout(...args),
         clearTimeout: (...args) => globalThis.clearTimeout(...args),
       },
-    } = {},
-  ) {
+    } = options;
     this.pack = validatePack(pack);
     this.fetcher = fetcher;
-    this.timeoutMs = timeoutMs;
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
-      throw new Error("Invalid load deadline");
+    this.timeoutMs = totalTimeoutMs;
+    this.legacyDeadline =
+      timeoutMs !== undefined && options.totalTimeoutMs === undefined;
+    this.budgets = {
+      total: totalTimeoutMs,
+      headers: headerTimeoutMs,
+      body: idleTimeoutMs,
+      decode: decodeTimeoutMs,
+      queued: queueTimeoutMs,
+    };
+    for (const value of Object.values(this.budgets))
+      if (!Number.isFinite(value) || value <= 0)
+        throw new Error("Invalid load deadline");
     this.now = now;
     this.validateCandidate = validateCandidate;
     if (prepareBuffer !== null && typeof prepareBuffer !== "function")
@@ -95,40 +109,77 @@ export class SampleBank {
     this.entries = new Map(
       pack.stems.map((stem) => [
         stem.id,
-        { stem, state: "idle", buffer: null, generation: 0 },
+        { stem, state: "idle", buffer: null, generation: 0, progress: null },
       ]),
     );
     this.disposed = false;
     this.duration = pack.bars * pack.beatsPerBar * secondsPerBeat(pack.bpm);
+    this.queues = new Set();
   }
   get(id) {
     const entry = this.entries.get(id);
     if (!entry) throw new Error("Unknown stem: " + id);
     return entry;
   }
-  load(id, context) {
+  load(id, context, { priority = 0 } = {}) {
     const entry = this.get(id);
     if (this.disposed) return Promise.reject(new Error("Bank disposed"));
-    if (entry.buffer) return Promise.resolve(entry.buffer);
+    if (entry.buffer) return Promise.resolve(this.verifyRetained(id));
     if (entry.promise) return entry.promise;
-    const generation = ++entry.generation;
-    const controller = new AbortController();
-    entry.controller = controller;
-    entry.state = "loading";
-    entry.error = null;
-    const deadline = this.now() + this.timeoutMs;
+    const generation = ++entry.generation,
+      controller = new AbortController();
+    const queue = contextLoadQueue(context);
+    this.queues.add(queue);
+    Object.assign(entry, {
+      controller,
+      state: "loading",
+      error: null,
+      progress: { phase: "queued", loaded: 0, total: null },
+    });
     let settle;
     const promise = new Promise((resolve) => {
       settle = resolve;
     });
-    const request = { done: false, finish: null };
+    const request = {
+      done: false,
+      finish: null,
+      started: null,
+      phaseDeadline: this.now() + this.budgets.queued,
+      totalDeadline: Infinity,
+      timers: new Set(),
+      reader: null,
+      release: null,
+    };
     entry.request = request;
     entry.promise = promise;
+    const clear = (key) => {
+      if (request[key] !== undefined) {
+        this.timers.clearTimeout(request[key]);
+        request.timers.delete(request[key]);
+        delete request[key];
+      }
+    };
+    const timer = (key, ms, fn) => {
+      clear(key);
+      request[key] = this.timers.setTimeout(fn, ms);
+      request.timers.add(request[key]);
+    };
+    const fail = (code) =>
+      request.finish(
+        "error",
+        null,
+        null,
+        this.legacyDeadline ? "timeout" : code,
+      );
     request.finish = (state, buffer = null, metrics = null, error = null) => {
       if (request.done) return;
       request.done = true;
-      this.timers.clearTimeout(request.timeout);
-      if (state !== "ready") controller.abort();
+      for (const task of request.timers) this.timers.clearTimeout(task);
+      request.timers.clear();
+      if (state !== "ready") {
+        controller.abort();
+        void request.reader?.cancel().catch(() => {});
+      }
       if (entry.request === request && generation === entry.generation) {
         ++entry.generation;
         Object.assign(entry, {
@@ -140,8 +191,11 @@ export class SampleBank {
           controller: null,
           timeout: null,
           request: null,
+          progress:
+            state === "ready" ? { ...entry.progress, phase: "ready" } : null,
         });
       }
+      request.release?.();
       settle(buffer);
     };
     const live = () => {
@@ -152,31 +206,121 @@ export class SampleBank {
         generation !== entry.generation
       )
         return false;
-      if (this.now() >= deadline) {
-        request.finish("error", null, null, "timeout");
+      if (this.now() >= request.totalDeadline) {
+        fail("total-timeout");
+        return false;
+      }
+      if (this.now() >= request.phaseDeadline) {
+        fail(
+          entry.progress.phase === "queued"
+            ? "queue-timeout"
+            : entry.progress.phase === "headers"
+              ? "headers-timeout"
+              : entry.progress.phase === "decoding"
+                ? "decode-timeout"
+                : "body-stalled",
+        );
         return false;
       }
       return true;
     };
-    request.timeout = this.timers.setTimeout(
-      () => request.finish("error", null, null, "timeout"),
-      this.timeoutMs,
-    );
-    entry.timeout = request.timeout;
-    // This worker may outlive its bounded logical promise: native decode is not
-    // abortable. Every continuation is guarded and stale rejection is consumed.
-    void (async () => {
+    const phase = (name, budget, error) => {
+      entry.progress = { ...entry.progress, phase: name };
+      request.phaseDeadline = this.now() + budget;
+      timer("phaseTimer", budget, () => fail(error));
+    };
+    timer("phaseTimer", this.budgets.queued, () => fail("queue-timeout"));
+    const worker = async () => {
+      if (!live()) return;
+      request.started = this.now();
+      request.totalDeadline = request.started + this.budgets.total;
+      timer("totalTimer", this.budgets.total, () => fail("total-timeout"));
+      phase(
+        "headers",
+        Math.min(this.budgets.headers, this.budgets.total),
+        "headers-timeout",
+      );
       try {
         const response = await this.fetcher(entry.stem.url, {
           signal: controller.signal,
         });
         if (!live()) return;
         if (!response.ok) throw new Error("Asset HTTP " + response.status);
-        const bytes = await response.arrayBuffer();
+        const length = Number(response.headers?.get("content-length"));
+        if (Number.isFinite(length) && length > 4 * 1024 * 1024)
+          throw new Error("Asset size limit");
+        const encoding = response.headers?.get("content-encoding");
+        entry.progress.total =
+          !encoding || encoding === "identity"
+            ? Number.isInteger(length) && length > 0
+              ? length
+              : null
+            : null;
+        phase(
+          "body",
+          Math.min(this.budgets.body, this.budgets.total),
+          "body-stalled",
+        );
+        let bytes;
+        if (response.body?.getReader) {
+          const reader = response.body.getReader(),
+            chunks = [];
+          request.reader = reader;
+          try {
+            while (live()) {
+              const { done, value } = await reader.read();
+              if (!live()) return;
+              if (done) break;
+              if (!value?.byteLength) continue;
+              entry.progress.loaded += value.byteLength;
+              if (entry.progress.loaded > 4 * 1024 * 1024)
+                throw new Error("Asset size limit");
+              chunks.push(value);
+              // Only genuine positive bytes extend inactivity, never headers,
+              // zero chunks, UI polls or a promise that has not delivered data.
+              phase("body", this.budgets.body, "body-stalled");
+            }
+            if (!live()) return;
+            bytes = new Uint8Array(entry.progress.loaded);
+            let offset = 0;
+            for (const chunk of chunks) {
+              bytes.set(chunk, offset);
+              offset += chunk.byteLength;
+            }
+            bytes = bytes.buffer;
+          } finally {
+            reader.releaseLock();
+            request.reader = null;
+          }
+        } else {
+          // Non-streaming adapters have no observable progress: their whole
+          // body remains bounded by inactivity; no fictitious byte updates.
+          bytes = await response.arrayBuffer();
+          if (!live()) return;
+          entry.progress.loaded = bytes.byteLength;
+        }
         if (!live()) return;
         if (!bytes.byteLength || bytes.byteLength > 4 * 1024 * 1024)
           throw new Error("Asset size limit");
-        let buffer = await context.decodeAudioData(bytes);
+        if (
+          entry.progress.total !== null &&
+          entry.progress.loaded !== entry.progress.total
+        )
+          throw new Error("Incomplete asset body");
+        phase(
+          "decoding",
+          Math.min(this.budgets.decode, this.budgets.total),
+          "decode-timeout",
+        );
+        const releaseDecode = await queue.acquireDecode(controller.signal);
+        if (!releaseDecode) return;
+        let buffer;
+        try {
+          if (!live()) return;
+          buffer = await context.decodeAudioData(bytes);
+        } finally {
+          releaseDecode();
+        }
         if (!live()) return;
         const duration =
           this.pack.kind === "one-shot"
@@ -184,9 +328,6 @@ export class SampleBank {
             : this.duration;
         let metrics = inspectBuffer(buffer, duration);
         if (this.prepareBuffer) {
-          // Validate both original and prepared PCM, then admit the final metrics.
-          // Preparation is synchronous and happens once per fresh decode, never
-          // per voice/start/variant switch. Cached geometry and memory stay fixed.
           buffer = this.prepareBuffer(buffer, entry.stem);
           metrics = inspectBuffer(buffer, duration);
         }
@@ -197,21 +338,61 @@ export class SampleBank {
         if (used + metrics.bytes > 32 * 1024 * 1024)
           throw new Error("Decoded bank memory limit");
         if (live()) {
-          // Synchronous admission and publication form one turn: engine-wide
-          // reservations cannot be bypassed by a stale UI intent or another bank.
           this.validateCandidate(entry, metrics);
           if (live()) request.finish("ready", buffer, metrics);
         }
       } catch (error) {
         if (live()) request.finish("error", null, null, error.message);
       }
-    })();
+    };
+    request.release = queue.enqueue(worker, priority);
     return promise;
+  }
+  verifyRetained(id) {
+    const entry = this.get(id);
+    if (!entry.buffer) return null;
+    try {
+      const b = entry.buffer,
+        m = entry.metrics;
+      const duration =
+        this.pack.kind === "one-shot"
+          ? entry.stem.durationSeconds
+          : this.duration;
+      if (
+        !m ||
+        !b.length ||
+        b.numberOfChannels < 1 ||
+        b.numberOfChannels > 2 ||
+        b.sampleRate < 8000 ||
+        Math.abs(b.duration - duration) > 2 / b.sampleRate ||
+        m.bytes !== b.length * b.numberOfChannels * 4 ||
+        !Number.isFinite(m.peak) ||
+        m.peak <= 0 ||
+        m.peak > 0.95 ||
+        !Number.isFinite(m.rms) ||
+        m.rms <= 0
+      )
+        throw new Error("Invalid cached audio metrics");
+      this.validateCandidate(entry, m);
+      return b;
+    } catch (error) {
+      Object.assign(entry, {
+        state: "error",
+        buffer: null,
+        metrics: null,
+        progress: null,
+        error: error.message,
+      });
+      return null;
+    }
   }
   loadAll(context) {
     return Promise.all(
       this.pack.stems.map((stem) => this.load(stem.id, context)),
     );
+  }
+  cancel(id) {
+    this.get(id).request?.finish("idle");
   }
   cancelLoading() {
     for (const entry of this.entries.values()) entry.request?.finish("idle");
@@ -220,13 +401,26 @@ export class SampleBank {
     this.disposed = true;
     this.cancelLoading();
     for (const entry of this.entries.values())
-      Object.assign(entry, { buffer: null, metrics: null, state: "disposed" });
+      Object.assign(entry, {
+        buffer: null,
+        metrics: null,
+        state: "disposed",
+        progress: null,
+      });
+  }
+  loadingResources() {
+    return [...this.queues].map((queue) => queue.snapshot());
   }
   snapshot() {
     return Object.fromEntries(
       [...this.entries].map(([id, e]) => [
         id,
-        { state: e.state, error: e.error || null, metrics: e.metrics || null },
+        {
+          state: e.state,
+          error: e.error || null,
+          metrics: e.metrics || null,
+          progress: e.progress ? { ...e.progress } : null,
+        },
       ]),
     );
   }

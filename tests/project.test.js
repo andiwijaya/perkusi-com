@@ -61,8 +61,9 @@ test("cancelled export retains single-job ownership until uninterruptible native
     },
   });
   const promise = exporter.render(project());
-  while (pending.length < 3)
+  for (let spin = 0; pending.length < 2 && spin < 100; spin++)
     await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(pending.length, 2); // Context-wide bounded admission.
   exporter.cancel();
   await new Promise((resolve) => setImmediate(resolve));
   assert(exporter.active);

@@ -117,12 +117,19 @@ export class AudioEngine {
       starts: 0,
     };
     this.operation = 0;
+    // Asset selection/loading is separate from the user's transport intent.
+    // Only Play opens this gate; Pause/interruption/disposal closes it.
+    this.playbackRequested = false;
     this.timer = null;
     this.startPromise = null;
     this.disposed = false;
     this.disposePromise = null;
     this.onContextState = () => {
       if (this.context.state !== "running") {
+        this.playbackRequested = false;
+        ++this.operation;
+        this.startPromise = null;
+        for (const bank of this.banks) bank.cancelLoading();
         this.rememberSequencePosition(this.context.currentTime);
         if (this.transport.running)
           this.transport.pause(this.context.currentTime);
@@ -175,8 +182,9 @@ export class AudioEngine {
       throw new Error("decoded-bank-memory-limit");
   }
   playableEntry(id, variant = this.selectedVariant.get(id)) {
+    const choice = this.variants.get(id)?.get(variant);
     const entry = this.variantEntry(id, variant);
-    if (!entry.buffer) return null;
+    if (!choice.bank.verifyRetained(id)) return null;
     try {
       this.admitCandidate(entry, entry.metrics);
       return entry;
@@ -191,21 +199,88 @@ export class AudioEngine {
       return null;
     }
   }
+  loopSelection() {
+    return this.pack.stems
+      .filter((stem) => this.sequence || this.enabled.get(stem.id))
+      .map((stem) => [
+        stem.id,
+        this.selectedVariant.get(stem.id),
+        this.variantOperations.get(stem.id),
+      ]);
+  }
   async loadSelection(context, operation) {
-    while (!this.disposed && operation === this.operation) {
-      const selection = [...this.selectedVariant];
+    const attempted = new Set();
+    while (
+      !this.disposed &&
+      this.playbackRequested &&
+      operation === this.operation
+    ) {
+      const selection = this.loopSelection();
       await Promise.all(
-        selection.map(([id, variant]) =>
-          this.variants.get(id).get(variant).bank.load(id, context),
-        ),
+        selection.map(async ([id, variant, token]) => {
+          const key = id + ":" + variant + ":" + token;
+          if (attempted.has(key)) return;
+          attempted.add(key);
+          await this.variants
+            .get(id)
+            .get(variant)
+            .bank.load(id, context, { priority: this.sequence ? 0 : 10 });
+          if (!this.sequence && token === this.variantOperations.get(id))
+            this.activateLoadedLoop(id, variant, operation, context, true);
+        }),
       );
-      if (
-        selection.every(
-          ([id, variant]) => this.selectedVariant.get(id) === variant,
-        )
-      )
+      if (JSON.stringify(selection) === JSON.stringify(this.loopSelection()))
         return;
     }
+  }
+  activateLoadedLoop(id, variant, operation, context, joinInitial = false) {
+    if (
+      this.disposed ||
+      !this.playbackRequested ||
+      this.sequence ||
+      operation !== this.operation ||
+      context !== this.context ||
+      context.state !== "running" ||
+      !this.enabled.get(id) ||
+      this.selectedVariant.get(id) !== variant ||
+      !this.playableEntry(id, variant)
+    )
+      return;
+    if (!this.transport.running) {
+      const bounds = this.cacheBounds();
+      if (bounds.peak > 0.95) throw new Error("unsafe-pack-headroom");
+      if (bounds.bytes > 32 * 1024 * 1024)
+        throw new Error("decoded-bank-memory-limit");
+      const when = context.currentTime + 0.05;
+      this.loopStartAt = when;
+      this.transport.start(when);
+      this.status = "playing";
+      this.error = null;
+      ++this.stats.starts;
+      for (const [role, choice] of this.loopSelection()) {
+        if (!this.playableEntry(role, choice)) continue;
+        this.addVoice(role, when, choice);
+        this.applied.set(role, true);
+        this.appliedVariant.set(role, choice);
+      }
+      this.record("play", { when, origin: this.transport.origin });
+      this.clearTimer();
+      this.timer = this.timers.setInterval(() => this.pump(), this.tickMs);
+      return;
+    }
+    if (this.applied.get(id) && this.appliedVariant.get(id) === variant) return;
+    // Assets ready during the existing first-start lead share that exact origin.
+    // Later arrivals/retries join on the normal common bar, never start off-clock.
+    if (
+      joinInitial &&
+      !this.applied.get(id) &&
+      context.currentTime + 0.005 <= this.loopStartAt
+    ) {
+      this.cancelPending(id);
+      this.addVoice(id, this.loopStartAt, variant);
+      this.applied.set(id, true);
+      this.appliedVariant.set(id, variant);
+    } else this.queueChange(id);
   }
   selectedBank() {
     return {
@@ -265,6 +340,7 @@ export class AudioEngine {
   }
   play() {
     if (this.disposed) return Promise.reject(new Error("Engine disposed"));
+    this.playbackRequested = true;
     if (this.startPromise) return this.startPromise;
     if (this.transport.running && this.context?.state === "running")
       return Promise.resolve(this.snapshot());
@@ -283,12 +359,30 @@ export class AudioEngine {
     this.error = null;
     const promise = (async () => {
       try {
+        await resumed;
+        if (!this.sequence) {
+          await this.loadSelection(context, operation);
+          if (
+            this.disposed ||
+            !this.playbackRequested ||
+            operation !== this.operation
+          )
+            return this.snapshot();
+          if (!this.transport.running) {
+            if (!this.loopSelection().length) this.status = "ready";
+            else throw new Error("no-assets-ready");
+          }
+          return this.snapshot();
+        }
         await Promise.all([
-          resumed,
           this.loadSelection(context, operation),
           this.composition?.load(context),
         ]);
-        if (this.disposed || operation !== this.operation)
+        if (
+          this.disposed ||
+          !this.playbackRequested ||
+          operation !== this.operation
+        )
           return this.snapshot();
         if (context.state !== "running") throw new Error("context-not-running");
         const available = this.pack.stems.filter((s) =>
@@ -410,11 +504,17 @@ export class AudioEngine {
       throw new Error("Invalid layer state");
     this.pump();
     this.enabled.set(id, enabled);
+    if (!enabled && !this.sequence) {
+      this.variantOperations.set(id, this.variantOperations.get(id) + 1);
+      for (const choice of this.variants.get(id).values())
+        choice.bank.cancel(id);
+    }
     this.queueChange(id);
     const entry = this.variantEntry(id);
     if (
       enabled &&
-      this.transport.running &&
+      this.context &&
+      (this.transport.running || this.status === "loading") &&
       !entry.buffer &&
       entry.state !== "error"
     )
@@ -424,7 +524,7 @@ export class AudioEngine {
     const enabled = this.enabled.get(id),
       variant = this.selectedVariant.get(id);
     this.cancelPending(id);
-    if (!this.transport.running) return;
+    if (!this.playbackRequested || !this.transport.running) return;
     if (enabled && !this.playableEntry(id, variant)) return;
     if (
       enabled === this.applied.get(id) &&
@@ -447,21 +547,28 @@ export class AudioEngine {
     this.variantEntry(id, variant);
     if (this.disposed) return;
     this.pump();
+    const previous = this.selectedVariant.get(id);
+    if (previous !== variant)
+      this.variants.get(id).get(previous).bank.cancel(id);
     this.selectedVariant.set(id, variant);
     const token = this.variantOperations.get(id) + 1;
     this.variantOperations.set(id, token);
     this.queueChange(id);
     const choice = this.variants.get(id).get(variant),
-      operation = this.operation;
-    if (!this.context || choice.bank.get(id).buffer) return;
-    await choice.bank.load(id, this.context);
+      operation = this.operation,
+      context = this.context;
+    if (!context || (!this.sequence && !this.enabled.get(id))) return;
+    await choice.bank.load(id, context, { priority: 10 });
     if (
       this.disposed ||
       operation !== this.operation ||
-      token !== this.variantOperations.get(id)
+      token !== this.variantOperations.get(id) ||
+      context !== this.context
     )
       return;
-    this.queueChange(id);
+    if (!this.sequence)
+      this.activateLoadedLoop(id, variant, operation, context);
+    else this.queueChange(id);
     return this.snapshot();
   }
   pump() {
@@ -659,6 +766,7 @@ export class AudioEngine {
   }
   pause() {
     if (this.disposed) return;
+    this.playbackRequested = false;
     this.rememberSequencePosition(this.context?.currentTime || 0);
     ++this.operation;
     for (const bank of this.banks) bank.cancelLoading();
@@ -704,19 +812,44 @@ export class AudioEngine {
     if (!this.disposed) this.status = "suspended";
   }
   async retry(id) {
-    if (!this.context || this.disposed) return;
-    const variant = this.selectedVariant.get(id),
-      choice = this.variants.get(id).get(variant),
-      token = this.variantOperations.get(id),
-      operation = this.operation;
-    await choice.bank.load(id, this.context);
     if (
+      !this.context ||
       this.disposed ||
-      token !== this.variantOperations.get(id) ||
-      operation !== this.operation
+      (!this.sequence && !this.enabled.get(id))
     )
       return;
-    this.queueChange(id);
+    const variant = this.selectedVariant.get(id),
+      choice = this.variants.get(id).get(variant),
+      token = this.variantOperations.get(id) + 1,
+      operation = this.operation,
+      context = this.context;
+    this.variantOperations.set(id, token);
+    try {
+      // Retry can recover an outstanding Play, but cannot reopen a later Pause.
+      // Decode/cache warming also works on a paused or suspended native context.
+      if (this.playbackRequested && context.state !== "running")
+        await context.resume();
+      if (
+        this.disposed ||
+        operation !== this.operation ||
+        context !== this.context
+      )
+        return;
+      await choice.bank.load(id, context, { priority: 20 });
+      if (
+        this.disposed ||
+        token !== this.variantOperations.get(id) ||
+        operation !== this.operation ||
+        context !== this.context
+      )
+        return;
+      if (!this.sequence)
+        this.activateLoadedLoop(id, variant, operation, context);
+      else this.queueChange(id);
+    } catch (error) {
+      if (operation === this.operation && !this.disposed)
+        this.error = "audio-start: " + error.message;
+    }
   }
   setVolume(value) {
     if (this.disposed) return;
@@ -749,6 +882,7 @@ export class AudioEngine {
   snapshot() {
     return {
       status: this.status,
+      playbackRequested: this.playbackRequested,
       error: this.error,
       contextState: this.context?.state || "absent",
       currentTime: this.context?.currentTime || 0,
@@ -767,6 +901,9 @@ export class AudioEngine {
             state: this.variantEntry(s.id).state,
             error: this.variantEntry(s.id).error || null,
             metrics: this.variantEntry(s.id).metrics || null,
+            progress: this.variantEntry(s.id).progress
+              ? { ...this.variantEntry(s.id).progress }
+              : null,
           },
         ]),
       ),
@@ -775,6 +912,9 @@ export class AudioEngine {
         timer: this.timer !== null,
         captures: this.captures.size,
         decodedBytes: this.cacheBounds().bytes,
+        loading: [
+          ...new Set([...this.banks].flatMap((bank) => [...bank.queues])),
+        ].map((queue) => queue.snapshot()),
       },
       stats: { ...this.stats },
       events: this.events.map((event) => ({ ...event })),
@@ -798,6 +938,7 @@ export class AudioEngine {
   async releaseResources(immediate = false) {
     if (this.disposed) return;
     this.disposed = true;
+    this.playbackRequested = false;
     ++this.operation;
     this.clearTimer();
     const fade =

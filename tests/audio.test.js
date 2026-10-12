@@ -341,8 +341,11 @@ for (const failure of ["all", "selected-only", "partial-selected"]) {
         sent,
         partial ? ["audio_started", "first_layer_enabled"] : [],
       );
-      if (failure === "all") {
-        await engine.play();
+      if (!partial) {
+        // Retry starts the selected first voice when the former startup had
+        // none. Disabled healthy roles are intentionally no longer prefetched.
+        assert.equal(engine.status, "playing");
+        assert.equal(engine.stats.starts, 1);
         context.currentTime += 0.1;
       } else {
         const boundary = engine.pending.get("a").at;
@@ -359,8 +362,8 @@ for (const failure of ["all", "selected-only", "partial-selected"]) {
       inspect();
       assert(engine.snapshot().stems.a.active);
       assert.deepEqual(sent, ["audio_started", "first_layer_enabled"]);
-      engine.setLayer("b", true);
-      engine.setLayer("c", true);
+      await engine.setLayer("b", true);
+      await engine.setLayer("c", true);
       const thirdBoundary = engine.pending.get("c").at;
       context.currentTime = thirdBoundary - 0.01;
       engine.pump();
@@ -1123,7 +1126,7 @@ test("S4 unsafe candidate is rejected without muting the currently valid variant
   await engine.dispose();
 });
 
-test("P2-S4-01 cancelled B→A loads must pass aggregate admission before retained cache publication and cached reuse", async () => {
+test("P2-S4-01 obsolete B→A decodes cannot publish; explicit cache and retry still require aggregate admission", async () => {
   const held = new Map();
   const { engine, context } = fixture({
     variantPacks: [alternatePack()],
@@ -1153,6 +1156,19 @@ test("P2-S4-01 cancelled B→A loads must pass aggregate admission before retain
     assert.equal(engine.selectedVariant.get(id), 1);
     assert.equal(engine.pending.size, 0);
   }
+  for (const id of ["a", "b", "c"]) {
+    assert.equal(engine.variantEntry(id, 2).state, "idle");
+    assert.equal(engine.variantEntry(id, 2).buffer, null);
+  }
+  // An intentional internal cache load remains guarded independently of the
+  // UI choice; cancelled/obsolete results themselves can never become cache.
+  const bank = engine.variants.get("a").get(2).bank;
+  for (const [index, id] of ["a", "b", "c"].entries()) {
+    const loading = bank.load(id, context);
+    await flush();
+    held.get(index + 3)(buffer(0.9));
+    await loading;
+  }
   assert.equal(engine.variantEntry("a", 2).state, "ready");
   for (const id of ["b", "c"]) {
     assert.equal(engine.variantEntry(id, 2).state, "error");
@@ -1162,13 +1178,13 @@ test("P2-S4-01 cancelled B→A loads must pass aggregate admission before retain
   await engine.setVariation("a", 2); // The accepted cached choice still works.
   const rejected = engine.setVariation("b", 2);
   await flush();
-  held.get(3)(buffer(0.9));
+  held.get(6)(buffer(0.9));
   await rejected;
   assert(!engine.pending.has("b"));
   assert.equal(engine.appliedVariant.get("b"), 1);
   const retried = engine.retry("b");
   await flush();
-  held.get(4)(buffer(0.9));
+  held.get(7)(buffer(0.9));
   await retried;
   assert.equal(engine.variantEntry("b", 2).error, "unsafe-pack-headroom");
   assert(!engine.pending.has("b"));
