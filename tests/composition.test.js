@@ -270,7 +270,11 @@ test("Every original expansion asset has exact RIFF geometry, source recipe, raw
     ),
     assets = [...m.kits[0].assets, ...m.instrument.assets],
     recipe = createHash("sha256")
-      .update(readFileSync("scripts/make-v3-sounds.py"))
+      .update(
+        readFileSync("scripts/make-v3-sounds.py")
+          .toString("utf8")
+          .replaceAll("\r\n", "\n"),
+      )
       .digest("hex");
   assert.equal(assets.length, 13);
   const hashes = new Set();

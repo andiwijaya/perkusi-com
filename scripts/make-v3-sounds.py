@@ -8,7 +8,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 OUT=ROOT/'internal/v3-sounds'; RATE=48000
 roles=['kick','snare','closed-hat','open-hat','clap','tom','rim','shaker']
 durations=[.7,.4,.18,.65,.28,.65,.22,.28]
-assets=[]; recipeHash=hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()
+assets=[]; recipeHash=hashlib.sha256(pathlib.Path(__file__).read_bytes().replace(b'\r\n',b'\n')).hexdigest()
 for i,(identity,duration) in enumerate(list(zip(roles,durations))+[(p,1.4) for p in ['d4','f4','g4','a4','c5']]):
  rng=random.Random(93017+i*719); frames=round(duration*RATE); raw=[]; low=phase=0
  for n in range(frames):

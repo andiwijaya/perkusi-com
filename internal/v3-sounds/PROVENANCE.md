@@ -9,3 +9,8 @@ Python standard library runtime is PSF-licensed: https://docs.python.org/3/licen
 Fusion is a contemporary original rhythmic hybrid inspired by Indonesian hand percussion. The three demos use interlocking syncopated hand-drum accents, original vocal loops and D-minor Bilah phrases. These are not sampled traditional instruments, an authentic koplo regional rhythm, or authentic gamelan tuning. Bilah uses five struck-metal keys with multiple inharmonic decaying partials; all pitches retain playbackRate1 across tempo changes.
 
 Manifest lists filename, SHA256, frames, PCM16 sample rate/channels, exact duration/bytes, author, date, method, source recipe SHA256, seed, gain trim, license ID/path, attribution requirement, commercial use and raw redistribution. The prior12 Original Groove and16 Studio one-shots and their original provenance remain byte-identical. Native digital output checks cannot certify musical quality. Owner acceptance currently covers only the previous loudness fix.
+
+
+## Recipe identity across checkouts
+
+The SHA256 sourceRecipeSha256 is the UTF-8 recipe with CRLF normalized to LF, matching the existing Git text attributes. This is line-ending canonicalization only; every expression, deterministic seed and PCM byte participates in the same recipe. Both Windows CRLF and Git LF checkouts validate the same recorded recipe identity. The13 original WAV files remain byte-identical. The original creation-recipe snapshot and its prior hash are retained in local release QA history.
