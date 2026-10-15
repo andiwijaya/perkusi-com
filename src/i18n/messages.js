@@ -182,9 +182,15 @@ const pairs = {
   ],
   "home.backTop": ["Kembali ke ketukan pertama", "Back to the first beat"],
   "privacy.heading": ["Privasi", "Privacy"],
+  "common.gamelanPreview": ["Gamelan Preview", "Gamelan Preview"],
+  "common.gamelanPlay": ["Main Gamelan Preview", "Play Gamelan Preview"],
+  "home.gamelanPreviewCopy": [
+    "Mainkan bank Pelog dan Slendro, rekam event, lalu lanjutkan di Studio. Validasi budaya, listening dan perangkat masih tertunda.",
+    "Play Pelog and Slendro banks, record events and continue in Studio. Culture, listening and physical-device validation remain pending.",
+  ],
   "privacy.updated": [
-    "Diperbarui 11 Oktober 2026.",
-    "Updated October 11, 2026.",
+    "Diperbarui 15 Oktober 2026.",
+    "Updated October 15, 2026.",
   ],
   "privacy.analytics": [
     "Perkusi.com menggunakan Google Analytics 4 untuk memahami penggunaan situs. Analytics dapat mengumpulkan halaman yang dikunjungi, jenis perangkat dan browser, sumber kunjungan, serta perkiraan lokasi, dan dapat menyimpan cookie pihak pertama di perangkatmu.",
@@ -212,8 +218,8 @@ const pairs = {
   ],
   "privacy.policy": ["Kebijakan privasi Google", "Google's privacy policy"],
   "privacy.unavailable": [
-    "Beatbox memuat suara dari situs ini dan memainkannya di browser. Tidak ada mikrofon, upload audio, atau pengiriman komposisi. Event analytics hanya mencatat pembukaan playground, audio mulai, layer pertama, tiga layer, perubahan bahasa, kesalahan audio, keberhasilan menyimpan proyek, dan hasil ekspor; tanpa nama proyek, isi file, pola, atau nama suara.",
-    "Beatbox loads sounds from this site and plays them in your browser. There is no microphone, audio upload or composition transmission. Analytics events count playground visits, audio starts, the first layer, three layers, language changes, audio errors, successful project saves and export outcomes; without project names, file content, patterns or sound names.",
+    "Beatbox, Studio, dan Gamelan memuat suara dari situs ini serta memproses proyek dan WAV di browser. Tidak ada mikrofon atau upload audio pada fitur ini. Event analytics mencatat penggunaan fitur secara agregat: pembukaan workspace, suara pertama, aktivasi layer, pemutaran demo, perpindahan mode, perubahan bahasa, kategori kesalahan umum, penyimpanan proyek, dan hasil ekspor. Nama proyek, isi file, pola, nada individual, nama suara, dan audio tidak dimasukkan ke parameter event kami.",
+    "Beatbox, Studio and Gamelan load sounds from this site and process projects and WAV files in your browser. These features do not use a microphone or upload audio. Analytics events count aggregate feature use: workspace visits, first sound, layer activation, demos, mode transfers, language changes, general error categories, project saves and export outcomes. Our event parameters do not include project names, file content, patterns, individual notes, sound names or audio.",
   ],
   "soon.beatbox.heading": ["Beatbox Playground", "Beatbox Playground"],
   "soon.beatbox.copy": [

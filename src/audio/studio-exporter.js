@@ -72,7 +72,7 @@ export class StudioWavExporter {
   cancel() {
     this.active?.abort();
   }
-  async render(project, onProgress = () => {}) {
+  async render(project, onProgress = () => {}, pcmOptions = null) {
     if (this.disposed) throw new ProjectError("cancelled");
     if (this.active) throw new ProjectError("exportBusy");
     const budget = studioExportBudget(
@@ -84,6 +84,9 @@ export class StudioWavExporter {
       controller = new AbortController();
     this.active = controller;
     const { signal } = controller;
+    const cancelExternal = () => controller.abort();
+    pcmOptions?.signal?.addEventListener("abort", cancelExternal);
+    if (pcmOptions?.signal?.aborted) controller.abort();
     let context, bank, master, stage, mixer, extras;
     const voices = [],
       last = new Map(),
@@ -91,14 +94,31 @@ export class StudioWavExporter {
     const abort = () => bank?.cancelLoading();
     signal.addEventListener("abort", abort);
     try {
-      context = this.contextFactory(budget.frames);
+      const rate = pcmOptions?.rate ?? 48000;
+      if (![44100, 48000].includes(rate)) throw new ProjectError("exportLimit");
+      // Canonical V4 needs only the native decoder/AudioBuffer factory. Do not
+      // provision a second arrangement-sized native render destination.
+      context = this.contextFactory(
+        pcmOptions?.renderCanonical ? 1 : Math.round(budget.seconds * rate),
+        rate,
+      );
       bank = new SampleBank(
         this.packForKit(budget.valid.pack.id),
         this.bankOptions,
       );
       const decodeContext = {
         decodeAudioData: async (data) => {
-          const job = context.decodeAudioData(data);
+          const job = (async () => {
+            const release = await pcmOptions?.acquireDecode?.(signal);
+            try {
+              throwIfCancelled(signal);
+              return await (pcmOptions?.decodeAudioData
+                ? pcmOptions.decodeAudioData(context, data)
+                : context.decodeAudioData(data));
+            } finally {
+              release?.();
+            }
+          })();
           decodes.add(job);
           try {
             return await job;
@@ -124,6 +144,30 @@ export class StudioWavExporter {
         signal,
       );
       throwIfCancelled(signal);
+      // Only the V4 prepared bus opts into this frame-domain renderer. The
+      // ordinary V1-V3 graph, envelope and WAV path below remain unchanged.
+      if (pcmOptions?.renderCanonical) {
+        onProgress({ phase: "rendering", value: 0 });
+        const pcm = await pcmOptions.renderCanonical({
+          context,
+          project: budget.valid,
+          bank,
+          extras,
+          rate,
+          signal,
+          onProgress,
+        });
+        throwIfCancelled(signal);
+        return {
+          pcm,
+          frames: pcm.length,
+          sampleRate: pcm.sampleRate,
+          channels: 2,
+          seconds: budget.seconds,
+          estimatedBytes: budget.bytes,
+          project: budget.valid,
+        };
+      }
       master = context.createGain();
       master.gain.value = budget.valid.master.volume;
       stage = this.outputStageFactory(context, master);
@@ -157,7 +201,11 @@ export class StudioWavExporter {
       throwIfCancelled(signal);
       const pcm = await context.startRendering();
       throwIfCancelled(signal);
-      const encoded = await encodeWav(pcm, { signal, onProgress });
+      // Optional admitted Float32 bus keeps the original score and DSP. The
+      // ordinary V1-V3 WAV path and its 48kHz encoding remain unchanged.
+      const encoded = pcmOptions
+        ? { pcm, frames: pcm.length, sampleRate: pcm.sampleRate, channels: 2 }
+        : await encodeWav(pcm, { signal, onProgress });
       throwIfCancelled(signal);
       return {
         ...encoded,
@@ -173,6 +221,7 @@ export class StudioWavExporter {
       );
     } finally {
       signal.removeEventListener("abort", abort);
+      pcmOptions?.signal?.removeEventListener("abort", cancelExternal);
       for (const v of voices) disconnectVoice(v);
       mixer?.dispose();
       master?.disconnect();

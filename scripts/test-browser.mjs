@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createRequire } from "node:module";
 import { preview } from "vite";
 import { messages } from "../src/i18n/messages.js";
+import { studioMessages } from "../src/studio/messages.js";
 import { navigationHref, pagePath } from "../src/app/routes.js";
 
 const require = createRequire(import.meta.url);
@@ -178,9 +179,15 @@ try {
             messages[locale]["common.language"],
           );
           if (screen === "studio") {
+            await page.waitForFunction(
+              () =>
+                document.querySelector(".studio-page")?.dataset.ready ===
+                "true",
+            );
+            assert.equal(await page.locator(".st-step").count(), 128);
             assert(
               (await page.locator(".eyebrow").textContent()) ===
-                messages[locale]["common.comingSoon"],
+                studioMessages[locale].eyebrow,
             );
             assert.equal(
               await page.locator("audio,[data-play],.character").count(),
@@ -279,7 +286,9 @@ try {
             );
           }
           if (["beatbox", "studio"].includes(screen)) {
-            await page.locator('main [data-home-anchor="tools"]').focus();
+            await page
+              .locator('.site-footer [data-home-anchor="tools"]')
+              .focus();
             await page.keyboard.press("Enter");
             await settle();
             assert.equal(new URL(page.url()).hash, "#tools");
@@ -484,7 +493,9 @@ try {
         );
         assert.equal(new URL(deniedPage.url()).hash, "#approach");
         await deniedPage.goto(base + navigationHref("studio", locale));
-        await deniedPage.locator('main [data-home-anchor="tools"]').focus();
+        await deniedPage
+          .locator('.site-footer [data-home-anchor="tools"]')
+          .focus();
         await deniedPage.keyboard.press("Enter");
         await deniedPage.waitForFunction(
           (lang) => document.documentElement.lang === lang,

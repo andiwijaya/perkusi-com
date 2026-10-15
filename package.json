@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
+    "build": "vite build --mode gamelan-public-candidate",
+    "build:gamelan-candidate": "node scripts/build-gamelan-candidate.mjs",
+    "build:gamelan-public": "node scripts/build-gamelan-public.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "lint": "eslint .",
     "check": "npm run lint && npm run build",

@@ -13,6 +13,12 @@ const events = new Set([
   "export_failed",
   "studio_open",
   "beatbox_to_studio",
+  "gamelan_open",
+  "gamelan_first_note",
+  "gamelan_demo_played",
+  "gamelan_to_studio",
+  "audio_export_succeeded",
+  "audio_export_failed",
 ]);
 const exportFailureCategories = new Set([
   "empty_mix",
@@ -45,7 +51,7 @@ export function createEventTracker(enabled, send) {
         name,
         name === "language_changed" && ["id", "en"].includes(locale)
           ? { language: locale }
-          : name === "export_failed"
+          : ["export_failed", "audio_export_failed"].includes(name)
             ? {
                 category: exportFailureCategories.has(locale)
                   ? locale

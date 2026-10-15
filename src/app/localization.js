@@ -45,6 +45,9 @@ export function initLocalization() {
     document.querySelectorAll("[data-route]").forEach((el) => {
       el.href = navigationHref(el.dataset.route, locale);
     });
+    document.querySelectorAll("[data-gamelan-link]").forEach((el) => {
+      el.href = locale === "en" ? "/en/gamelan/" : "/gamelan/?lang=id";
+    });
     document.querySelectorAll("[data-home-anchor]").forEach((el) => {
       el.href =
         page === "home"

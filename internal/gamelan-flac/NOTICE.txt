@@ -1,0 +1,7 @@
+Perkusi FLAC delivery candidate, lossless packaging variant of accepted CDM Porto PCM24.
+
+All101 work/title/creator/source/license/quality/rights records, CC BY3.0 text, Artistic2.0 library text and prior gain/resample changes remain in internal/gamelan-delivery/ and the credits page. This encoding adds no DSP, mono conversion, trim/fade/retune, padding or normalization. Full integer PCM24 MD5/SHA256 and original-to-FLAC map are in asset-map.json; every FLAC has embedded title/creator/source/license/change comments. No endorsement or legal/cultural/listening warranty.
+
+The first-party limited encoder source encode-reference.py uses pre-existing NumPy1.26.4 and Python3.12. It implements the open RFC9639 format; no Xiph/libFLAC code/binary or new dependency is copied. This modified delivery source form and existing original library remain available under the preserved Artistic2.0 package terms described in the unchanged parent NOTICE and license, without changing the overall Perkusi application license. Upstream acquisition links and unchanged source/derivative reference recipes are retained. Original WAVs and accepted PCM files are untouched.
+
+Native decode compatibility and exactness must be validated before adoption; this is not production release. Numeric losslessness does not establish musical quality, one-set/region identity or acoustic completeness beyond the original recording.

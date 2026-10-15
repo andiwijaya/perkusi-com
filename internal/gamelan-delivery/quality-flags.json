@@ -1,0 +1,72 @@
+[
+  {
+    "sampleId": "fs-261953",
+    "title": "GENDER_GSPL6.wav",
+    "instrument": "Slenthem",
+    "laras": "pelog",
+    "flags": [
+      "last100ms_rms_above_minus50dbfs_tail_review_only"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261805",
+    "title": "BONANG_BBPL3.wav",
+    "instrument": "Bonang barung",
+    "laras": "pelog",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261803",
+    "title": "BONANG_BBPL4.wav",
+    "instrument": "Bonang barung",
+    "laras": "pelog",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261783",
+    "title": "BONANG_BBPL7.wav",
+    "instrument": "Bonang barung",
+    "laras": "pelog",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261710",
+    "title": "BONANG_BBSL6.wav",
+    "instrument": "Bonang barung",
+    "laras": "slendro",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261708",
+    "title": "BONANG_BPPL1.wav",
+    "instrument": "Bonang panerus",
+    "laras": "pelog",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  },
+  {
+    "sampleId": "fs-261942",
+    "title": "BONANG_BPSL1.wav",
+    "instrument": "Bonang panerus",
+    "laras": "slendro",
+    "flags": [
+      "source_contains_full_scale_integer_samples_not_audibility_judgment"
+    ],
+    "disposition": "Retained unchanged; source observation, not an audibility/repair conclusion. Owner/expert listening or replacement decision needed before final quality acceptance."
+  }
+]

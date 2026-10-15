@@ -4,6 +4,12 @@ import { resolve, join, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderDocument } from "./src/app/document.js";
 import { buildEntries, pageFromPath } from "./src/app/routes.js";
+import {
+  gamelanPreviewAssets,
+  gamelanDeliveryAliases,
+} from "./scripts/gamelan-preview-assets.mjs";
+import { gamelanBuildMode } from "./src/gamelan/public-context.js";
+import { publicCandidateHTML } from "./scripts/gamelan-public-pages.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 function missingPageMiddleware(server, preview = false) {
@@ -58,51 +64,98 @@ function missingPageMiddleware(server, preview = false) {
     res.end(req.method === "HEAD" ? "" : html);
   };
 }
-export default defineConfig(({ mode }) => ({
-  appType: "mpa",
-  build: {
-    rollupOptions: {
-      input:
-        mode === "audio-prototype"
-          ? {
-              ...buildEntries,
-              audioPrototype: "internal/audio/index.html",
-              soundLab: "internal/sound-lab/index.html",
-            }
-          : buildEntries,
+export default defineConfig(({ mode }) => {
+  const gamelan = gamelanBuildMode(mode);
+  const publicCandidate = mode === "gamelan-public-candidate";
+  const delivery =
+    process.env.PERKUSI_GAMELAN_DELIVERY || (publicCandidate ? "flac" : "pcm");
+  return {
+    appType: "mpa",
+    define: {
+      "import.meta.env.GAMELAN_BUILD": JSON.stringify(gamelan),
+      "import.meta.env.GAMELAN_PUBLIC_BUILD": JSON.stringify(publicCandidate),
+      "import.meta.env.GAMELAN_DELIVERY": JSON.stringify(
+        gamelan && delivery === "flac" ? "flac" : "pcm",
+      ),
     },
-  },
-  plugins: [
-    {
-      name: "localized-static-pages",
-      transformIndexHtml: {
-        order: "pre",
-        handler(html) {
-          const match = html.match(
-            /<!-- perkusi-page:(home|beatbox|studio|privacy|notFound):(id|en) -->/,
-          );
-          return match ? renderDocument(match[1], match[2]) : html;
+    resolve: {
+      alias: gamelan ? gamelanDeliveryAliases(root, delivery) : [],
+    },
+    build: {
+      ...(mode === "gamelan-preview"
+        ? { outDir: "qa-artifacts/gamelan-preview-dist", emptyOutDir: false }
+        : {}),
+      rollupOptions: {
+        input:
+          mode === "audio-prototype"
+            ? {
+                ...buildEntries,
+                audioPrototype: "internal/audio/index.html",
+                soundLab: "internal/sound-lab/index.html",
+              }
+            : gamelan
+              ? {
+                  ...buildEntries,
+                  gamelanId: "gamelan/index.html",
+                  gamelanEn: "en/gamelan/index.html",
+                  gamelanCreditsId: "gamelan/credits/index.html",
+                  gamelanCreditsEn: "en/gamelan/credits/index.html",
+                }
+              : buildEntries,
+      },
+    },
+    plugins: [
+      ...(gamelan
+        ? [
+            gamelanPreviewAssets(root, {
+              delivery,
+            }),
+          ]
+        : []),
+      {
+        name: "localized-static-pages",
+        transformIndexHtml: {
+          order: "pre",
+          handler(html, context) {
+            const match = html.match(
+              /<!-- perkusi-page:(home|beatbox|studio|privacy|notFound):(id|en) -->/,
+            );
+            let rendered = match ? renderDocument(match[1], match[2]) : html;
+            if (publicCandidate)
+              rendered = publicCandidateHTML(rendered, {
+                page: match?.[1] || null,
+                locale:
+                  match?.[2] || (context.path.startsWith("/en/") ? "en" : "id"),
+                credits: context.path.includes("/credits/"),
+              });
+            return mode === "gamelan-preview" && match?.[1] === "studio"
+              ? rendered.replace(
+                  "<head>",
+                  '<head><meta name="robots" content="noindex,nofollow">',
+                )
+              : rendered;
+          },
+        },
+        configureServer(server) {
+          server.middlewares.use(missingPageMiddleware(server));
+        },
+        configurePreviewServer(server) {
+          server.middlewares.use(missingPageMiddleware(server, true));
         },
       },
-      configureServer(server) {
-        server.middlewares.use(missingPageMiddleware(server));
+      {
+        name: "deployment-revision",
+        generateBundle() {
+          this.emitFile({
+            type: "asset",
+            fileName: "version.json",
+            source: JSON.stringify({
+              commit: process.env.CF_PAGES_COMMIT_SHA || "local",
+              branch: process.env.CF_PAGES_BRANCH || "local",
+            }),
+          });
+        },
       },
-      configurePreviewServer(server) {
-        server.middlewares.use(missingPageMiddleware(server, true));
-      },
-    },
-    {
-      name: "deployment-revision",
-      generateBundle() {
-        this.emitFile({
-          type: "asset",
-          fileName: "version.json",
-          source: JSON.stringify({
-            commit: process.env.CF_PAGES_COMMIT_SHA || "local",
-            branch: process.env.CF_PAGES_BRANCH || "local",
-          }),
-        });
-      },
-    },
-  ],
-}));
+    ],
+  };
+});

@@ -1,0 +1,1825 @@
+{
+  "version": 1,
+  "name": "Perkusi CDM Porto delivery candidate",
+  "files": [
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261938.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261938.wav",
+      "sha256": "7a68273c7259710c5e4d462b8e6e5e9ad14e71ce3a754dba3d3d436af667b9a5",
+      "bytes": 2271266,
+      "frames": 378537,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261938.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261938.wav",
+      "sha256": "171e1e4f597238f5d81fd0ba5dedca8903abfb5338278e208ae2e9507a7818ff",
+      "bytes": 2472128,
+      "frames": 412014,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261937.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261937.wav",
+      "sha256": "9d7b23baf5414ddc6145cb9c47bb6e877999abf47af5b51dfad70cad1f0ad0fd",
+      "bytes": 3159350,
+      "frames": 526551,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261937.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261937.wav",
+      "sha256": "f3c1cd4ac47a6e30ef086eb7251cff8aceb34363937d5700e1c13c8bf0ef15b0",
+      "bytes": 3438746,
+      "frames": 573117,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261730.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261730.wav",
+      "sha256": "e74af77b3853b04abac12d58ead110b9b9f931120743c38539e8a6e6a9f9e8dc",
+      "bytes": 3071942,
+      "frames": 511983,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261730.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261730.wav",
+      "sha256": "d2e86d4eab31c715636f9258c327117518099376b30f1af23cdd7d5c66980259",
+      "bytes": 3343610,
+      "frames": 557261,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261927.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261927.wav",
+      "sha256": "f8b1422159f275185d8f248d56472430d897b07d512dc951d435565a62e82dd2",
+      "bytes": 3121124,
+      "frames": 520180,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261927.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261927.wav",
+      "sha256": "cb2f6e2c1653de4b2f9d57e1ca5b05638d0995082fda1f3a000dc92e76ffab8d",
+      "bytes": 3397142,
+      "frames": 566183,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261924.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261924.wav",
+      "sha256": "f9ae1d4cee6ade0b1a4e5c307783d5d6970600c16bca3ab84c78a49116a51a69",
+      "bytes": 1688804,
+      "frames": 281460,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261924.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261924.wav",
+      "sha256": "e5824d5a32a30b969d2d61d778ee89c1b139c75fa9b24dfe06fad980786efd34",
+      "bytes": 1838156,
+      "frames": 306352,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261968.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261968.wav",
+      "sha256": "e760a8fa9427e5b8f97021d9a9a82d0e4946fecea87c961e35fbe61ddc257dc1",
+      "bytes": 2282216,
+      "frames": 380362,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261968.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261968.wav",
+      "sha256": "a1edf6ffb5ebcf42d3070b18ddd439b5ca16aaf016795c06c7300df8c941b03f",
+      "bytes": 2484044,
+      "frames": 414000,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261883.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261883.wav",
+      "sha256": "da540691ef803323c91b2a4665d20232fff90daa39fa9b4bf8fb7eac1e199ed7",
+      "bytes": 2706392,
+      "frames": 451058,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261883.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261883.wav",
+      "sha256": "b8d6021be2ac25772882b7cd4b9e9b1411b6822ebe45d083d8aa2aa45f051622",
+      "bytes": 2945732,
+      "frames": 490948,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261695.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261695.wav",
+      "sha256": "0f0027fbe67a98a04789c57d175fd3a49929eb16daad1b098ea889c9acc9c0c3",
+      "bytes": 3239462,
+      "frames": 539903,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261695.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261695.wav",
+      "sha256": "8f88ed1a031f727412ad13e1f57ea98bea32692e6b13f179d8124f012875b0a4",
+      "bytes": 3525944,
+      "frames": 587650,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261731.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261731.wav",
+      "sha256": "7743b7bb4aabfe54bc0ad6f89b51908e6f809c447120173b1cc34fffdd759e54",
+      "bytes": 1557788,
+      "frames": 259624,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261731.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261731.wav",
+      "sha256": "50c8731627e275681ad372428ce20d8c6c387544bfade2d3995ce0b1eeaf7995",
+      "bytes": 1695548,
+      "frames": 282584,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261884.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261884.wav",
+      "sha256": "b2063e659aa8be4a0ab9a2aac97fb6c5fe9c590b33b2d4ff22a7d82731bc1e45",
+      "bytes": 1722950,
+      "frames": 287151,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261884.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261884.wav",
+      "sha256": "7f5cff612f97284c4e382b7012a2d0dbea062a62c128b2a78144f0ef474d56f7",
+      "bytes": 1875320,
+      "frames": 312546,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261940.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261940.wav",
+      "sha256": "43e6cd3134cb8d8388032a986e87272c431fade4f74d4c28bd4b8a19d6fa42be",
+      "bytes": 2244416,
+      "frames": 374062,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261940.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261940.wav",
+      "sha256": "e0608f35e7e54ebc300322bfa680efbfe5bba28ef14937fc1d8efe55725ab064",
+      "bytes": 2442902,
+      "frames": 407143,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261966.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261966.wav",
+      "sha256": "89b450214217952d40c3996b09e1c44463a478e9984bfeda42b37668b81ccd26",
+      "bytes": 2085056,
+      "frames": 347502,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261966.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261966.wav",
+      "sha256": "cc4a198dae5a0340c0b79606d405ecd9bd0064457a8ff023fc1747ab535d38be",
+      "bytes": 2269448,
+      "frames": 378234,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261687.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261687.wav",
+      "sha256": "0d7920c3eec0966061ddc586867aef2d8b51176918a944bb88514bc0e1265731",
+      "bytes": 2042960,
+      "frames": 340486,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261687.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261687.wav",
+      "sha256": "34354d4d08d6613d3365523431396f10b5e409dc8546d6f7b571e11a4b5558ab",
+      "bytes": 2223632,
+      "frames": 370598,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261694.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261694.wav",
+      "sha256": "c06fb26f7f9454462541e076d5e1af9486e7140e1a5bf8d51f005872c1f2ff82",
+      "bytes": 1459208,
+      "frames": 243194,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261694.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261694.wav",
+      "sha256": "2c80cb7d6fe7fe6822967d4314a3a6153ac0c49559f8095e18a7361e118dfef4",
+      "bytes": 1588250,
+      "frames": 264701,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261693.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261693.wav",
+      "sha256": "32e24e7640b9c08fa62d04f5a5b837913ce99ff381792c562bde47bc2b1e0e52",
+      "bytes": 1451474,
+      "frames": 241905,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261693.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261693.wav",
+      "sha256": "3d6c37dbe098bcc65bc81b658327b99123f324c035dbb40bb7520764984b3f4e",
+      "bytes": 1579832,
+      "frames": 263298,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261955.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261955.wav",
+      "sha256": "f0757ab84730a5a248ff65fdbc76302bf792c7dd295f11424ddb1a7f470828f1",
+      "bytes": 2330324,
+      "frames": 388380,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261955.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261955.wav",
+      "sha256": "78183607451a2693c7fe04f5b76b5bd19dbac482857ac1c647a4a06a1353de1a",
+      "bytes": 2536406,
+      "frames": 422727,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261939.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261939.wav",
+      "sha256": "bec6747856fc76d9fafbaccdcae066f80cf939982981272cde51125276e6d5ef",
+      "bytes": 2299184,
+      "frames": 383190,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261939.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261939.wav",
+      "sha256": "60f4958706ed42a393bf42ae096881eeb006841b91f21a7ce0a53349f77431a7",
+      "bytes": 2502512,
+      "frames": 417078,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261720.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261720.wav",
+      "sha256": "638bf5020c6e8b10ac510a663e1b1c2a267bf8b214470836569ab6fac67a7721",
+      "bytes": 1316168,
+      "frames": 219354,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261720.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261720.wav",
+      "sha256": "cac099164d979cbc2662b96b7cfc97975c3583fe0f4cd182641d3445fa52e3a2",
+      "bytes": 1432562,
+      "frames": 238753,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261887.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261887.wav",
+      "sha256": "d7639e8bed68d8766d60311372f8c4535425a61da6ae57c1cd7ebd1d5c2539ae",
+      "bytes": 3176750,
+      "frames": 529451,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261887.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261887.wav",
+      "sha256": "0db81a5ee59fa59980b747059ea52f5f06c0d78fd397b97cb304abf0e71f5da0",
+      "bytes": 3457688,
+      "frames": 576274,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261726.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261726.wav",
+      "sha256": "3270ae66f9de80a9819c01f967a89849047d86d83d4eb8d6fdc0d3f4ea673516",
+      "bytes": 1847516,
+      "frames": 307912,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261726.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261726.wav",
+      "sha256": "634dc589126a3efd91bd4d6a48bf107ab4fba315bf8058cba0d18a30d82f9d43",
+      "bytes": 2010902,
+      "frames": 335143,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261724.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261724.wav",
+      "sha256": "5f22d6f42604a9bf16722da27fa6095a04473c2089e3d564e6fb811c25728b85",
+      "bytes": 997016,
+      "frames": 166162,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261724.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261724.wav",
+      "sha256": "d1a5019d9d8a027b16a9052d182396b263ae5bd67500eb958a2e7b6221a90517",
+      "bytes": 1085186,
+      "frames": 180857,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261923.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261923.wav",
+      "sha256": "0b8558f3b57a826907d3dea8e782c9f6ed961d8e05bdb191d1b95faa4400403b",
+      "bytes": 1026656,
+      "frames": 171102,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261923.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261923.wav",
+      "sha256": "20070112e013da0b8418a8124f7528233f9be71d815591f2664177b5be96f090",
+      "bytes": 1117448,
+      "frames": 186234,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261792.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261792.wav",
+      "sha256": "0878c4708e68ba8ab4409955ccabb2a3cc77e9200852d6fbeaa2c837bdd3bdc8",
+      "bytes": 4566974,
+      "frames": 761155,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261792.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261792.wav",
+      "sha256": "8462ec292a42b03b68f546cf5de70cb44a824d8ec94804eef031ce30ec172076",
+      "bytes": 4970858,
+      "frames": 828469,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261765.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261765.wav",
+      "sha256": "7c913f8e3280cf8b3bedbb978781364963f6905248f963a2efdee1544a31aa79",
+      "bytes": 4552154,
+      "frames": 758685,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261765.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261765.wav",
+      "sha256": "bac4ffc96a39f3c4aaec34e581bc1457105902d7beeef29ec2ca904c9feec89b",
+      "bytes": 4954724,
+      "frames": 825780,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261824.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261824.wav",
+      "sha256": "c07e165423c966d1015d696279e02c2824956bff0d9ae65a1d482e4cd90629df",
+      "bytes": 1893908,
+      "frames": 315644,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261824.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261824.wav",
+      "sha256": "42ab2b71c3cc365b8e981d64341c0760b28ab1ea3a183a198813f0a8d6468ab7",
+      "bytes": 2061398,
+      "frames": 343559,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261795.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261795.wav",
+      "sha256": "bd7dbfa3df918f74cb5878f2a036108aa7bbc644039f88f3b7a5bc80547f3cdf",
+      "bytes": 3829010,
+      "frames": 638161,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261795.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261795.wav",
+      "sha256": "3d0541b4ad56ba5fefa26966dbae3aed7a842264e05cc2d493bf5adab864c8ec",
+      "bytes": 4167632,
+      "frames": 694598,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261797.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261797.wav",
+      "sha256": "cf690bc4ecf6d694721ab494c24570b711562d5eccae992a2d7b004ee9ce146c",
+      "bytes": 1592582,
+      "frames": 265423,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261797.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261797.wav",
+      "sha256": "213d41df63b362c5c6f24a76241dc5157ad882fadb099aa0fd73f8c0f7f0c879",
+      "bytes": 1733420,
+      "frames": 288896,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261728.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261728.wav",
+      "sha256": "ce4e4830ac2390624d02a6c6b7c314703d984029d3b8d43fca07f805cb3fe062",
+      "bytes": 1065314,
+      "frames": 177545,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261728.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261728.wav",
+      "sha256": "09ed23071391393da39e1d4f356113687b6c80f5e9e60cb332312bc74a12166a",
+      "bytes": 1159526,
+      "frames": 193247,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261763.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261763.wav",
+      "sha256": "adabf30e5081b60efacc9e70cedc9bddb2b5238b6e1a4c0f3cbeb4121ec78991",
+      "bytes": 757118,
+      "frames": 126179,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261763.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261763.wav",
+      "sha256": "bb3bc980a35aff3d068a7c7466dc561017474d9b1e6cab4852d2ed5142eb01b9",
+      "bytes": 824072,
+      "frames": 137338,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261819.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261819.wav",
+      "sha256": "fa99d58249fbb08150e846419a334c9a6bd4a49bc695cc1e515f53ec26558cd6",
+      "bytes": 753896,
+      "frames": 125642,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261819.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261819.wav",
+      "sha256": "182a75c1ce56bb2d43e1e8d5366b8e197758d985796c7747a165f457dfff6fe6",
+      "bytes": 820568,
+      "frames": 136754,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261818.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261818.wav",
+      "sha256": "d28ac15f561d55bdf8a125e95c989bb3613a949984a634da58ea1e99c480dedf",
+      "bytes": 956210,
+      "frames": 159361,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261818.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261818.wav",
+      "sha256": "269b64e716b1a6d8e60c89f2b9ce3f755e5177e114256c79b0c4a434465ec3c9",
+      "bytes": 1040774,
+      "frames": 173455,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261762.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261762.wav",
+      "sha256": "9d6962c7b1631bff7d607b6c8f934464e0b68a020161e43220dd6332cc4ddc41",
+      "bytes": 913472,
+      "frames": 152238,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261762.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261762.wav",
+      "sha256": "ff7abdb8b459a1299ee814e5bf0ffa58b1054584dc1ba9527649d4f11b0e3ae2",
+      "bytes": 994256,
+      "frames": 165702,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261823.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261823.wav",
+      "sha256": "e285e7725d5c97a9c3bfc28ff4dea069e0188809bc2395b67eeb0faeb17532a5",
+      "bytes": 1317674,
+      "frames": 219605,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261823.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261823.wav",
+      "sha256": "8241561f5c50e1fd0e525eba5315a90f2cfaabd89885ae3ffad5670cb6eacfe7",
+      "bytes": 1434200,
+      "frames": 239026,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261822.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261822.wav",
+      "sha256": "1d479ab87979b38ad9daad231a170b8c8e22cf1da95e4e6afa43ef633a10f387",
+      "bytes": 1035038,
+      "frames": 172499,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261822.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261822.wav",
+      "sha256": "fd4b394ffb36229ca3770a79f80d9b748f13762d409583719ea06a4190ecbb38",
+      "bytes": 1126574,
+      "frames": 187755,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261733.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261733.wav",
+      "sha256": "a17c57f6dc2310f43b9647c494c993e8544522d65528921a987e2a912f489ebe",
+      "bytes": 1190102,
+      "frames": 198343,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261733.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261733.wav",
+      "sha256": "3479343db0295892efe73647bc0ea62d5348d6e1f3fa86ed1957b1d8a9ca2d40",
+      "bytes": 1295348,
+      "frames": 215884,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261732.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261732.wav",
+      "sha256": "d9b9175f448583fb49cedb595d4da5f371458369726ec03fde4ac5b7620b4358",
+      "bytes": 1477040,
+      "frames": 246166,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261732.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261732.wav",
+      "sha256": "6075e3c4c8e9b8504de54c273fb527c00d426829698e147f471a87b519ab62fd",
+      "bytes": 1607660,
+      "frames": 267936,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261909.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261909.wav",
+      "sha256": "22309c1f2e9d29d4fdd52d5f0a36cfc5e74b06c7674666a6170a89723d53ac21",
+      "bytes": 9822890,
+      "frames": 1637141,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261909.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261909.wav",
+      "sha256": "08916047f6b7423ef189bd939338fd7519043cb999ddca12886fb58eba01c354",
+      "bytes": 10691582,
+      "frames": 1781923,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261747.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261747.wav",
+      "sha256": "4fc70219a1f039f21eadd636bace9467886edd8e63cbe5ac189920b8773df05e",
+      "bytes": 4699910,
+      "frames": 783311,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261747.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261747.wav",
+      "sha256": "cb8c500dbe21dfd179e2f803007a728bfddb3ec2e67ebdbab7d4dc787f1ce8fe",
+      "bytes": 5115548,
+      "frames": 852584,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261746.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261746.wav",
+      "sha256": "d0dd6f736eeeca0ad520171ad54a5fe8a1ab7fe771828ac5804a3f5256acc994",
+      "bytes": 3494180,
+      "frames": 582356,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261746.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261746.wav",
+      "sha256": "b724807a877e17e5f8eb091660af30683c8fe5d4ab522df73fd0c8355d499eaf",
+      "bytes": 3803186,
+      "frames": 633857,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261745.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261745.wav",
+      "sha256": "92f347ac91bf1af2aff84864906ab0f19876f62621f5f8c281ddc1a085f28eba",
+      "bytes": 1809506,
+      "frames": 301577,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261745.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261745.wav",
+      "sha256": "b6992b118f2c2b9296bed777e284cf4fe9381266493d685c0670645ee8761fbc",
+      "bytes": 1969532,
+      "frames": 328248,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261744.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261744.wav",
+      "sha256": "6458fea0333f7dde9b23014235969dacc31b597cd3d6ea7596ddca926a7a0a46",
+      "bytes": 5860766,
+      "frames": 976787,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261744.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261744.wav",
+      "sha256": "8816fedc37e968fe6e41ecc08994da1bb6c6ce5c3b4d99cde0679f770944abb9",
+      "bytes": 6379064,
+      "frames": 1063170,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261953.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261953.wav",
+      "sha256": "531007b7ac3b0a2a2368051c360c5eb9d11c074b429722a01e4ec5916b9e0431",
+      "bytes": 6453110,
+      "frames": 1075511,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261953.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261953.wav",
+      "sha256": "c997b6351f6db8c8443634617798947927eb5f1129fd16c6d3cae9edfe1fd009",
+      "bytes": 7023794,
+      "frames": 1170625,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261761.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261761.wav",
+      "sha256": "24862b5c09b08551fe158e2503d70b1bc5c7fbd8c2884573148adc290d371780",
+      "bytes": 2128010,
+      "frames": 354661,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261761.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261761.wav",
+      "sha256": "a19085792c4ec0b17745b9155efa1cb928aebc4579a4905f312819e569e2a72e",
+      "bytes": 2316200,
+      "frames": 386026,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261898.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261898.wav",
+      "sha256": "9de9141b3eb26da122fb12cc6325f46690e94b5f9eea1675a63b53d5122f6915",
+      "bytes": 4759628,
+      "frames": 793264,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261898.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261898.wav",
+      "sha256": "77c5eaf5e624b3907dd454cf05cbddefa859942b9bd8f1128d6768b3148cc694",
+      "bytes": 5180546,
+      "frames": 863417,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261896.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261896.wav",
+      "sha256": "51c35cc4d3ee6296cac7b716d05b4f167652e790aac91757bbd9e024d6ba3af9",
+      "bytes": 3398180,
+      "frames": 566356,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261896.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261896.wav",
+      "sha256": "e62d6cfb5169f9eab920ce788030a3690a375de20b55504be2712ad95b4f4d1a",
+      "bytes": 3698696,
+      "frames": 616442,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261897.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261897.wav",
+      "sha256": "5588375e7977a7f6a205e277feb8bb524f2d50e969b851b0a87a9cab01c585d6",
+      "bytes": 9475598,
+      "frames": 1579259,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261897.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261897.wav",
+      "sha256": "ef51d86816fc33a208ed745cd613e34123bac5c90cfad5f123735867cc00f3e8",
+      "bytes": 10313576,
+      "frames": 1718922,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261894.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261894.wav",
+      "sha256": "b2d2ca30dc9f07ce638408a817fb3a58a51b6296956e2d83c16110f1a51c37f7",
+      "bytes": 11897804,
+      "frames": 1982960,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261894.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261894.wav",
+      "sha256": "a0bdd4e6bf688f6f5f05dd03a83c1d4c8316d674c58ac265b7052f1977afbbad",
+      "bytes": 12949988,
+      "frames": 2158324,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261895.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261895.wav",
+      "sha256": "880938a301db40db79d44f33f1bcec62f03bf4c4f480e28ac5e0200a6145845b",
+      "bytes": 5496722,
+      "frames": 916113,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261895.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261895.wav",
+      "sha256": "79437b45cee48697f70b73ed1f46d8dd9b8ddd60d802fb52ad74cd2b27dc1634",
+      "bytes": 5982824,
+      "frames": 997130,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261801.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261801.wav",
+      "sha256": "a264cf2804e8e304089445b560bfad669705eb7d6bd63fcd442e6c6c42fe14f3",
+      "bytes": 2658284,
+      "frames": 443040,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261801.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261801.wav",
+      "sha256": "5e268c1166869e808beb4536b7f25c3d66421096c8284a0a1b35978ec2d295ac",
+      "bytes": 2893370,
+      "frames": 482221,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261799.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261799.wav",
+      "sha256": "48c0c1936c64bb0a393b958d781985c314f036924f8cd6e7b968dd8d16362474",
+      "bytes": 2115770,
+      "frames": 352621,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261799.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261799.wav",
+      "sha256": "63ba566d7b963b624cea30467c70bbde54581f3f771174ac4a0fb0a25874d61b",
+      "bytes": 2302880,
+      "frames": 383806,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261805.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261805.wav",
+      "sha256": "cee030ff4a44669448850fa3e873200b823fbcd25c0bae7ecc886dee3a5a9149",
+      "bytes": 2542310,
+      "frames": 423711,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261805.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261805.wav",
+      "sha256": "9e78d0929eed4e4ce24b8c1abbf0c4e2046765b5c7809fcac72dae77dc4eab26",
+      "bytes": 2767142,
+      "frames": 461183,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261803.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261803.wav",
+      "sha256": "a8accfc9005d891134e105c95ee452758e3abb773184a06627ec8e2235475278",
+      "bytes": 2240336,
+      "frames": 373382,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261803.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261803.wav",
+      "sha256": "b16ab7afdfc21c72165ae400c742e7ee851e4a545c62a7e96d83515e4f6ef917",
+      "bytes": 2438462,
+      "frames": 406403,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261807.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261807.wav",
+      "sha256": "d5329f0ff56cc800629b12f96c68bf42f442e0d62967d209a0add5d2235e4de8",
+      "bytes": 2729378,
+      "frames": 454889,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261807.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261807.wav",
+      "sha256": "41230f375f099a6c08db8d41e21165fee45792e62d68985ee02722d6070cd457",
+      "bytes": 2970752,
+      "frames": 495118,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261785.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261785.wav",
+      "sha256": "04b52d07ef3d5c66037f757bfde8d6f5abbab4ded77f6878a86cb104832ca0a0",
+      "bytes": 2055848,
+      "frames": 342634,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261785.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261785.wav",
+      "sha256": "0a7c06fedc6ba142700373a95d1b7d978832875d617cda79973ba6abc727d52b",
+      "bytes": 2237654,
+      "frames": 372935,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261783.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261783.wav",
+      "sha256": "507663d5bc79444be3f7c1dc7dce1d3c0ace81bdee2061ae5ac8dcd08bf26874",
+      "bytes": 1823678,
+      "frames": 303939,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261783.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261783.wav",
+      "sha256": "5cf341e40aa56e8bccb46ede8104219d576957311b612fd426e5fa17ab37dac9",
+      "bytes": 1984952,
+      "frames": 330818,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261789.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261789.wav",
+      "sha256": "5fcdf10c6c88e2fc685065d424c77411eecbc7fd9838b4f407aa217a58b19f77",
+      "bytes": 2697158,
+      "frames": 449519,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261789.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261789.wav",
+      "sha256": "09c14e2bd8101ebb37417475ff4b50760b3134d70e39d279ab89179fb4535035",
+      "bytes": 2935682,
+      "frames": 489273,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261786.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261786.wav",
+      "sha256": "ede0ed2ac323e5082529cc40a6dda89ca1036663242d193ed0bb0321340d4b06",
+      "bytes": 2239910,
+      "frames": 373311,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261786.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261786.wav",
+      "sha256": "079483c30648a568024db19e873dfa05fc0fd0976df0938ff946899b1e9fd1ae",
+      "bytes": 2437994,
+      "frames": 406325,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261706.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261706.wav",
+      "sha256": "d05dfbc433b17f82ae996e2c2d992038d19ce9269362c83baab065d9260898f7",
+      "bytes": 2389388,
+      "frames": 398224,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261706.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261706.wav",
+      "sha256": "7d810b2f531daf5002132163ffeeeb8a122f127ea85198688717e06106d7a12d",
+      "bytes": 2600696,
+      "frames": 433442,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261704.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261704.wav",
+      "sha256": "c451fdf677de6b212335fbe4c4e4226e95e64db9df6e011dc4c2e73c3dbfb9b3",
+      "bytes": 1488416,
+      "frames": 248062,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261704.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261704.wav",
+      "sha256": "04e4f0660ec9e752630d921e97c8c3fc04402625092f526b9394891a1145075e",
+      "bytes": 1620044,
+      "frames": 270000,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261710.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261710.wav",
+      "sha256": "5680b7d3a01a36dab1f5a4c599cc96cb282c3803464ed100075669cbffe7881f",
+      "bytes": 1438592,
+      "frames": 239758,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261710.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261710.wav",
+      "sha256": "9ba537f5886da2b7e05da6324b6fa909141ff5e0e7324170aabd10369c204691",
+      "bytes": 1565816,
+      "frames": 260962,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261708.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261708.wav",
+      "sha256": "44d572646901c0704759af3ccea127438e410ef49b2c8d869d2c926ffe60ded8",
+      "bytes": 1569818,
+      "frames": 261629,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261708.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261708.wav",
+      "sha256": "fa0c971e61f218a55e9419e75708a073aec2746f1d8f7fbef25f7dbf122e0ae1",
+      "bytes": 1708646,
+      "frames": 284767,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261698.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261698.wav",
+      "sha256": "6dbd0a9f7a595049bbb84f5edd654fb3c483fbe7b91760e3a58c71dd4f2428ea",
+      "bytes": 2092790,
+      "frames": 348791,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261698.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261698.wav",
+      "sha256": "00c5735d136746a92766dc02d777a062bf0354970fd780e632b9277622392ca3",
+      "bytes": 2277866,
+      "frames": 379637,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261737.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261737.wav",
+      "sha256": "b6683fc42d38df84752f13c2f585800e3bd5edf3380f578bba378838b6b8b3d2",
+      "bytes": 1808858,
+      "frames": 301469,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261737.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261737.wav",
+      "sha256": "6194ff3ac03709237e2379f246b24b7021da8746531479c99327d8c019ec1b59",
+      "bytes": 1968824,
+      "frames": 328130,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261739.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261739.wav",
+      "sha256": "59820b77a4474b398dc9d9f3edd096c7aee3656df8348302ec83009ee8e37e60",
+      "bytes": 1692026,
+      "frames": 281997,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261739.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261739.wav",
+      "sha256": "ced60e0ded578f76054460180fef33b7ffdab419fca6d4b0165ee28787d0aa69",
+      "bytes": 1841660,
+      "frames": 306936,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261741.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261741.wav",
+      "sha256": "c498e87ebd772084286975cf22b2bc56fa956b2b500da1a807efc8dd500b4f18",
+      "bytes": 1240784,
+      "frames": 206790,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261741.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261741.wav",
+      "sha256": "12a28d209bc8d3e51abf2d86a73005c3d5c21156630590a51b636a63a69634b9",
+      "bytes": 1350512,
+      "frames": 225078,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261743.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261743.wav",
+      "sha256": "365ce580506d6bb982e4b4d2af6f6f1e372ed8ea8cb406e8cc186d167f7685dc",
+      "bytes": 1585496,
+      "frames": 264242,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261743.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261743.wav",
+      "sha256": "961fed3035ae839639eaf0c197dd69a62048bf420c2dae23412d3fc5dfac24cf",
+      "bytes": 1725710,
+      "frames": 287611,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261735.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261735.wav",
+      "sha256": "62136cc45a131b34ab194c0c46f5c35885ddd85a730e18d65b8e285d23423662",
+      "bytes": 1764404,
+      "frames": 294060,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261735.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261735.wav",
+      "sha256": "debdf9e901cd6d2237103fe802458e91f3f405199fa7f469289dcad3983a4e19",
+      "bytes": 1920440,
+      "frames": 320066,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261942.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261942.wav",
+      "sha256": "95a53424ab49cae13e8d5ff29d9adc984585955343f83a362e7057eb40d0b830",
+      "bytes": 1651646,
+      "frames": 275267,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261942.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261942.wav",
+      "sha256": "10eebc70a9eab015c44b3f597aee0a62f0026ff9b3f5e46cbc9630c9d4a99652",
+      "bytes": 1797710,
+      "frames": 299611,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261945.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261945.wav",
+      "sha256": "aa2ef9ba5469746a6e62aacbf64c2c416ed089908d7568f948c4cd3d45694949",
+      "bytes": 935162,
+      "frames": 155853,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261945.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261945.wav",
+      "sha256": "8bf2e7f4df5feb214adb4f81cf8ddb4c68992933f65977635e5ccf61c4599193",
+      "bytes": 1017860,
+      "frames": 169636,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261948.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261948.wav",
+      "sha256": "ecb71097264719ac10796832b7e53c461bf3373893562dcfdd32f00bdae6848a",
+      "bytes": 1101824,
+      "frames": 183630,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261948.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261948.wav",
+      "sha256": "e686bf3331cd249e682b86ee2fb0b5cbe840c3419240985d91442bfe040ee67a",
+      "bytes": 1199264,
+      "frames": 199870,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261950.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261950.wav",
+      "sha256": "d684016e1144f786b8022a272844d511815bcd817c6ad3c0bce797e95ff966b3",
+      "bytes": 1248302,
+      "frames": 208043,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261950.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261950.wav",
+      "sha256": "be0e0b27884e3a5db9d3873b95a14aee8c8d1cd181e2619aef215a89e97b0446",
+      "bytes": 1358696,
+      "frames": 226442,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261996.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261996.wav",
+      "sha256": "14a464e337f313d3a7e7f59ecdadeb7e649299e2edb45c12d5fa50ccaa55c354",
+      "bytes": 1164752,
+      "frames": 194118,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261996.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261996.wav",
+      "sha256": "cd7eeba528f9e0c88289897cacc4c88765da108c85a821912dd69239fbe21299",
+      "bytes": 1267754,
+      "frames": 211285,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261891.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261891.wav",
+      "sha256": "f51b946e66de3c89fae2bc1f5ea119b16a6ec7512b92711cf33b9819263123b1",
+      "bytes": 3362954,
+      "frames": 560485,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261891.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261891.wav",
+      "sha256": "12322d770f48d5aca1954a3d26418f8c50a976f6c5bd0e4d7e312167262f5efd",
+      "bytes": 3660356,
+      "frames": 610052,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261915.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261915.wav",
+      "sha256": "bbbfeba77fe00b33a12a119a1d274a9df9f8a5264baf10d230d702b0d260ecdd",
+      "bytes": 323276,
+      "frames": 53872,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261915.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261915.wav",
+      "sha256": "4fab8df4c561b8f7ce721c46f731d03171d9f4c80a589f7aa703a9ba9fbebe8e",
+      "bytes": 351866,
+      "frames": 58637,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261808.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261808.wav",
+      "sha256": "67fe913bb15ce2f40385b2310641ebc15016b61ffcb92df40a5d6eabcdd5be77",
+      "bytes": 4678652,
+      "frames": 779768,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261808.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261808.wav",
+      "sha256": "a8b0a48a025ff28f69220cf57658a487e5e022d157e1bfa871638269e581485c",
+      "bytes": 5092412,
+      "frames": 848728,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261913.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261913.wav",
+      "sha256": "798bcb62e32348d9697d383ec3f357e8b38f1ad0fa6a0ea821bcb13854eeccdc",
+      "bytes": 328004,
+      "frames": 54660,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261913.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261913.wav",
+      "sha256": "9fe17ec6022532dba5e71c3938b82290f9fb5ecdcdabb0b6280e15e6dc0d2634",
+      "bytes": 357008,
+      "frames": 59494,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261810.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261810.wav",
+      "sha256": "63a1751a3fce52dc79684138c48bd1b8bdbf966c15422893ae8d44e7c9f4c1d5",
+      "bytes": 4500392,
+      "frames": 750058,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261810.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261810.wav",
+      "sha256": "f1ad249b53cdbef64154c4a3a1e5c30b9d018f49ab592d20d8347aa8e2269776",
+      "bytes": 4898384,
+      "frames": 816390,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261919.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261919.wav",
+      "sha256": "d9ae8b8fe3e668a383b54fc1b75f9ce40424e7cdb64bc26d51d3d424f821cc0b",
+      "bytes": 234578,
+      "frames": 39089,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261919.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261919.wav",
+      "sha256": "29e78e15b837de1760852d5425c8b6d9d937d1b3e7feb0bebc885fbc7f691bc1",
+      "bytes": 255320,
+      "frames": 42546,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261812.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261812.wav",
+      "sha256": "3ae946b47c7f224d19e0e2fbe9d9f0dc3b723af07538697155ee44ece111510c",
+      "bytes": 2700812,
+      "frames": 450128,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261812.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261812.wav",
+      "sha256": "dd6c2f2a9b39246f4704eeef2d5034cf264eaceb91e5a6337a98d0f91e072c3e",
+      "bytes": 2939660,
+      "frames": 489936,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261917.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261917.wav",
+      "sha256": "e0ce5dc5692efaca469e0d971a9fc623b5f3704fc49ca492f906dfb7c6165202",
+      "bytes": 213956,
+      "frames": 35652,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261917.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261917.wav",
+      "sha256": "ec661f4006fefbd4d9bcc8ee6d00cc4c480477f56a926a72be7849b13d39019e",
+      "bytes": 232874,
+      "frames": 38805,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261814.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261814.wav",
+      "sha256": "38088daa4a819d4a1a4c96f2c2258362d40f9c48c3aaf96a14e26bf32742fbfd",
+      "bytes": 2923316,
+      "frames": 487212,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261814.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261814.wav",
+      "sha256": "1af2840020385fc9c3b154b3349fcdafc3173081258e4b01c813e01787209938",
+      "bytes": 3181838,
+      "frames": 530299,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261921.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261921.wav",
+      "sha256": "c5ad7c76f7fb48e775a38460ee4ee49ef8496f2070f5110822607f18be8849df",
+      "bytes": 292346,
+      "frames": 48717,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261921.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261921.wav",
+      "sha256": "8153e8529e06aeafa10a5b90ff2a2afcb2baa125b414cefd120e4297612cd74c",
+      "bytes": 318200,
+      "frames": 53026,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261816.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261816.wav",
+      "sha256": "ea1c6f3646235560bc941cce9bb40a0e715b75ba36f10140ff354e3ca72e02ad",
+      "bytes": 1729394,
+      "frames": 288225,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261816.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261816.wav",
+      "sha256": "fef3f0e5ea78173cadca8375aa1054a6ff0fcbdd236d0ab047b752974f60483a",
+      "bytes": 1882334,
+      "frames": 313715,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261957.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261957.wav",
+      "sha256": "7f143775170776f4b1392a6161ec8900d461f12ed48c5423cc95fffb301cb3af",
+      "bytes": 212024,
+      "frames": 35330,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261957.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261957.wav",
+      "sha256": "8d914b0b93da8163d4efafedcb834d5f192c4e9cf6d3cbf59ea7984385238b83",
+      "bytes": 230774,
+      "frames": 38455,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261697.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261697.wav",
+      "sha256": "bbfddb0c3b66cba0b6ccbb6427a68f5ff376fcb1054386992748388fa5ceb88c",
+      "bytes": 2929970,
+      "frames": 488321,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261697.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261697.wav",
+      "sha256": "d029b5638b5a5ec0661c74e5c8794e90b207ea792b584b1d46fba826c8490eb3",
+      "bytes": 3189080,
+      "frames": 531506,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261959.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261959.wav",
+      "sha256": "30bbf61a2001e74b4201fe86e8e1496451fcd73e9939c4b47f3ffab2c7867c96",
+      "bytes": 308672,
+      "frames": 51438,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261959.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261959.wav",
+      "sha256": "a3c0b778623d8c7ca1a768a7c5bd62ccd63295f03cded02b22f0f4fd58929212",
+      "bytes": 335966,
+      "frames": 55987,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261701.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261701.wav",
+      "sha256": "a365f9f43e8d6d72b3a46264a193c70490f8985c57aa6462d417dff74a012420",
+      "bytes": 3169874,
+      "frames": 528305,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261701.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261701.wav",
+      "sha256": "fe3c63011152a7b24a640dfd7515c88899d0227b08afaaac83568bd26027d732",
+      "bytes": 3450200,
+      "frames": 575026,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261952.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261952.wav",
+      "sha256": "ea287865d90b71565c198fc2e5a0c52a12c5f2a9b2517f1d3ccde3fd2c838019",
+      "bytes": 323924,
+      "frames": 53980,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261952.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261952.wav",
+      "sha256": "e99872e8ee07df94717c84e25db593a5299fe036fdf01d7cfddf52b0f7e1822b",
+      "bytes": 352568,
+      "frames": 58754,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261729.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261729.wav",
+      "sha256": "4cdb38fa0c4b076deaa5d59a575370c07ba2718cf8b607f61786434fb1a2ebf0",
+      "bytes": 2885942,
+      "frames": 480983,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261729.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261729.wav",
+      "sha256": "c2aaf1bbc510775ede877cdc4b3f57afc80514ccfd1318345217ebbae0998e68",
+      "bytes": 3141158,
+      "frames": 523519,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261963.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261963.wav",
+      "sha256": "c6a1b8b930e693c29b2b613c7f7d6948d8eca76d40abce6fe1aaaf293ba5bf6c",
+      "bytes": 215030,
+      "frames": 35831,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261963.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261963.wav",
+      "sha256": "007770f6a26387fc7d294fff1b71de300bf5ac2431b41b730d08ff6494818de4",
+      "bytes": 234044,
+      "frames": 39000,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261982.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261982.wav",
+      "sha256": "4e734c8be6b0e494f32efbec9a215e7cb275f400633498a72af258ed9ddcd116",
+      "bytes": 2523836,
+      "frames": 420632,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261982.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261982.wav",
+      "sha256": "e3dd97f24ef4213fac815b10b900fa0e90560c2506964dfe7f6d7794f338a9f2",
+      "bytes": 2747030,
+      "frames": 457831,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261965.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261965.wav",
+      "sha256": "b2349152bdea10a0da3ac59e2729d0e1c38d0231700bd5595df15ac8ee9e4dc8",
+      "bytes": 269582,
+      "frames": 44923,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261965.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261965.wav",
+      "sha256": "c84069130db14c72af35fa03978234f8dd0ec1195f3d585603955e1e37f5e0b0",
+      "bytes": 293420,
+      "frames": 48896,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261980.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261980.wav",
+      "sha256": "28beeda2ce5441b834610d2a9b4cce874b0a5c137320daffae8927583e760d6e",
+      "bytes": 1629530,
+      "frames": 271581,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261980.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261980.wav",
+      "sha256": "499eb15c44fe7ac9e5a93bdcf750e30021132ee148bc355b7a698e33c4792581",
+      "bytes": 1773638,
+      "frames": 295599,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261721.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261721.wav",
+      "sha256": "4a66f8bb5ca725b0814db497269f8dc5f32919f3e35eeecdc392d5fa07076c41",
+      "bytes": 297290,
+      "frames": 49541,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261721.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261721.wav",
+      "sha256": "405e541ec9c77d6092b79418f000c9d89e4b9c2112fa08f1de6e02d0e0af1a91",
+      "bytes": 323582,
+      "frames": 53923,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261691.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261691.wav",
+      "sha256": "91831b71f88518dcc3da4273f4731cabdddbb0783a821e53f5ddbb759a52ee46",
+      "bytes": 377186,
+      "frames": 62857,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261691.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261691.wav",
+      "sha256": "b42cfcdb9eacf1baf53a7feb7b6ebcfa7935e0b62694cd2080a131d3204e9e1f",
+      "bytes": 410540,
+      "frames": 68416,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261685.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261685.wav",
+      "sha256": "6325b9ab719ea424604bb4e2fd595d88cfe41b64a60ecfa55e3507f9eae03c11",
+      "bytes": 512060,
+      "frames": 85336,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261685.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261685.wav",
+      "sha256": "900ad2fd7533f49b4ba854e24aab2c3cf095cf961c8e7493a3f9c372f29ab366",
+      "bytes": 557342,
+      "frames": 92883,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261984.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261984.wav",
+      "sha256": "1ce3e882a03ed80e4e475cea7b91dfb8abf8cc92e50e9448fa3e4c12b6d9a6a1",
+      "bytes": 263144,
+      "frames": 43850,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261984.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261984.wav",
+      "sha256": "15be58506505900e059070afda6949d84744d61d6b837d0755d59508000ae78c",
+      "bytes": 286412,
+      "frames": 47728,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261760.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261760.wav",
+      "sha256": "8c0998db0d4f547db62077c460fecdf78655b66bbc00a8a5d232c5c19873197a",
+      "bytes": 276236,
+      "frames": 46032,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261760.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261760.wav",
+      "sha256": "be8178fa10d3f4cd964b6e61929fd8f72bf6bfabdf1e958e85501c5ddf05ebfd",
+      "bytes": 300662,
+      "frames": 50103,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261893.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261893.wav",
+      "sha256": "305722ccee84c30c3ba6cd1ceca1d5c94a681b85acc2b866b2260761208e917d",
+      "bytes": 5304932,
+      "frames": 884148,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261893.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261893.wav",
+      "sha256": "e395e5630ebdb366f4582fdc1a9ccdc3150cfad7dafec747352a5e9f7d8cbd5c",
+      "bytes": 5774072,
+      "frames": 962338,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261992.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261992.wav",
+      "sha256": "967e67c40506220c7ea2a48b369512780878aa8f926f7a82594211436b44b940",
+      "bytes": 235868,
+      "frames": 39304,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261992.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261992.wav",
+      "sha256": "2721a480cd12b59e5f3a345071bcb2f7b0dbb605fb14f46f6293dff85b66cba1",
+      "bytes": 256724,
+      "frames": 42780,
+      "channels": 2
+    },
+    {
+      "rate": 44100,
+      "assetPath": "/sounds/cdm-porto-candidate/44100/s261991.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/44100/s261991.wav",
+      "sha256": "6d9901c0ef319da9d2f4ec356bcb2ac8ba637d895c567b12dad9fc3d6b34eba9",
+      "bytes": 180968,
+      "frames": 30154,
+      "channels": 2
+    },
+    {
+      "rate": 48000,
+      "assetPath": "/sounds/cdm-porto-candidate/48000/s261991.wav",
+      "sourcePath": "internal/gamelan-delivery/audio/48000/s261991.wav",
+      "sha256": "f492ee5272369d1f027d7c5953ca629da015f486c0922cf93507be7c14ab41c3",
+      "bytes": 196970,
+      "frames": 32821,
+      "channels": 2
+    }
+  ],
+  "bytes": 479867000
+}

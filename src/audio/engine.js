@@ -124,6 +124,8 @@ export class AudioEngine {
     this.startPromise = null;
     this.disposed = false;
     this.disposePromise = null;
+    this.disposalClosePending = false;
+    this.closeRetryPromise = null;
     this.onContextState = () => {
       if (this.context.state !== "running") {
         this.playbackRequested = false;
@@ -954,10 +956,30 @@ export class AudioEngine {
     this.mixer?.dispose();
     this.outputStage?.dispose();
     this.composition?.dispose();
-    if (this.context && this.context.state !== "closed")
+    if (this.context && this.context.state !== "closed") {
+      this.disposalClosePending = true;
       await this.context.close();
+      this.disposalClosePending = false;
+    }
     this.transport.reset();
     this.status = "disposed";
     this.record("dispose");
+  }
+  retryDisposedClose() {
+    // Only resume the final native-close stage. Earlier cleanup failures stay
+    // failures; the terminal engine is never made playable or rebuilt.
+    if (!this.disposed || !this.disposalClosePending)
+      return Promise.reject(new Error("No pending disposal close"));
+    if (this.closeRetryPromise) return this.closeRetryPromise;
+    this.closeRetryPromise = (async () => {
+      if (this.context?.state !== "closed") await this.context.close();
+      this.disposalClosePending = false;
+      this.transport.reset();
+      this.status = "disposed";
+      this.record("dispose");
+    })().finally(() => {
+      this.closeRetryPromise = null;
+    });
+    return this.closeRetryPromise;
   }
 }
