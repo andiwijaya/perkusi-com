@@ -17,26 +17,6 @@ export function shotEnvelope(frame, length, rate, choke = null) {
     : f32(natural(frame));
 }
 
-export function panFrame(left, right, pan, mono = false) {
-  if (mono) {
-    const angle = ((pan + 1) * Math.PI) / 4;
-    return [f32(left * f32(Math.cos(angle))), f32(left * f32(Math.sin(angle)))];
-  }
-  if (pan === 0) return [left, right];
-  if (pan < 0) {
-    const angle = ((pan + 1) * Math.PI) / 2;
-    return [
-      f32(left + f32(right * f32(Math.cos(angle)))),
-      f32(right * f32(Math.sin(angle))),
-    ];
-  }
-  const angle = (pan * Math.PI) / 2;
-  return [
-    f32(left * f32(Math.cos(angle))),
-    f32(right + f32(left * f32(Math.sin(angle)))),
-  ];
-}
-
 export function panMatrix(pan, mono = false) {
   if (mono) {
     const angle = ((pan + 1) * Math.PI) / 4;

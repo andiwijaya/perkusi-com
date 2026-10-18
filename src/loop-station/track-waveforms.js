@@ -1,5 +1,6 @@
 import { mergeWaveform, waveformPath } from "./waveform.js";
 import { recordCopy } from "./record-copy.js";
+import { phaseAdvance } from "./phase-alignment.js";
 
 export const waveformCopy = {
   id: {
@@ -41,6 +42,7 @@ export class TrackWaveforms {
     this.views = [];
     this.queue = Promise.resolve();
     this.closed = false;
+    this.reduced = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
   }
   begin(project) {
     if (this.closed) return;
@@ -68,7 +70,15 @@ export class TrackWaveforms {
     svg.setAttribute("aria-label", label + ". " + t.hint);
     const path = d.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("class", "ls-waveform-path");
-    svg.append(path);
+    const cursor = d.createElementNS("http://www.w3.org/2000/svg", "line");
+    cursor.setAttribute("class", "ls-waveform-playhead");
+    cursor.setAttribute("y1", "0");
+    cursor.setAttribute("y2", "96");
+    cursor.setAttribute("x1", "0");
+    cursor.setAttribute("x2", "0");
+    cursor.setAttribute("visibility", "hidden");
+    cursor.setAttribute("aria-hidden", "true");
+    svg.append(path, cursor);
     const caption = d.createElement("figcaption"),
       retry = d.createElement("button");
     retry.type = "button";
@@ -77,7 +87,18 @@ export class TrackWaveforms {
     retry.onclick = () => this.load(key);
     figure.append(svg, caption, retry);
     host.append(figure);
-    const view = { key, locale, label, figure, path, caption, retry, live };
+    const view = {
+      key,
+      locale,
+      label,
+      figure,
+      path,
+      cursor,
+      caption,
+      retry,
+      live,
+      cursorVisible: false,
+    };
     this.views.push(view);
     this.paint(view);
     return view;
@@ -95,6 +116,7 @@ export class TrackWaveforms {
       );
       view.figure.dataset.waveformKey = ref.sha256;
       view.figure.dataset.clipId = clip.id;
+      Object.assign(view, { clip, ref, projectClock: project.clock });
       if (!this.cache.has(key)) {
         this.cache.set(key, {
           ref,
@@ -138,6 +160,47 @@ export class TrackWaveforms {
           this.repaint(key);
         }
       });
+  }
+  position(position, clock) {
+    for (const view of this.views) {
+      const { clip, ref, cursor } = view;
+      let visible = !!(
+          clip &&
+          ref &&
+          clock &&
+          ["playing", "paused"].includes(position.state)
+        ),
+        phase = 0;
+      if (visible) {
+        const elapsed = position.frame - clock.frame(clip.startTick);
+        visible = elapsed >= 0 && (clip.loop || elapsed < ref.frames);
+        if (visible) {
+          const advance = clip.phaseAlignment
+            ? phaseAdvance(clip, ref, view.projectClock)
+            : 0;
+          const source =
+            (((elapsed + advance) % ref.frames) + ref.frames) % ref.frames;
+          phase = source / ref.frames;
+          if (this.reduced?.matches) phase = Math.floor(phase * 16) / 16;
+        }
+      }
+      if (view.cursorVisible !== visible) {
+        view.cursorVisible = visible;
+        cursor.setAttribute("visibility", visible ? "visible" : "hidden");
+      }
+      if (visible) {
+        const x = String(phase * 512);
+        const key = x + "/" + position.state;
+        if (view.cursorPosition !== key) {
+          view.cursorPosition = key;
+          cursor.setAttribute("transform", `translate(${x} 0)`);
+          cursor.setAttribute(
+            "opacity",
+            position.state === "paused" ? "0.5" : "1",
+          );
+        }
+      }
+    }
   }
   updateLive(
     trackId,

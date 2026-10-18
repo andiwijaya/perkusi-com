@@ -99,13 +99,31 @@ test("FLAC registry changes only transport fields and preserves all source IDs, 
 });
 test("Delivery switch defaults to canonical PCM, selects only two trusted opt-in aliases, and rejects unknown formats", () => {
   assert.deepEqual(gamelanDeliveryAliases(process.cwd(), "pcm"), []);
+  const aliases = gamelanDeliveryAliases(process.cwd(), "flac");
   assert.deepEqual(
-    gamelanDeliveryAliases(process.cwd(), "flac"),
+    aliases.map(({ find, replacement }) => ({ find, replacement })),
     [44100, 48000].map((r) => ({
       find: `../../internal/instrument-focus/registry-${r}.json`,
       replacement: resolve(`internal/gamelan-flac/registry-${r}.json`),
     })),
   );
+  for (const [index, rate] of [44100, 48000].entries()) {
+    const alias = aliases[index];
+    assert.equal(
+      alias.customResolver(
+        alias.replacement,
+        resolve("src/gamelan/registry.js"),
+      ).id,
+      alias.replacement,
+    );
+    assert.equal(
+      alias.customResolver(
+        alias.replacement,
+        resolve("src/audio/canonical-registered-assets.js"),
+      ).id,
+      resolve(`internal/instrument-focus/registry-${rate}.json`),
+    );
+  }
   for (const kind of ["mp3", "opus", "auto", "../outside", "FLAC"])
     assert.throws(() => gamelanDeliveryAliases(process.cwd(), kind));
 });

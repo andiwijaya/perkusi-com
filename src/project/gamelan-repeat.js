@@ -3,6 +3,7 @@ import { eventFrame } from "./instrument-project.js";
 import { legacyAudible } from "./instrument-mix.js";
 import { fail } from "./instrument-contract.js";
 import { dampFrames } from "../audio/frame-dsp.js";
+import { repeatPeakBound } from "../audio/repeat-headroom.js";
 
 export const REPEAT_LOOKAHEAD = 0.75;
 // Includes a delayed onended delivery during the tested 400ms main-thread stall.
@@ -70,7 +71,7 @@ export function repeatedVoice(plan, cycle, index) {
 
 // Exact periodic interval sweep. Bound all owned pending/playing/end-callback
 // nodes, not only simultaneous audible tails. No truncation or voice stealing.
-export function repeatAdmission(plan, metrics, volume) {
+export function repeatAdmission(plan, metrics, volume, pcm = null) {
   if (!Number.isFinite(volume) || volume < 0 || volume > 1)
     fail("invalidLoopPlan");
   const period = plan.periodFrames,
@@ -118,11 +119,19 @@ export function repeatAdmission(plan, metrics, volume) {
     maxPeak = Math.max(maxPeak, peak);
   }
   if (maxOwned > 16) fail("voiceLimit");
+  const analysis = pcm
+    ? repeatPeakBound(plan, pcm.items, volume, pcm.memory)
+    : null;
+  if (analysis) maxPeak = analysis.maxPeak;
   if (maxPeak > 0.95) fail("voiceHeadroom");
-  return {
+  return Object.freeze({
+    plan,
+    volume,
+    pcmBound: !!analysis,
+    ...(analysis ?? {}),
     maxOwned,
     maxPeak,
     lookahead: REPEAT_LOOKAHEAD,
     releaseGrace: RELEASE_GRACE,
-  };
+  });
 }

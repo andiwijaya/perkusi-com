@@ -266,6 +266,7 @@ export class RecordPanel {
       "microphone";
     sourceSelect.value = this.instrumentId;
     sourceSelect.onchange = () => {
+      this.recordError = null;
       void this.owner.stopMic?.().catch(() => {});
       this.instrumentId = sourceSelect.value;
       this.inputs.clear();
@@ -273,6 +274,7 @@ export class RecordPanel {
       this.update();
     };
     this.button(setup, t.prepare, "prepare", async () => {
+      this.recordError = null;
       if (
         this.project().tracks.find((x) => x.id === this.selected())?.clips
           .length
@@ -331,8 +333,12 @@ export class RecordPanel {
       this.bars = Number(bars.value);
     };
     this.elementFor("span", t.countIn, controls).className = "ls-rec-hint";
-    this.button(controls, t.record, "record", () =>
-      this.record({ bars: this.bars, countInBars: 1 }),
+    this.button(controls, t.record, "record", () => this.recordAttempt());
+    this.elementFor("p", t.levelHint, this.element, "level-hint").className =
+      "ls-rec-hint";
+    this.elementFor("p", "", this.element, "record-error").setAttribute(
+      "role",
+      "alert",
     );
     this.button(controls, t.preview, "preview", () => this.preview());
     this.elementFor(
@@ -416,6 +422,15 @@ export class RecordPanel {
       this.confirming = null;
     });
     this.update();
+  }
+  async recordAttempt() {
+    this.recordError = null;
+    try {
+      return await this.record({ bars: this.bars, countInBars: 1 });
+    } catch (error) {
+      if (error.code === "voiceHeadroom") this.recordError = "recordHeadroom";
+      throw error;
+    }
   }
   download(id) {
     if (this.export) fail("recordBusy");
@@ -565,7 +580,9 @@ export class RecordPanel {
     const micState = mic?.muted ? "muted" : (this.owner.micStatus ?? "off");
     write("mic-status", mt.states[micState] ?? mt.states.error);
     this.$("mic-status").dataset.state = micState;
-    this.$("mic-meter").value = Math.min(1, producer?.meter?.peak ?? 0);
+    this.$("mic-meter").value = micReady
+      ? Math.min(1, producer?.meter?.peak ?? 0)
+      : 0;
     this.$("mic-details").hidden = !micReady;
     const settings = producer?.settings;
     write(
@@ -702,6 +719,9 @@ export class RecordPanel {
       !this.canPreview() &&
       !this.owner.controller?.snapshot().finiteCaptureBridge;
     const playable = this.playable();
+    if (!r?.source) this.recordError = null;
+    write("record-error", t.errors[this.recordError] ?? "");
+    this.$("record-error").hidden = !this.recordError;
     const isMic = this.instrumentId === "microphone";
     const micReady = this.updateMicControls({
       r,

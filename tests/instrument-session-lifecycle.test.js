@@ -5,6 +5,7 @@ import { setTimeout as pause } from "node:timers/promises";
 import { InstrumentSession } from "../src/audio/instrument-session.js";
 import { Transport } from "../src/audio/transport.js";
 import { AudioMemory } from "../src/audio/audio-memory.js";
+import { PPQ } from "../src/project/instrument-project.js";
 import { shareInstrumentOutput } from "../src/project/instrument-share.js";
 
 const deferred = () => {
@@ -39,7 +40,7 @@ const pcm = (frames = 8, rate = 48000, level = 0.01) => ({
   getChannelData: () => new Float32Array(frames).fill(level),
 });
 const body = new Uint8Array(32).fill(17);
-function catalog(rate) {
+function catalog(rate, frames = 8) {
   const result = {
     banks: [
       {
@@ -62,7 +63,7 @@ function catalog(rate) {
             encodedBytes: 32,
             sampleRate: rate,
             channels: 1,
-            frames: 8,
+            frames,
             gainTrim: 1,
             voicePolicy: "polyphonic",
           },
@@ -78,7 +79,7 @@ function catalog(rate) {
   });
   return result;
 }
-function fixture(t, { recordedSet = false, level = 0.01 } = {}) {
+function fixture(t, { recordedSet = false, level = 0.01, frames = 8 } = {}) {
   const oldFetch = globalThis.fetch,
     oldOffline = globalThis.OfflineAudioContext;
   const controls = {
@@ -138,6 +139,13 @@ function fixture(t, { recordedSet = false, level = 0.01 } = {}) {
             destination: {},
             closeCalls: 0,
             async resume() {
+              if (controls.resumeFailure) {
+                controls.resumeFailure = false;
+                throw new DOMException(
+                  "QA simulated audio activation denial",
+                  "NotAllowedError",
+                );
+              }
               await controls.resumeGate?.promise;
             },
             async close() {
@@ -166,7 +174,7 @@ function fixture(t, { recordedSet = false, level = 0.01 } = {}) {
               };
             },
             async decodeAudioData() {
-              return pcm(8, 48000, level);
+              return pcm(frames, 48000, level);
             },
           };
           this.context = c;
@@ -193,7 +201,10 @@ function fixture(t, { recordedSet = false, level = 0.01 } = {}) {
     };
     return engine;
   };
-  const catalogs = { 44100: catalog(44100), 48000: catalog(48000) };
+  const catalogs = {
+    44100: catalog(44100, frames),
+    48000: catalog(48000, frames),
+  };
   if (recordedSet)
     for (const cat of Object.values(catalogs))
       for (const bank of cat.banks) bank.setId = "cdm-porto-recorded-candidate";
@@ -275,6 +286,129 @@ test("periodic replay advances fixed cycles and paused repeat resumes without re
   assert.equal(session.snapshot().repeating, false);
   assert.equal(session.snapshot().canResume, false);
   assert.equal(session.toJSON(), text);
+});
+
+test("Gamelan playhead reads rendered time, not queued starts, and freezes/resumes/clears without score edits", async (t) => {
+  const { session, record, controls } = fixture(t);
+  await record();
+  const before = session.toJSON();
+  assert.equal(session.playhead().state, "stopped");
+  await session.replay({ repeat: true });
+  assert(controls.sourceStarts.length > 0);
+  assert.equal(session.playhead().state, "waiting");
+  assert.equal(session.playhead().step, null);
+  const origin = session.snapshot().clock.origin;
+  session.audioContext.currentTime = origin + 1.6;
+  assert.equal(session.playhead().step, 10);
+  session.pause();
+  const paused = session.playhead();
+  assert.equal(paused.state, "paused");
+  session.audioContext.currentTime += 1;
+  assert.deepEqual(session.playhead(), paused);
+  await session.enable({ gesture: true });
+  await session.replay({ resume: true });
+  assert.equal(session.playhead().state, "waiting");
+  session.audioContext.currentTime += 0.11;
+  assert.equal(session.playhead().state, "playing");
+  assert.equal(session.playhead().step, 10);
+  session.stopPlayback();
+  assert.equal(session.playhead().state, "stopped");
+  assert.equal(session.playhead().step, null);
+  assert.equal(session.toJSON(), before);
+});
+
+test("separated short attacks no longer refuse repeat by charging lookahead as simultaneous sound", async (t) => {
+  const { session, controls } = fixture(t, { level: 0.9 });
+  await session.enable({ gesture: true });
+  const p = structuredClone(session.project);
+  p.banks = [{ id: "cdm-pelog", version: "candidate-1.0.0" }];
+  p.events = Array.from({ length: 14 }, (_, i) => ({
+    id: "dense-" + i,
+    tick: (i * PPQ) / 4,
+    action: "strike",
+    velocity: 1,
+    bankId: "cdm-pelog",
+    sampleId: "s1",
+  }));
+  session.importJSON(JSON.stringify(p));
+  await session.enable({ gesture: true });
+  const before = session.toJSON();
+  await session.replay({ repeat: true });
+  assert.equal(session.snapshot().replaying, true);
+  assert.equal(session.snapshot().repeating, true);
+  assert.equal(session.snapshot().error, null);
+  assert(controls.sourceStarts.length > 0);
+  assert.equal(session.toJSON(), before);
+  session.stopPlayback();
+  await session.closeAudio();
+  assert.equal(session.memory.snapshot().bytes, 0);
+});
+
+test("genuinely loud periodic PCM still refuses before sources and permits safe Play once directly", async (t) => {
+  const { session, controls } = fixture(t, { level: 0.9, frames: 48000 });
+  const p = structuredClone(session.project);
+  p.clock.lengthTicks = (PPQ * 6) / 25; // 150 ms cycle, full one-second sustain.
+  p.banks = [{ id: "cdm-pelog", version: "candidate-1.0.0" }];
+  p.events = [
+    {
+      id: "sustain",
+      tick: 0,
+      action: "strike",
+      velocity: 1,
+      bankId: "cdm-pelog",
+      sampleId: "s1",
+    },
+  ];
+  session.importJSON(JSON.stringify(p));
+  await session.enable({ gesture: true });
+  const before = session.toJSON();
+  await assert.rejects(session.replay({ repeat: true }), {
+    code: "voiceHeadroom",
+  });
+  assert.equal(controls.sourceStarts.length, 0);
+  assert.equal(session.snapshot().voiceCount, 0);
+  await session.enable({ gesture: true });
+  await session.replay({ repeat: false });
+  assert.equal(session.snapshot().replaying, true);
+  assert.equal(session.snapshot().repeating, false);
+  assert(controls.sourceStarts.length > 0);
+  assert.equal(session.toJSON(), before);
+  session.stopPlayback();
+  await session.closeAudio();
+  assert.equal(session.memory.snapshot().bytes, 0);
+});
+
+test("native audio resume rejection leaves a retryable state and the next trusted enable keeps the original project", async (t) => {
+  const { session, controls } = fixture(t);
+  controls.resumeFailure = true;
+  const before = session.toJSON();
+  await assert.rejects(
+    session.enable({ gesture: true }).catch((error) => {
+      const s = session.snapshot();
+      t.diagnostic(
+        JSON.stringify({
+          status: s.status,
+          error: s.error,
+          playbackRequested: s.playbackRequested,
+        }),
+      );
+      throw error;
+    }),
+    { code: "audioResumeFailed" },
+  );
+  assert.equal(session.snapshot().status, "error");
+  assert.equal(session.snapshot().error, "audioResumeFailed");
+  assert.equal(session.snapshot().playbackRequested, false);
+  assert.equal(session.playhead().state, "stopped");
+  assert.equal(controls.sourceStarts.length, 0);
+  assert.equal(session.toJSON(), before);
+  await session.enable({ gesture: true });
+  assert.equal(session.snapshot().status, "ready");
+  assert.equal(session.snapshot().error, null);
+  assert.equal(controls.contexts.length, 1);
+  assert.equal(session.toJSON(), before);
+  await session.closeAudio();
+  assert.equal(session.memory.snapshot().bytes, 0);
 });
 
 test("multi-instrument paused repeat transitions release previous replay leases as well as focus", async (t) => {

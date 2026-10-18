@@ -1,0 +1,31 @@
+.playback-position {
+  flex-basis: 100%;
+  width: 100%;
+  margin-block: 12px;
+  color: inherit;
+  font-size: 0.875rem;
+}
+.playback-position output {
+  display: block;
+  min-height: 24px;
+}
+.playback-position-rail {
+  height: 4px;
+  background: #ffffff18;
+  overflow: hidden;
+}
+.playback-position-rail i {
+  display: block;
+  height: 100%;
+  background: var(--st-gold, #f2c66c);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.playback-position[data-state="stopped"] .playback-position-rail i,
+.playback-position[data-state="waiting"] .playback-position-rail i {
+  opacity: 0;
+}
+.playback-position[data-state="paused"] .playback-position-rail i,
+.playback-position[data-state="tail"] .playback-position-rail i {
+  opacity: 0.5;
+}

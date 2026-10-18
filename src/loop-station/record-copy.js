@@ -50,6 +50,8 @@ export const recordCopy = {
     barsPlural: "bar",
     countIn: "Hitungan masuk: 1 bar",
     record: "Rekam",
+    levelHint:
+      "Proyek kosong baru memakai Master 0,5 untuk memberi ruang bagi permainan langsung dan loop rekaman. Rekaman asli tidak berubah.",
     preview: "Mulai pratinjau sumber 4 bar",
     previewHint:
       "Putar pratinjau terbatas, lalu tekan Rekam. Setelah sumber selesai, monitor dan rekaman tetap berjalan.",
@@ -110,6 +112,8 @@ export const recordCopy = {
       error: "Audio perlu ditinjau; take tetap dipertahankan",
     },
     errors: {
+      recordHeadroom:
+        "Campuran terlalu kuat untuk mulai merekam. Turunkan Master atau volume track, lalu tekan Rekam lagi. Proyek dan take yang ada tetap disimpan.",
       audioRecovered:
         "Audio ditutup. Take parsial tetap tersedia untuk diunduh atau ditinjau. Buang salinan sesi setelah selesai sebelum menyiapkan audio kembali.",
       takeRateMismatch:
@@ -177,6 +181,8 @@ export const recordCopy = {
     barsPlural: "bars",
     countIn: "Count-in: 1 bar",
     record: "Record",
+    levelHint:
+      "New empty projects use Master 0.5 to leave room for live playing and recorded loops. Original recordings are unchanged.",
     preview: "Start 4-bar source preview",
     previewHint:
       "Start the finite preview, then press Record. Monitoring and recording continue after the source finishes.",
@@ -237,6 +243,8 @@ export const recordCopy = {
       error: "Audio needs review; your take is retained",
     },
     errors: {
+      recordHeadroom:
+        "The mix is too loud to start recording. Lower Master or the track volume, then press Record again. Your project and existing takes are retained.",
       audioRecovered:
         "Audio closed. Your partial take remains available for download or review. Discard session copies after reviewing them before preparing audio again.",
       takeRateMismatch:

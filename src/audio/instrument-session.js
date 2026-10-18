@@ -5,6 +5,7 @@ import { Transport, secondsPerBeat } from "./transport.js";
 import { InstrumentRegistry } from "./instrument-registry.js";
 import { InstrumentSampleCache } from "./instrument-cache.js";
 import { AudioMemory } from "./audio-memory.js";
+import { STOPPED_POSITION, scorePosition } from "./playback-position.js";
 import { validateFocus, focusSelection } from "../gamelan/instrument-focus.js";
 import { ExtensionOwners } from "./extension-owners.js";
 import { instrumentVoice, INSTRUMENT_LEVEL } from "./instrument-voice.js";
@@ -21,7 +22,7 @@ import {
 } from "./programme-level.js";
 import { prepareLegacyBus } from "./legacy-bus.js";
 import { DAMP_SECONDS } from "./instrument-voice.js";
-import { groupMix } from "../project/instrument-mix.js";
+import { groupMix, legacyAudible } from "../project/instrument-mix.js";
 import {
   gamelanRepeatPlan,
   repeatedVoice,
@@ -171,6 +172,42 @@ export class InstrumentSession {
   get audioContext() {
     return this.#engine?.context ?? null;
   }
+  playhead() {
+    if (this.#disposed || this.#disposing || this.#error)
+      return STOPPED_POSITION;
+    const replay = this.#replay,
+      context = this.audioContext,
+      paused = !replay && this.#resumeFrame > 0;
+    if (!context || (!paused && !replay)) return STOPPED_POSITION;
+    const repeat = replay?.repeat ?? this.#resumeRepeat,
+      framesPerTick =
+        (60 * this.#rate) / (this.#project.composition.timing.bpm * PPQ),
+      bodyFrames =
+        replay?.plan.periodFrames ??
+        Math.round(
+          Math.max(
+            this.#project.clock.lengthTicks,
+            legacyAudible(this.#project.composition)
+              ? this.#project.composition.chain.length * 4 * PPQ
+              : 0,
+          ) * framesPerTick,
+        ),
+      elapsed = replay
+        ? Math.floor((context.currentTime - replay.time) * this.#rate)
+        : 0,
+      position = scorePosition(
+        paused ? this.#resumeFrame : replay.offset + Math.max(0, elapsed),
+        framesPerTick,
+        bodyFrames,
+        repeat,
+      );
+    if (paused || context.state !== "running") position.state = "paused";
+    else if (elapsed < 0) {
+      position.state = "waiting";
+      position.step = null;
+    }
+    return position;
+  }
   #assert() {
     if (this.#disposed || this.#disposing) fail("sessionDisposed");
   }
@@ -273,7 +310,24 @@ export class InstrumentSession {
       };
       context.addEventListener("statechange", this.#stateListener);
     }
-    await resumed;
+    try {
+      await resumed;
+    } catch {
+      if (
+        this.#disposed ||
+        this.#disposing ||
+        operation !== this.#generation ||
+        engine !== this.#engine
+      )
+        fail("cancelled");
+      // A rejected browser activation must not leave the UI in starting or
+      // keep the previous scheduler requested. A later trusted tap may retry.
+      this.pause();
+      this.#status = "error";
+      this.#error = "audioResumeFailed";
+      this.#notify();
+      fail("audioResumeFailed");
+    }
     await this.#waitVoices();
     if (
       this.#disposed ||
@@ -466,7 +520,20 @@ export class InstrumentSession {
         volume *
         mix.volume *
         (mix.pan ? Math.SQRT2 : 1);
-    if (existing + peak + (this.#legacyBus?.peak ?? 0) > 0.95)
+    const proof = this.#replay?.admission,
+      periodic =
+        this.#replay?.repeat &&
+        spec &&
+        !dynamicMix &&
+        proof?.pcmBound &&
+        proof.plan === this.#replay.plan &&
+        proof.volume === volume &&
+        !this.#legacyBus;
+    if (
+      (periodic
+        ? proof.maxPeak
+        : existing + peak + (this.#legacyBus?.peak ?? 0)) > 0.95
+    )
       fail("voiceHeadroom");
     let held, nodeMemory, mixGain, pan;
     const row = {
@@ -1075,7 +1142,12 @@ export class InstrumentSession {
               ),
           });
         }
-        if (repeatMode) repeatAdmission(plan, metrics, this.#engine.volume);
+        const admission = repeatMode
+          ? repeatAdmission(plan, metrics, this.#engine.volume, {
+              items,
+              memory: this.#memory,
+            })
+          : null;
         if (
           !repeatMode &&
           plannedHeadroom(plan, metrics, this.#engine.volume) +
@@ -1176,6 +1248,7 @@ export class InstrumentSession {
         this.#engine.transport.start(time);
         this.#replay = {
           plan,
+          admission,
           index: 0,
           time,
           offset,

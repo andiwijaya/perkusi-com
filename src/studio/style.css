@@ -364,6 +364,9 @@
 .studio-page .st-step.st-playhead {
   box-shadow: inset 0 0 0 3px var(--st-gold);
 }
+.v3-note-grid button.st-playhead {
+  box-shadow: inset 0 0 0 3px var(--st-gold);
+}
 .st-grid th.st-playhead {
   color: var(--st-gold);
   background: #3c3420;

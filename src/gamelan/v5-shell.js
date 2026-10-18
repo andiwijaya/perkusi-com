@@ -4,10 +4,17 @@ import "./v5-shell.css";
 import { renderSiteShell } from "../app/site-shell.js";
 import { initNavigation } from "../app/navigation.js";
 import { INSTRUMENT_DEMOS } from "./instrument-demos.js";
-import { leaveInstrumentWorkspace } from "./v5-navigation.js";
+import {
+  leaveInstrumentWorkspace,
+  instrumentHandoffText,
+} from "./v5-navigation.js";
 import { instrumentRouteHref } from "./route-context.js";
 import { instrumentNames } from "./instrument-focus.js";
 import { initSequencePanel } from "./sequence-panel.js";
+import {
+  canonicalLocalSession,
+  canonicalStudioHref,
+} from "../studio/canonical-route.js";
 
 const copy = {
   id: {
@@ -136,6 +143,7 @@ export function initV5Shell({
     studio,
     locale,
     act,
+    onPosition: (position) => studio.renderPosition?.(position),
   });
   for (const node of [
     host.querySelector("#if-route"),
@@ -167,6 +175,66 @@ export function initV5Shell({
   let language = null,
     removeNavigation,
     moving = false;
+  let mainStudio = null;
+  if (
+    (import.meta.env.DEV ||
+      import.meta.env.CANONICAL_LOCAL_REVIEW ||
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
+    canonicalLocalSession(
+      true,
+      location.href,
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+    )
+  ) {
+    mainStudio = document.createElement("button");
+    mainStudio.type = "button";
+    mainStudio.id = "v5-main-studio";
+    context.after(mainStudio);
+    mainStudio.addEventListener(
+      "click",
+      () =>
+        void act(async () => {
+          if (moving || navigation.blocked())
+            throw Object.assign(Error("recordBusy"), { code: "recordBusy" });
+          moving = true;
+          mainStudio.disabled = true;
+          let held, store;
+          try {
+            const text = await instrumentHandoffText(session);
+            held = session.memory.reserve(
+              new TextEncoder().encode(text).length * 2 + 4096,
+              "canonical/gamelan-handoff-blob",
+            );
+            const { CanonicalHandoffStore } =
+              await import("../project/canonical-handoff.js");
+            store = new CanonicalHandoffStore({ memory: session.memory });
+            const transfer = await store.stage(
+              new Blob([text], { type: "application/json" }),
+              { kind: "gamelan", title: session.project.composition.title },
+            );
+            if (session.toJSON() !== text)
+              throw Object.assign(Error("routeConflict"), {
+                code: "routeConflict",
+              });
+            const href = new URL(canonicalStudioHref(locale()), location.href);
+            href.searchParams.set("handoff", transfer.id);
+            await leaveInstrumentWorkspace(
+              {
+                session,
+                ...navigation,
+                navigate: (url) => location.assign(url),
+              },
+              href.href,
+            );
+          } finally {
+            store?.close();
+            held?.release();
+            moving = false;
+            if (mainStudio) mainStudio.disabled = false;
+          }
+        }),
+    );
+  }
   frame.addEventListener("click", (event) => {
     const link = event.target.closest("a[href]");
     if (
@@ -256,6 +324,28 @@ export function initV5Shell({
     const lang = locale(),
       t = copy[lang];
     loopLink.href = "/loop-station/?lang=" + lang;
+    if (
+      (import.meta.env.DEV ||
+        import.meta.env.CANONICAL_LOCAL_REVIEW ||
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
+      canonicalLocalSession(
+        true,
+        location.href,
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+      )
+    )
+      loopLink.href += "&candidate=canonical";
+    if (mainStudio) {
+      mainStudio.textContent =
+        lang === "en"
+          ? "Bring project to Rhythm Studio"
+          : "Bawa proyek ke Rhythm Studio";
+      mainStudio.disabled = moving || navigation.blocked();
+      const ownEditor = host.querySelector("#if-studio");
+      if (ownEditor)
+        ownEditor.textContent =
+          lang === "en" ? "Open Gamelan editor" : "Buka editor Gamelan";
+    }
     loopLink.textContent =
       lang === "id" ? "Lanjutkan ke Loop Station" : "Continue in Loop Station";
     sequence.render(s);
@@ -297,8 +387,15 @@ export function initV5Shell({
       composition.after(demos);
     compactDemos(t, lang);
   };
-  window.addEventListener("pagehide", () => removeNavigation?.(), {
-    once: true,
-  });
+  window.addEventListener(
+    "pagehide",
+    () => {
+      removeNavigation?.();
+      sequence.dispose();
+    },
+    {
+      once: true,
+    },
+  );
   return { render };
 }

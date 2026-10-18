@@ -45,5 +45,3 @@ export function alignRecordedClip(project, trackId, clipId, advanceFrames) {
   if (advanceFrames === 0) delete clip.phaseAlignment;
   return next;
 }
-export const phaseIndex = (frame, advance, period) =>
-  (((frame + advance) % period) + period) % period;

@@ -26,6 +26,49 @@ const hash = async (file) => {
   for await (const chunk of createReadStream(file)) h.update(chunk);
   return h.digest("hex");
 };
+// The legacy renderer uses these public URLs in both dev and built previews.
+// Vite's public directory does not contain the generated build copies in dev.
+// Resolve only the twelve registered originals, with the same integrity check
+// used by packaging; never turn this into a general filesystem route.
+export async function originalGrooveDelivery(root) {
+  const manifest = JSON.parse(
+    await readFile(
+      resolve(root, "internal/original-groove/manifest.json"),
+      "utf8",
+    ),
+  );
+  if (!Array.isArray(manifest.assets) || manifest.assets.length !== 12)
+    throw Error("Incomplete original groove catalogue");
+  const seen = new Set(),
+    rows = [];
+  for (const a of manifest.assets) {
+    if (
+      !/^audio\/[a-z-]+-[12]\.wav$/.test(a.assetPath) ||
+      !/^[a-f0-9]{64}$/.test(a.sha256)
+    )
+      throw Error("Unsafe original groove asset");
+    const sourcePath = "internal/original-groove/" + a.assetPath;
+    const source = resolve(root, sourcePath),
+      assetPath = "/sounds/original-groove/" + a.assetPath.split("/").at(-1);
+    if (seen.has(assetPath)) throw Error("Duplicate original groove asset");
+    seen.add(assetPath);
+    if (
+      (await stat(source)).size !== a.bytes ||
+      (await hash(source)) !== a.sha256
+    )
+      throw Error("Original groove integrity failed: " + assetPath);
+    rows.push(
+      Object.freeze({
+        source,
+        sourcePath,
+        assetPath,
+        bytes: a.bytes,
+        sha256: a.sha256,
+      }),
+    );
+  }
+  return Object.freeze(rows);
+}
 export function gamelanOutputPath(root, outDir, publicCandidate = false) {
   const out = resolve(root, outDir);
   if (publicCandidate === true && out === resolve(root, "dist")) return out;
@@ -41,6 +84,18 @@ export function gamelanDeliveryAliases(root, delivery) {
           root,
           `internal/gamelan-flac/registry-${rate}.json`,
         ),
+        // The canonical adapter resolves verified original WAV URLs and PCM
+        // receipts. Keep its registry paired with those bytes while all legacy
+        // Gamelan consumers still receive the configured FLAC delivery bank.
+        customResolver(updatedId, importer) {
+          return {
+            id: importer
+              ?.replaceAll("\\", "/")
+              .endsWith("/src/audio/canonical-registered-assets.js")
+              ? resolve(root, `internal/instrument-focus/registry-${rate}.json`)
+              : updatedId,
+          };
+        },
       }))
     : [];
 }
@@ -60,6 +115,27 @@ export function gamelanPreviewAssets(
           config.mode,
         ),
       );
+    },
+    async configureServer(server) {
+      const rows = new Map(
+        (await originalGrooveDelivery(root)).map((row) => [row.assetPath, row]),
+      );
+      server.middlewares.use((req, res, next) => {
+        if (!["GET", "HEAD"].includes(req.method)) return next();
+        const row = rows.get(new URL(req.url, "http://localhost").pathname);
+        if (!row) return next();
+        const etag = '"' + row.sha256 + '"';
+        res.setHeader("ETag", etag);
+        res.setHeader("Cache-Control", "no-cache");
+        if (req.headers["if-none-match"] === etag) {
+          res.statusCode = 304;
+          return res.end();
+        }
+        res.setHeader("Content-Type", "audio/wav");
+        res.setHeader("Content-Length", row.bytes);
+        if (req.method === "HEAD") return res.end();
+        createReadStream(row.source).on("error", next).pipe(res);
+      });
     },
     async writeBundle() {
       const load = async (path) =>
@@ -156,13 +232,8 @@ export function gamelanPreviewAssets(
         );
       }
       for (const row of selected) await add(row.sourcePath, row.assetPath, row);
-      const original = await load("internal/original-groove/manifest.json");
-      for (const a of original.assets)
-        await add(
-          "internal/original-groove/" + a.assetPath,
-          "/sounds/original-groove/" + a.assetPath.split("/").at(-1),
-          a,
-        );
+      for (const row of await originalGrooveDelivery(root))
+        await add(row.sourcePath, row.assetPath, row);
       for (const dir of ["studio-kits", "v3-sounds"]) {
         const m = await load("internal/" + dir + "/manifest.json");
         for (const a of [

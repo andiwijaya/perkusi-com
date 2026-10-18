@@ -168,3 +168,11 @@ export function emptyLoopProject(registry) {
     registry,
   );
 }
+
+// New recording workspaces reserve room for live input plus loop replay.
+// Legacy parsing and imported/saved mixer values keep their original defaults.
+export function newRecordingProject(registry) {
+  const project = structuredClone(emptyLoopProject(registry));
+  project.master.volume = 0.5;
+  return validateLoopProject(project, registry);
+}

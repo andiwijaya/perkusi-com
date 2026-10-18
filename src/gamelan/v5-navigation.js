@@ -1,4 +1,9 @@
 // The active tab owns its audio and draft. Do not leave until both settle.
+export async function instrumentHandoffText(session) {
+  if (session.snapshot?.().replaying) session.pause();
+  await session.prepareStudio();
+  return session.toJSON();
+}
 export async function leaveInstrumentWorkspace(
   { session, flushDraft, blocked, releaseOutputs, navigate },
   href,

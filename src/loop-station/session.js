@@ -1,5 +1,9 @@
 import { Transport } from "../audio/transport.js";
 import { AudioMemory } from "../audio/audio-memory.js";
+import {
+  STOPPED_POSITION,
+  musicalPosition,
+} from "../audio/playback-position.js";
 import { startPlannedVoice } from "./planned-voice.js";
 import { buildMixGraph } from "./mix-graph.js";
 import { finalMixProgram } from "./final-program.js";
@@ -31,6 +35,7 @@ export class LoopStationSession {
   #finiteTail = null;
   #tailDrain = false;
   #finiteCohort = null;
+  #positionBounds = new WeakMap();
   constructor({
     context,
     transport,
@@ -120,6 +125,58 @@ export class LoopStationSession {
         /* UI never owns resources. */
       }
     }
+  }
+  playhead() {
+    const plan = this.plan;
+    if (
+      !plan ||
+      this.closing ||
+      this.disposed ||
+      !["playing", "paused"].includes(this.status)
+    )
+      return STOPPED_POSITION;
+    let bounds = this.#positionBounds.get(plan);
+    if (!bounds) {
+      bounds = { body: 0, repeats: false };
+      for (const t of plan.tracks)
+        for (const c of t.clips) {
+          bounds.body = Math.max(
+            bounds.body,
+            plan.clock.frame(c.startTick + c.lengthTicks),
+          );
+          bounds.repeats ||= c.loop;
+        }
+      this.#positionBounds.set(plan, bounds);
+    }
+    const playing = this.status === "playing",
+      start = this.transport.origin + this.offset / this.context.sampleRate,
+      waiting = playing && this.context.currentTime < start,
+      frame = playing
+        ? Math.max(
+            this.offset,
+            Math.floor(
+              (this.context.currentTime - this.transport.origin) *
+                this.context.sampleRate,
+            ),
+          )
+        : this.offset,
+      end =
+        this.finite?.bodyFrames ?? (bounds.repeats ? Infinity : bounds.body),
+      tail = end > 0 && frame >= end,
+      p = musicalPosition(tail ? end - 1 : frame, plan.clock.framesPerTick);
+    return {
+      ...p,
+      frame,
+      state:
+        !playing || this.context.state !== "running"
+          ? "paused"
+          : waiting
+            ? "waiting"
+            : tail
+              ? "tail"
+              : "playing",
+      ...(tail ? { step: null, phase: 1 } : waiting ? { step: null } : {}),
+    };
   }
   snapshot() {
     return {

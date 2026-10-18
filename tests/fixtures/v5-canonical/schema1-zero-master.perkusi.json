@@ -1,0 +1,56 @@
+ 
+{
+  "format": "perkusi-project",
+  "schemaVersion": 1,
+  "mode": "beatbox",
+  "title": "Master nol",
+  "pack": {
+    "id": "original-groove",
+    "version": "0.1.0-candidate"
+  },
+  "timing": {
+    "bpm": 96,
+    "meter": [
+      4,
+      4
+    ]
+  },
+  "master": {
+    "volume": 0
+  },
+  "tracks": [
+    {
+      "role": "kick",
+      "enabled": true,
+      "variant": 1
+    },
+    {
+      "role": "snare",
+      "enabled": false,
+      "variant": 2
+    },
+    {
+      "role": "hat",
+      "enabled": true,
+      "variant": 1
+    },
+    {
+      "role": "vocal-bass",
+      "enabled": false,
+      "variant": 2
+    },
+    {
+      "role": "hum",
+      "enabled": true,
+      "variant": 1
+    },
+    {
+      "role": "percussion-fx",
+      "enabled": false,
+      "variant": 2
+    }
+  ],
+  "export": {
+    "bars": 4
+  }
+}

@@ -413,3 +413,8 @@
     flex-wrap: wrap;
   }
 }
+.ls-waveform-playhead {
+  stroke: #f2c66c;
+  stroke-width: 2;
+  pointer-events: none;
+}

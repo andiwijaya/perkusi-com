@@ -7,6 +7,7 @@ import {
 import { instrumentGroups } from "../project/instrument-mix.js";
 import { instrumentNames } from "../gamelan/instrument-focus.js";
 import { focusKeeper } from "../gamelan/accessible-focus.js";
+import { stepIndexAtBeat } from "../audio/sequencing.js";
 
 export const combinedMessages = {
   id: {
@@ -73,6 +74,46 @@ export function compositionPanel({
 }) {
   let signature = "";
   let reconcileRejected = false;
+  let playbackView = null,
+    positionKey = "";
+  function renderPosition(position) {
+    if (!playbackView) return;
+    const v = playbackView,
+      p = v.project.composition,
+      active = position.state === "playing" && position.bar < p.chain.length,
+      pattern = p.patterns.find(
+        (a) => a.id === (active ? p.chain[position.bar] : p.activePattern),
+      ),
+      step = active ? stepIndexAtBeat(position.beat, p.timing.swing) % 16 : -1,
+      key = [position.state, position.bar, step, pattern.id].join("/");
+    if (key === positionKey) return;
+    positionKey = key;
+    v.patternSelect.value = pattern.id;
+    v.chain.forEach((span, i) =>
+      span.classList.toggle("st-playhead", active && i === position.bar),
+    );
+    v.headers.forEach((span, i) => {
+      span.classList.toggle("st-playhead", i === step);
+      if (i === step) span.setAttribute("aria-current", "step");
+      else span.removeAttribute("aria-current");
+    });
+    for (const b of v.grid.querySelectorAll("[data-step]")) {
+      const [role, i] = b.dataset.step.split("/"),
+        value = pattern.steps[role][i];
+      b.classList.toggle("st-playhead", Number(i) === step);
+      b.setAttribute("aria-pressed", String(value > 0));
+      b.setAttribute(
+        "aria-label",
+        role + ", " + (Number(i) + 1) + ", " + value,
+      );
+    }
+    v.notes.forEach((group, i) => {
+      group.classList.toggle("st-playhead", i === step);
+      const note = pattern.notes[i];
+      group.querySelector("select").value = note?.pitch ?? "";
+      group.querySelector("input").value = note?.velocity ?? 0.5;
+    });
+  }
   const focus = focusKeeper(host);
   const commit = (change) =>
     transact(() => {
@@ -102,6 +143,7 @@ export function compositionPanel({
     reconcileRejected = false;
     const focused = focus.capture();
     host.replaceChildren();
+    positionKey = "";
     const node = (tag, text, parent = host) => {
       const e = document.createElement(tag);
       if (text) e.textContent = text;
@@ -230,7 +272,7 @@ export function compositionPanel({
         }),
       controls,
     );
-    select(
+    const patternSelect = select(
       t.pattern,
       p.activePattern,
       p.patterns.map((a) => [a.id, a.name]),
@@ -273,18 +315,32 @@ export function compositionPanel({
         }),
       controls,
     );
-    node(
-      "p",
-      t.chain +
-        ": " +
-        p.chain
-          .map((id) => p.patterns.find((a) => a.id === id).name)
-          .join(" → "),
-    );
+    const chainHost = node("p", t.chain + ": "),
+      chain = [];
+    chainHost.className = "combined-chain";
+    p.chain.forEach((id, i) => {
+      const span = node(
+        "span",
+        p.patterns.find((a) => a.id === id).name,
+        chainHost,
+      );
+      span.dataset.combinedChain = String(i);
+      chain.push(span);
+      if (i < p.chain.length - 1) node("span", " → ", chainHost);
+    });
     node("h4", t.steps);
     const pattern = p.patterns.find((a) => a.id === p.activePattern),
       grid = node("div");
     grid.className = "combined-grid";
+    const header = node("div", "", grid),
+      headers = [];
+    header.className = "step-row combined-head";
+    node("span", "", header);
+    for (let i = 0; i < 16; i++) {
+      const span = node("span", String(i + 1), header);
+      span.dataset.combinedHead = String(i);
+      headers.push(span);
+    }
     for (const role of STUDIO_ROLES) {
       const row = node("div", "", grid);
       row.className = "step-row";
@@ -327,9 +383,13 @@ export function compositionPanel({
     const bilahSection = section("bilah", t.notes);
     const notes = node("div", "", bilahSection);
     notes.className = "combined-mix";
+    const noteGroups = [];
     for (let i = 0; i < 16; i++) {
       const group = node("div", "", notes),
         note = pattern.notes[i];
+      group.classList.add("combined-note");
+      group.dataset.combinedNote = String(i);
+      noteGroups.push(group);
       group.setAttribute("role", "group");
       group.setAttribute("aria-label", t.notes + " - " + (i + 1));
       select(
@@ -417,7 +477,15 @@ export function compositionPanel({
     input(t.consent, project.tuningConsent === true, "checkbox", (v) =>
       bridge.acknowledgeTuning(v),
     );
+    playbackView = {
+      project,
+      grid,
+      headers,
+      notes: noteGroups,
+      patternSelect,
+      chain,
+    };
     focus.restore(focused);
   }
-  return { render };
+  return { render, renderPosition };
 }

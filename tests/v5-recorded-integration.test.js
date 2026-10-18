@@ -769,7 +769,7 @@ for (const [rate, bars] of [
     assertClean(f);
   });
 
-test("production export cancellation at render/check/encode and memory/owner refusal are atomic with original PCM/credits retained", async () => {
+test("production export cancellation/refusal and stopped-plan success retain original PCM/credits atomically", async () => {
   for (const mode of [
     "rendering",
     "checking",
@@ -803,14 +803,19 @@ test("production export cancellation at render/check/encode and memory/owner ref
         }
       },
     });
-    await assert.rejects(
-      op,
-      ["other-render", "bad-owner", "stopped-live"].includes(mode)
-        ? code("voiceLimit")
-        : ["memory", "render-memory"].includes(mode)
-          ? () => true
-          : code("cancelled"),
-    );
+    if (mode === "stopped-live") {
+      const result = await op;
+      assert.equal(result.frames, 4 * f.P);
+      result.release();
+    } else
+      await assert.rejects(
+        op,
+        ["other-render", "bad-owner"].includes(mode)
+          ? code("voiceLimit")
+          : ["memory", "render-memory"].includes(mode)
+            ? () => true
+            : code("cancelled"),
+      );
     if (["rendering", "checking", "encoding"].includes(mode)) assert(reached);
     pressure?.release();
     if (mode === "render-memory") assert.equal(f.contexts.length, 2);

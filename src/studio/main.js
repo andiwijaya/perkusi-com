@@ -41,10 +41,101 @@ import {
 } from "../project/files.js";
 import { projectMessages } from "../project/messages.js";
 import { trackEvent, exportFailureCategory } from "../analytics.js";
+import { initCanonicalStudioPanel } from "./canonical-panel.js";
+import { initCanonicalEditableStudio } from "./canonical-workspace.js";
+import {
+  canonicalLocalBuild,
+  canonicalLocalRoute,
+  canonicalStudioHref,
+  canonicalLegacyHref,
+  canonicalRecoveryHref,
+} from "./canonical-route.js";
 
-export function initStudio() {
+export function initStudio({ canonicalCandidate = null } = {}) {
   const root = document.querySelector(".studio-page"),
     $ = (id) => root.querySelector("#st-" + id);
+  if (
+    (import.meta.env.DEV ||
+      import.meta.env.CANONICAL_LOCAL_REVIEW ||
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
+    !canonicalCandidate &&
+    canonicalLocalRoute(
+      true,
+      location.href,
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+    )
+  )
+    return import("./canonical-entry.js")
+      .then(({ initCanonicalLocalEntry }) => initCanonicalLocalEntry())
+      .catch((error) => {
+        root.dataset.canonicalError = error.code ?? error.message;
+        $("project-status").setAttribute("role", "alert");
+        $("project-status").textContent =
+          document.documentElement.lang === "en"
+            ? "Local Studio could not open. Your saved projects remain available."
+            : "Studio lokal belum dapat dibuka. Proyek tersimpan tetap tersedia.";
+        for (const [href, label] of [
+          [
+            canonicalLegacyHref(document.documentElement.lang),
+            document.documentElement.lang === "en"
+              ? "Previous Studio"
+              : "Studio sebelumnya",
+          ],
+          [
+            canonicalRecoveryHref(document.documentElement.lang),
+            document.documentElement.lang === "en"
+              ? "Recover saved Preview projects"
+              : "Pulihkan proyek Preview tersimpan",
+          ],
+        ]) {
+          const a = document.createElement("a");
+          a.href = href;
+          a.textContent = label;
+          $("project-status").append(document.createTextNode(" · "), a);
+        }
+        throw error;
+      });
+  if (
+    (import.meta.env.DEV ||
+      import.meta.env.CANONICAL_LOCAL_REVIEW ||
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
+    !canonicalCandidate &&
+    canonicalLocalBuild(
+      true,
+      location.href,
+      import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+    )
+  ) {
+    const entry = document.createElement("a");
+    entry.id = "st-canonical-entry";
+    entry.dataset.stCopy = "canonicalEntry";
+    entry.href = canonicalStudioHref(document.documentElement.lang);
+    entry.addEventListener("click", () => {
+      entry.href = canonicalStudioHref(document.documentElement.lang);
+    });
+    root.querySelector(".st-intro").append(entry);
+    const recovery = document.createElement("a");
+    recovery.id = "st-canonical-recovery";
+    recovery.dataset.stCopy = "canonicalRecovery";
+    recovery.href = canonicalRecoveryHref(document.documentElement.lang);
+    recovery.addEventListener("click", () => {
+      recovery.href = canonicalRecoveryHref(document.documentElement.lang);
+    });
+    root.querySelector(".st-intro").append(recovery);
+  }
+  if (canonicalCandidate) {
+    if (
+      !canonicalLocalBuild(
+        true,
+        location.href,
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+      )
+    )
+      throw Error("canonicalLocalOnly");
+    return canonicalCandidate.editable
+      ? initCanonicalEditableStudio({ root, ...canonicalCandidate })
+      : initCanonicalStudioPanel({ root, ...canonicalCandidate });
+  }
   const engine = new AudioEngine(studioPack(1), {
     variantPacks: [studioPack(2), studioPack(3)],
     sequenceCatalog: studioCatalog,
@@ -304,14 +395,25 @@ export function initStudio() {
       `${Math.floor(s.beat / 4) + 1} : ${Math.floor(s.beat % 4) + 1}`,
     );
     const step =
-      s.status === "playing" && s.sequence.playhead >= 0
+      s.status === "playing" &&
+      s.sequence.playhead >= 0 &&
+      engine.context.currentTime >=
+        engine.transport.origin +
+          engine.transport.position * engine.transport.beatSeconds
         ? s.sequence.playhead % 16
         : -1;
-    root
-      .querySelectorAll("[data-st-head]")
-      .forEach((el) =>
-        el.classList.toggle("st-playhead", Number(el.dataset.stHead) === step),
-      );
+    root.querySelectorAll("[data-st-head]").forEach((el) => {
+      const current = Number(el.dataset.stHead) === step;
+      el.classList.toggle("st-playhead", current);
+      if (current) el.setAttribute("aria-current", "step");
+      else el.removeAttribute("aria-current");
+    });
+    root.querySelectorAll("[data-v3-step]").forEach((el) => {
+      const current = Number(el.dataset.v3Step) === step;
+      el.classList.toggle("st-playhead", current);
+      if (current) el.setAttribute("aria-current", "step");
+      else el.removeAttribute("aria-current");
+    });
     root
       .querySelectorAll("[data-st-step]")
       .forEach((el) =>

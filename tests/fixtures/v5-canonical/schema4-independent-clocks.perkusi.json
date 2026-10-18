@@ -1,0 +1,934 @@
+ 
+{
+  "format": "perkusi-project",
+  "schemaVersion": 4,
+  "mode": "instrument-events",
+  "composition": {
+    "format": "perkusi-project",
+    "schemaVersion": 3,
+    "mode": "composition",
+    "title": "Nusantara Fusion",
+    "pack": {
+      "id": "fusion",
+      "version": "1.0.0"
+    },
+    "timing": {
+      "bpm": 96,
+      "meter": [
+        4,
+        4
+      ],
+      "swing": 0,
+      "quantize": true
+    },
+    "master": {
+      "volume": 0.17
+    },
+    "tracks": [
+      {
+        "role": "kick",
+        "volume": 0.45,
+        "pan": -0.4,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "snare",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "closed-hat",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "open-hat",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "clap",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "tom",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "rim",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "shaker",
+        "volume": 0.45,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      }
+    ],
+    "patterns": [
+      {
+        "id": "p1",
+        "name": "A",
+        "steps": {
+          "kick": [
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "snare": [
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "closed-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7
+          ],
+          "open-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clap": [
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "tom": [
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0
+          ],
+          "rim": [
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shaker": [
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0
+          ]
+        },
+        "notes": [
+          {
+            "pitch": "d4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "g4",
+            "velocity": 0.6
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "a4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          {
+            "pitch": "f4",
+            "velocity": 0.6
+          },
+          null
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "B",
+        "steps": {
+          "kick": [
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "snare": [
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0.7
+          ],
+          "closed-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7
+          ],
+          "open-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "clap": [
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "tom": [
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0
+          ],
+          "rim": [
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shaker": [
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0
+          ]
+        },
+        "notes": [
+          {
+            "pitch": "g4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "a4",
+            "velocity": 0.6
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "f4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          {
+            "pitch": "d4",
+            "velocity": 0.6
+          },
+          null
+        ]
+      },
+      {
+        "id": "p3",
+        "name": "C",
+        "steps": {
+          "kick": [
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "snare": [
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "closed-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7
+          ],
+          "open-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "clap": [
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "tom": [
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0
+          ],
+          "rim": [
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shaker": [
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0
+          ]
+        },
+        "notes": [
+          {
+            "pitch": "a4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "f4",
+            "velocity": 0.6
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "d4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          {
+            "pitch": "g4",
+            "velocity": 0.6
+          },
+          null
+        ]
+      },
+      {
+        "id": "p4",
+        "name": "D",
+        "steps": {
+          "kick": [
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "snare": [
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0.7
+          ],
+          "closed-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7
+          ],
+          "open-hat": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0
+          ],
+          "clap": [
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0
+          ],
+          "tom": [
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0.8,
+            0,
+            0,
+            0,
+            0.8,
+            0,
+            0.8,
+            0,
+            0.8,
+            0,
+            0.8
+          ],
+          "rim": [
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shaker": [
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0,
+            0.45,
+            0
+          ]
+        },
+        "notes": [
+          {
+            "pitch": "f4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "d4",
+            "velocity": 0.6
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "pitch": "g4",
+            "velocity": 0.5
+          },
+          null,
+          null,
+          null,
+          {
+            "pitch": "a4",
+            "velocity": 0.6
+          },
+          null
+        ]
+      }
+    ],
+    "activePattern": "p2",
+    "chain": [
+      "p1",
+      "p2",
+      "p1",
+      "p2"
+    ],
+    "export": {
+      "arrangement": true
+    },
+    "clipPack": {
+      "id": "original-groove",
+      "version": "0.1.0-candidate",
+      "bpm": 96,
+      "bars": 2,
+      "key": "D minor",
+      "processing": "bumi-presence-v1"
+    },
+    "clips": [
+      {
+        "role": "kick",
+        "variant": 1,
+        "enabled": false,
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "snare",
+        "variant": 1,
+        "enabled": false,
+        "volume": 0.4,
+        "pan": -0.2,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "hat",
+        "variant": 1,
+        "enabled": false,
+        "volume": 0.4,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "vocal-bass",
+        "variant": 1,
+        "enabled": true,
+        "volume": 0.4,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "hum",
+        "variant": 1,
+        "enabled": true,
+        "volume": 0.4,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      },
+      {
+        "role": "percussion-fx",
+        "variant": 1,
+        "enabled": true,
+        "volume": 0.4,
+        "pan": 0,
+        "mute": false,
+        "solo": false
+      }
+    ],
+    "instrument": {
+      "id": "bilah",
+      "version": "1.0.0",
+      "volume": 0.5,
+      "pan": 0.3,
+      "mute": false,
+      "solo": false
+    }
+  },
+  "origin": {
+    "schemaVersion": 3,
+    "text": "{\"format\":\"perkusi-project\",\"schemaVersion\":3,\"mode\":\"composition\",\"title\":\"Nusantara Fusion\",\"pack\":{\"id\":\"fusion\",\"version\":\"1.0.0\"},\"timing\":{\"bpm\":96,\"meter\":[4,4],\"swing\":0,\"quantize\":true},\"master\":{\"volume\":0.17},\"tracks\":[{\"role\":\"kick\",\"volume\":0.45,\"pan\":-0.4,\"mute\":false,\"solo\":false},{\"role\":\"snare\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"closed-hat\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"open-hat\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"clap\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"tom\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"rim\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"shaker\",\"volume\":0.45,\"pan\":0,\"mute\":false,\"solo\":false}],\"patterns\":[{\"id\":\"p1\",\"name\":\"A\",\"steps\":{\"kick\":[0.7,0,0,0,0,0,0.7,0,0.7,0,0,0,0,0,0.7,0],\"snare\":[0,0,0,0.7,0,0,0,0.7,0,0,0,0,0.7,0,0,0],\"closed-hat\":[0,0,0,0,0,0,0,0.7,0,0,0,0,0,0,0,0.7],\"open-hat\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"clap\":[0,0,0,0,0.7,0,0,0,0,0,0,0,0.7,0,0,0],\"tom\":[0,0,0.8,0,0,0.8,0,0,0,0,0.8,0,0,0.8,0,0],\"rim\":[0,0.7,0,0,0,0,0,0,0,0.7,0,0,0,0,0,0],\"shaker\":[0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0]},\"notes\":[{\"pitch\":\"d4\",\"velocity\":0.5},null,null,null,null,{\"pitch\":\"g4\",\"velocity\":0.6},null,null,null,null,{\"pitch\":\"a4\",\"velocity\":0.5},null,null,null,{\"pitch\":\"f4\",\"velocity\":0.6},null]},{\"id\":\"p2\",\"name\":\"B\",\"steps\":{\"kick\":[0.7,0,0,0,0,0,0.7,0,0.7,0,0,0,0,0,0.7,0],\"snare\":[0,0,0,0.7,0,0,0,0.7,0,0,0,0,0.7,0,0,0.7],\"closed-hat\":[0,0,0,0,0,0,0,0.7,0,0,0,0,0,0,0,0.7],\"open-hat\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.7,0],\"clap\":[0,0,0,0,0.7,0,0,0,0,0,0,0,0.7,0,0,0],\"tom\":[0,0,0.8,0,0,0.8,0,0,0,0,0.8,0,0,0.8,0,0],\"rim\":[0,0.7,0,0,0,0,0,0,0,0.7,0,0,0,0,0,0],\"shaker\":[0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0]},\"notes\":[{\"pitch\":\"g4\",\"velocity\":0.5},null,null,null,null,{\"pitch\":\"a4\",\"velocity\":0.6},null,null,null,null,{\"pitch\":\"f4\",\"velocity\":0.5},null,null,null,{\"pitch\":\"d4\",\"velocity\":0.6},null]},{\"id\":\"p3\",\"name\":\"C\",\"steps\":{\"kick\":[0.7,0,0,0,0,0,0.7,0,0.7,0,0,0,0,0,0.7,0],\"snare\":[0,0,0,0.7,0,0,0,0.7,0,0,0,0,0.7,0,0,0],\"closed-hat\":[0,0,0,0,0,0,0,0.7,0,0,0,0,0,0,0,0.7],\"open-hat\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"clap\":[0,0,0,0,0.7,0,0,0,0,0,0,0,0.7,0,0,0],\"tom\":[0,0,0.8,0,0,0.8,0,0,0,0,0.8,0,0,0.8,0,0],\"rim\":[0,0.7,0,0,0,0,0,0,0,0.7,0,0,0,0,0,0],\"shaker\":[0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0]},\"notes\":[{\"pitch\":\"a4\",\"velocity\":0.5},null,null,null,null,{\"pitch\":\"f4\",\"velocity\":0.6},null,null,null,null,{\"pitch\":\"d4\",\"velocity\":0.5},null,null,null,{\"pitch\":\"g4\",\"velocity\":0.6},null]},{\"id\":\"p4\",\"name\":\"D\",\"steps\":{\"kick\":[0.7,0,0,0,0,0,0.7,0,0.7,0,0,0,0,0,0.7,0],\"snare\":[0,0,0,0.7,0,0,0,0.7,0,0,0,0,0.7,0,0,0.7],\"closed-hat\":[0,0,0,0,0,0,0,0.7,0,0,0,0,0,0,0,0.7],\"open-hat\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.7,0],\"clap\":[0,0,0,0,0.7,0,0,0,0,0,0,0,0.7,0,0,0],\"tom\":[0,0,0.8,0,0,0.8,0,0,0,0.8,0,0.8,0,0.8,0,0.8],\"rim\":[0,0.7,0,0,0,0,0,0,0,0.7,0,0,0,0,0,0],\"shaker\":[0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0,0.45,0]},\"notes\":[{\"pitch\":\"f4\",\"velocity\":0.5},null,null,null,null,{\"pitch\":\"d4\",\"velocity\":0.6},null,null,null,null,{\"pitch\":\"g4\",\"velocity\":0.5},null,null,null,{\"pitch\":\"a4\",\"velocity\":0.6},null]}],\"activePattern\":\"p2\",\"chain\":[\"p1\",\"p2\",\"p1\",\"p2\"],\"export\":{\"arrangement\":true},\"clipPack\":{\"id\":\"original-groove\",\"version\":\"0.1.0-candidate\",\"bpm\":96,\"bars\":2,\"key\":\"D minor\",\"processing\":\"bumi-presence-v1\"},\"clips\":[{\"role\":\"kick\",\"variant\":1,\"enabled\":false,\"volume\":0.7,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"snare\",\"variant\":1,\"enabled\":false,\"volume\":0.4,\"pan\":-0.2,\"mute\":false,\"solo\":false},{\"role\":\"hat\",\"variant\":1,\"enabled\":false,\"volume\":0.4,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"vocal-bass\",\"variant\":1,\"enabled\":true,\"volume\":0.4,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"hum\",\"variant\":1,\"enabled\":true,\"volume\":0.4,\"pan\":0,\"mute\":false,\"solo\":false},{\"role\":\"percussion-fx\",\"variant\":1,\"enabled\":true,\"volume\":0.4,\"pan\":0,\"mute\":false,\"solo\":false}],\"instrument\":{\"id\":\"bilah\",\"version\":\"1.0.0\",\"volume\":0.5,\"pan\":0.3,\"mute\":false,\"solo\":false}}"
+  },
+  "clock": {
+    "unit": "tick",
+    "ppq": 960000,
+    "lengthTicks": 7680000
+  },
+  "banks": [
+    {
+      "id": "cdm-pelog",
+      "version": "candidate-1.0.0"
+    }
+  ],
+  "events": [
+    {
+      "id": "off-grid-strike",
+      "tick": 137,
+      "action": "strike",
+      "velocity": 0.65,
+      "bankId": "cdm-pelog",
+      "sampleId": "fs-261824"
+    },
+    {
+      "id": "off-grid-damp",
+      "tick": 960019,
+      "action": "damp",
+      "velocity": 0,
+      "bankId": "cdm-pelog",
+      "sampleId": "fs-261824"
+    }
+  ],
+  "tuningConsent": true,
+  "instrumentMix": [
+    {
+      "bankId": "cdm-pelog",
+      "instrumentId": "peking",
+      "volume": 0.4,
+      "pan": -0.3,
+      "mute": false,
+      "solo": false
+    }
+  ]
+}

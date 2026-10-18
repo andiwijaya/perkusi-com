@@ -1,4 +1,3 @@
-export const DEFAULT_TIMING = Object.freeze({ bpm: 96, beatsPerBar: 4 });
 export function secondsPerBeat(bpm) {
   if (!Number.isFinite(bpm) || bpm < 60 || bpm > 180)
     throw new RangeError("Tempo outside 60–180 BPM");

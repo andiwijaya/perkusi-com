@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { readFile, readdir, mkdir, rename, statfs } from "node:fs/promises";
 import { resolve, join, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { pagesReleaseMode } from "./pages-release-policy.mjs";
 import {
   workspaceRoot,
   inside,
@@ -59,6 +60,7 @@ export async function buildPayloadMinimum(
       "gamelan-public-candidate",
       "gamelan-v5-ux",
       "gamelan-v5-public-candidate",
+      "gamelan-v5-canonical-release",
     ].includes(mode)
       ? "flac"
       : "pcm");
@@ -82,7 +84,13 @@ export async function buildPayloadMinimum(
       bytes += a.bytes;
   }
   bytes += (await measureTree(root, join(root, "public"))).bytes;
-  if (["gamelan-v5-ux", "gamelan-v5-public-candidate"].includes(mode)) {
+  if (
+    [
+      "gamelan-v5-ux",
+      "gamelan-v5-public-candidate",
+      "gamelan-v5-canonical-release",
+    ].includes(mode)
+  ) {
     const notes = await load("internal/loop-instruments/manifest.json");
     bytes += (notes?.assets ?? []).reduce((n, a) => n + a.derivative.bytes, 0);
     bytes += (
@@ -156,6 +164,7 @@ export async function runLocalBuild({
       "gamelan-preview",
       "gamelan-v5-ux",
       "gamelan-v5-public-candidate",
+      "gamelan-v5-canonical-release",
       "audio-prototype",
     ].includes(mode)
   )
@@ -419,6 +428,7 @@ if (
       throw Error("Use --mode MODE --outDir PATH");
     options[args[i] === "--mode" ? "mode" : "outDir"] = args[++i];
   }
+  options.mode = pagesReleaseMode(options.mode);
   const result = await runLocalBuild(options);
   console.log(
     JSON.stringify({

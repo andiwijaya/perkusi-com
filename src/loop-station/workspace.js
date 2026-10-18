@@ -12,13 +12,18 @@ import { calibrateLoopProgramme } from "./programme-level.js";
 import { createPackFromCatalog } from "../audio/pack-catalog.js";
 import { originalRegistry } from "../project/original-registry.js";
 import { AudioMemory } from "../audio/audio-memory.js";
+import {
+  musicalPosition,
+  STOPPED_POSITION,
+} from "../audio/playback-position.js";
+import { playbackDisplay, positionDriver } from "../app/playback-position.js";
 import { InstrumentSampleCache } from "../audio/instrument-cache.js";
 import { LoopStationSession } from "./session.js";
 import { WorkspaceAudioOwner } from "./workspace-owner.js";
 import { freezeCaptureProject } from "./master-capture-clock.js";
 import {
   LoopHistory,
-  emptyLoopProject,
+  newRecordingProject,
   eightTrackProject,
   assignSource,
   instrumentSource,
@@ -34,6 +39,7 @@ import { commitLoopEdit } from "./persisted-edit.js";
 import { SharedLoopDraft } from "./shared-draft.js";
 import { legacyAudible } from "../project/instrument-mix.js";
 import { SelectedRecorder } from "./selected-recorder.js";
+import { armSelectedRecording } from "./record-intent.js";
 import { RecordPanel } from "./record-panel.js";
 import { alignRecordedClip } from "./phase-alignment.js";
 import { phaseCopy } from "./phase-copy.js";
@@ -61,6 +67,10 @@ import { finalCopy } from "./final-copy.js";
 import { FLAT_EQ, BYPASS_LIMITER, hasEQ, limiterEnabled } from "./fx-model.js";
 import captureModuleURL from "./capture-worklet.js?worker&url";
 import finiteReaderModuleURL from "./finite-reader-worklet.js?worker&url";
+import {
+  canonicalLocalSession,
+  canonicalStudioHref,
+} from "../studio/canonical-route.js";
 export const LOOP_DRAFT_KEY = "perkusi.loop-station.draft.v5",
   LOOP_INCOMING_KEY = "perkusi.loop-station.incoming.v4";
 const host = document.getElementById("loop-workspace");
@@ -124,14 +134,16 @@ function init() {
     storageReady = false,
     storageOperation = null,
     storageReceipt = false,
-    adoptedReceipt = false;
+    adoptedReceipt = false,
+    displayPosition = () => {},
+    positionLoop = null;
   const documentStore = new AudioDocument({ registry, memory }),
     deviceProfiles = new DeviceProfileStore(),
     trackWaveforms = new TrackWaveforms({ documentStore, memory });
   const markerKey = LOOP_DRAFT_KEY + ".audio-revision";
   const audioText = () => audioCopy[locale];
   const text = () => loopCopy[locale];
-  let initial = emptyLoopProject(registry);
+  let initial = newRecordingProject(registry);
   let draft;
   try {
     draft = localStorage.getItem(LOOP_DRAFT_KEY);
@@ -349,6 +361,51 @@ function init() {
     return audioOperation("portable-export", () =>
       portableDownload(history.project),
     );
+  }
+  async function continueMainStudio() {
+    const { CanonicalHandoffStore } =
+      await import("../project/canonical-handoff.js");
+    const inbox = new CanonicalHandoffStore({ memory });
+    try {
+      const transfer = await audioOperation(
+        "main-studio-handoff",
+        async (signal) => {
+          const snapshot = JSON.stringify(history.project);
+          let output, held, blob;
+          try {
+            if (history.project.assetRefs.length) {
+              if (!storageReady) fail("audioStorageUnavailable");
+              output = await documentStore.portable(history.project, {
+                signal,
+              });
+              blob = output.blob;
+            } else {
+              held = memory.reserve(
+                new TextEncoder().encode(snapshot).length * 2 + 4096,
+                "canonical/loop-handoff-blob",
+              );
+              blob = new Blob([snapshot], { type: "application/json" });
+            }
+            const staged = await inbox.stage(blob, {
+              kind: "loop",
+              title: history.project.title,
+              signal,
+            });
+            if (JSON.stringify(history.project) !== snapshot)
+              fail("routeConflict");
+            return staged;
+          } finally {
+            output?.release();
+            held?.release();
+          }
+        },
+      );
+      const href = new URL(canonicalStudioHref(locale), location.href);
+      href.searchParams.set("handoff", transfer.id);
+      await leave(href.href);
+    } finally {
+      inbox.close();
+    }
   }
   function adoptTake() {
     if (!storageReady) fail("audioStorageUnavailable");
@@ -787,6 +844,7 @@ function init() {
         engine.outputStage.setProgrammeGain(calibration.gain);
       }
       controller.play({ resume, bars });
+      return Object.freeze({ token });
     } finally {
       boundary.finish();
       activeStarts.delete(token);
@@ -917,6 +975,7 @@ function init() {
     host.dataset.state = s.status;
     host.dataset.saving = String(editing);
     host.dataset.rendering = String(finalPanel.pending);
+    positionLoop?.update();
     const t = text(),
       state = host.querySelector("#ls-state");
     if (state)
@@ -1031,6 +1090,14 @@ function init() {
       row.dataset.muted = String(
         track.mute ||
           (history.project.tracks.some((t) => t.solo) && !track.solo),
+      );
+      set(
+        "ls-main-studio",
+        busy ||
+          editing ||
+          !!storageOperation ||
+          audioOwner.hasTakeWork() ||
+          recovery !== null,
       );
       row.querySelector(".ls-track-state").textContent =
         t.state[st] ?? t.state.error;
@@ -1196,9 +1263,12 @@ function init() {
         }),
       );
     };
+    displayPosition = playbackDisplay(main, "ls-playhead", () => locale, {
+      unit: "beat",
+    });
     node("p", t.masterHint, main).className = "ls-note";
     button(tools, t.newProject, "ls-new", () =>
-      commit(() => emptyLoopProject(registry)),
+      commit(() => newRecordingProject(registry)),
     ).dataset.edit = "true";
     button(tools, t.demo, "ls-demo", () =>
       commit(() => eightTrackDemo(registry)),
@@ -1228,6 +1298,24 @@ function init() {
       "aria-describedby",
       "ls-json-note",
     );
+    if (
+      (import.meta.env.DEV ||
+        import.meta.env.CANONICAL_LOCAL_REVIEW ||
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
+      canonicalLocalSession(
+        true,
+        location.href,
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+      )
+    )
+      button(
+        tools,
+        locale === "en"
+          ? "Bring project to Rhythm Studio"
+          : "Bawa proyek ke Rhythm Studio",
+        "ls-main-studio",
+        continueMainStudio,
+      );
     button(tools, audioText().save, "ls-browser-save", () =>
       audioOperation("save-project", (signal) =>
         save(history.project, { signal }),
@@ -1291,7 +1379,7 @@ function init() {
             const raw = draftStore.read();
             history.commit(() =>
               raw === null
-                ? emptyLoopProject(registry)
+                ? newRecordingProject(registry)
                 : eightTrackProject(raw, registry),
             );
             draftStore.adopt(raw);
@@ -1310,7 +1398,7 @@ function init() {
         download(recovery, "perkusi-recovery-original.txt"),
       );
       button(recoveryBox, t.new, "ls-fresh", async () => {
-        const next = emptyLoopProject(registry);
+        const next = newRecordingProject(registry);
         await save(next, { backup: recovery });
         history = new LoopHistory(next, registry);
         recovery = null;
@@ -1741,12 +1829,44 @@ function init() {
   function historyReplace(url) {
     window.history.replaceState(null, "", url);
   }
+  positionLoop = positionDriver(
+    () => {
+      const p = controller?.playhead() ?? STOPPED_POSITION;
+      if (
+        p.state !== "stopped" ||
+        controller?.status !== "stopped" ||
+        engine?.context?.state !== "running" ||
+        !engine.transport.running ||
+        !audioOwner.keepTransportRunning() ||
+        audioOwner.boundaries.size
+      )
+        return p;
+      const frame = Math.floor(
+        (engine.context.currentTime - engine.transport.origin) *
+          engine.context.sampleRate,
+      );
+      return frame < 0
+        ? { ...STOPPED_POSITION, state: "waiting" }
+        : {
+            ...musicalPosition(
+              frame,
+              (engine.context.sampleRate * engine.transport.beatSeconds) / PPQ,
+            ),
+            state: "playing",
+          };
+    },
+    (p) => {
+      displayPosition(p);
+      trackWaveforms.position(p, controller?.plan?.clock);
+    },
+  );
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       void pause().catch(() => {});
     }
   });
   window.addEventListener("pagehide", () => {
+    positionLoop.dispose();
     storageOperation?.abort();
     void finalPanel.close();
     for (const url of portableExports.keys()) releasePortable(url);
@@ -1906,8 +2026,15 @@ function init() {
   }
   async function recordSelected(options) {
     if (!recorder) fail("instrumentNotReady");
-    if (!engine.transport.running) await play(false);
-    return recorder.arm(options);
+    return armSelectedRecording(
+      {
+        recorder,
+        owner: audioOwner,
+        start: () => play(false),
+        current: (receipt) => receipt?.token === intent,
+      },
+      options,
+    );
   }
   // Local candidate module bridge. Production gating above remains required.
   return {

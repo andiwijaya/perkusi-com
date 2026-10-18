@@ -2,6 +2,8 @@
 
 Browser-based Beatbox Playground, Rhythm Studio, Gamelan Preview and Loop Station Preview. Indonesian is the default; English has UI and metadata parity. V5 adds eight-track arranging, local recording, audio-bearing projects, mixer/FX and bounded WAV exports. Audio stays in the browser; no account or database is required. See the [V5 Preview release notes](docs/v5-preview-release.md) for the accepted scope and remaining device, latency and cultural limitations.
 
+The optional [unified Studio Preview](docs/v5-unified-preview-release.md) uses an explicit entry from the previous Studio, which remains the default. Existing projects are copied only by choice. New schema6 projects remain exportable through the retained recovery reader during compatible routing rollback.
+
 ## Development
 
 Requires Node.js 22.12+ (production pins 24.12.0) and npm.
@@ -38,6 +40,8 @@ Production: https://perkusi.com
 GitHub `main` → Cloudflare Pages Git integration → `perkusi.com`.
 
 Cloudflare Pages project: `perkusi-com`. Production branch: `main`. Build command: `npm run build`. Build output: `dist`. Repository root is the build root. Every push to `main` triggers a production deployment through the Git integration; do not replace this with manual uploads. The existing Cloudflare zone and nameservers are retained. Both apex and www have proxied CNAME records pointing to `perkusi-com.pages.dev`. The zone rule `Canonical www to perkusi.com` redirects `http*://www.perkusi.com/*` to `https://perkusi.com/${2}` with HTTP 301 and preserves the query string. HTTP and HTTPS www redirects were verified with a nested path and query.
+
+Local `npm run build` remains canonical-off. `scripts/pages-release-policy.mjs` deliberately selects `gamelan-v5-canonical-release` only for the existing Pages `main` build with its full commit identity; branch previews retain the requested mode. All public build modes retain the schema6 recovery entries, even when canonical editing is off. Future publications and rollbacks must keep this reader and visible access. Stock b0570f1 alone cannot read new schema6 projects; use the recovery-capable rollback plan in the unified Preview release notes.
 
 The existing Cloudflare Workers and Pages GitHub app uses **Only select repositories**. `perkusi-com` is included. New repositories must be explicitly added to this selection before their automatic deploys can work; listing a public repository in the Pages import screen alone does not grant webhook access.
 

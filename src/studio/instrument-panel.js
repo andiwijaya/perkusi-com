@@ -12,6 +12,8 @@ import {
 } from "../gamelan/instrument-demos.js";
 import { legacyAudible } from "../project/instrument-mix.js";
 import { readinessCopy } from "../gamelan/readiness-copy.js";
+import { playbackDisplay } from "../app/playback-position.js";
+import { STOPPED_POSITION } from "../audio/playback-position.js";
 
 export function initInstrumentStudio({
   host,
@@ -76,6 +78,29 @@ export function initInstrumentStudio({
   shareButton.type = "button";
   $("release").before(shareButton);
   let compositionUI;
+  const positionHost = document.createElement("div");
+  $("status").after(positionHost);
+  const displayPosition = playbackDisplay(positionHost, "is-playhead", locale);
+  let positionKey = "";
+  function renderPosition(position) {
+    const p = host.hidden ? STOPPED_POSITION : position;
+    displayPosition(p);
+    compositionUI?.renderPosition?.(p);
+    const key = [p.state, p.bar, p.step, renderedPage, locale()].join("/");
+    if (key === positionKey) return;
+    positionKey = key;
+    const active = p.state === "playing" && p.step !== null,
+      tick = active ? (p.bar * 16 + p.step) * (PPQ / 4) : -1;
+    for (const button of $("list").querySelectorAll("[data-event]")) {
+      const current =
+        active &&
+        Number(button.dataset.eventTick) >= tick &&
+        Number(button.dataset.eventTick) < tick + PPQ / 4;
+      button.classList.toggle("st-playhead", current);
+      if (current) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    }
+  }
   const blocked = (s) =>
     s.disposing ||
     s.disposed ||
@@ -201,6 +226,7 @@ export function initInstrumentStudio({
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.event = e.id;
+        button.dataset.eventTick = String(e.tick);
         button.setAttribute("aria-controls", "is-editor");
         const note = {
           instrument: descriptor.instrumentId,
@@ -348,6 +374,7 @@ export function initInstrumentStudio({
       render();
     },
     render,
+    renderPosition,
     get project() {
       return bridge?.toFocus();
     },

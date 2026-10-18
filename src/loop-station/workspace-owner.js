@@ -493,8 +493,16 @@ export class WorkspaceAudioOwner {
           : loopAdmission(plan)
       ).maxOwned,
       b = this.bounds();
+    // A loaded plan is a future playback requirement, not an owned voice.
+    // Playing may schedule more nodes; stopped/paused sessions cannot, but
+    // every ending or already scheduled row keeps its slot until release.
+    // A later Play still checks the render tickets through admitOrdinary.
+    const ordinary =
+      ["stopped", "paused"].includes(this.controller?.status)
+        ? this.controller.rows.size
+        : b.maxOwned;
     const current =
-      b.maxOwned +
+      ordinary +
       [
         ...this.claims,
         ...this.producers.values(),

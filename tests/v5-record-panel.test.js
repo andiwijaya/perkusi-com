@@ -66,6 +66,14 @@ test("mic layout extraction preserves full-panel record readiness and pending St
     "ready microphone can still record through full update",
   );
   assert.equal(node("mic-details").hidden, false);
+  panel.recordError = "recordHeadroom";
+  panel.update();
+  assert.equal(node("record-error").hidden, false);
+  assert.match(node("record-error").textContent, /Turunkan Master/);
+  assert.equal(node("record").disabled, false);
+  assert.equal(node("cancel").disabled, true);
+  assert.equal(node("wav").disabled, true);
+  assert.equal(node("mic-meter").value, 0.2);
   ready = false;
   owner.producers.clear();
   owner.micInput = null;
@@ -73,6 +81,11 @@ test("mic layout extraction preserves full-panel record readiness and pending St
   panel.update();
   assert.equal(node("record").disabled, true);
   assert.equal(node("mic-details").hidden, true);
+  assert.equal(
+    node("mic-meter").value,
+    0,
+    "inactive input cannot show a stale live level",
+  );
   owner.micInput = { state: "requesting" };
   owner.micStatus = "requesting";
   panel.pending = true;
@@ -83,6 +96,28 @@ test("mic layout extraction preserves full-panel record readiness and pending St
     "Stop remains reachable while an enable operation is pending",
   );
   assert.equal(node("mic-enable").disabled, true);
+});
+
+test("arm error explains headroom and retry clears the stale alert", async () => {
+  const failure = Object.assign(Error("headroom"), { code: "voiceHeadroom" });
+  const panel = {
+    bars: 2,
+    record: () => {
+      throw failure;
+    },
+  };
+  await assert.rejects(
+    RecordPanel.prototype.recordAttempt.call(panel),
+    (e) => e === failure,
+  );
+  assert.equal(panel.recordError, "recordHeadroom");
+  const handle = { state: "armed" };
+  panel.record = (options) => {
+    assert.deepEqual(options, { bars: 2, countInBars: 1 });
+    return handle;
+  };
+  assert.equal(await RecordPanel.prototype.recordAttempt.call(panel), handle);
+  assert.equal(panel.recordError, null);
 });
 
 test("rejected prepare refreshes shared selector status after pending clears", async () => {

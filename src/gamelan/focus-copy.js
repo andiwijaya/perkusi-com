@@ -56,6 +56,8 @@ export const focusCopy = {
       cacheMemoryLimit:
         "Bank ini belum muat dalam batas memori. Hentikan suara/ekspor yang aktif dan coba lagi.",
       audioPaused: "Audio dijeda. Tekan Aktifkan lagi sebelum memainkan nada.",
+      audioResumeFailed:
+        "Browser belum mengaktifkan audio. Ketuk Putar lagi untuk mencoba; proyek tetap disimpan.",
       instrumentNotReady: "Tunggu seluruh bank siap atau muat ulang.",
       assetFailed: "File audio gagal dimuat. Coba muat ulang.",
       assetHash:
@@ -149,6 +151,8 @@ export const focusCopy = {
       cacheMemoryLimit:
         "This bank cannot yet fit within the memory budget. Stop active voices/exports and retry.",
       audioPaused: "Audio is paused. Enable again before playing a note.",
+      audioResumeFailed:
+        "The browser could not activate audio. Tap Play again to retry; your project is retained.",
       instrumentNotReady: "Wait for the complete bank or reload it.",
       assetFailed: "An audio file could not load. Reload the bank.",
       assetHash:

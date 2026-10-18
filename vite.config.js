@@ -65,11 +65,17 @@ function missingPageMiddleware(server, preview = false) {
   };
 }
 export default defineConfig(({ mode }) => {
-  const v5UX = ["gamelan-v5-ux", "gamelan-v5-public-candidate"].includes(mode);
+  const canonicalRelease = mode === "gamelan-v5-canonical-release";
+  const v5UX = [
+    "gamelan-v5-ux",
+    "gamelan-v5-public-candidate",
+    "gamelan-v5-canonical-release",
+  ].includes(mode);
   const gamelan = gamelanBuildMode(mode) || v5UX;
   const publicCandidate = [
     "gamelan-public-candidate",
     "gamelan-v5-public-candidate",
+    "gamelan-v5-canonical-release",
   ].includes(mode);
   const delivery =
     process.env.PERKUSI_GAMELAN_DELIVERY ||
@@ -77,6 +83,12 @@ export default defineConfig(({ mode }) => {
   return {
     appType: "mpa",
     define: {
+      "import.meta.env.CANONICAL_PUBLIC_PREVIEW":
+        JSON.stringify(canonicalRelease),
+      // Private compiled review only. Public builds keep canonical routes off.
+      "import.meta.env.CANONICAL_LOCAL_REVIEW": JSON.stringify(
+        mode === "gamelan-v5-ux",
+      ),
       "import.meta.env.GAMELAN_V5_UX": JSON.stringify(v5UX),
       "import.meta.env.GAMELAN_BUILD": JSON.stringify(gamelan),
       "import.meta.env.GAMELAN_PUBLIC_BUILD": JSON.stringify(publicCandidate),
@@ -102,6 +114,12 @@ export default defineConfig(({ mode }) => {
             : gamelan
               ? {
                   ...buildEntries,
+                  ...(publicCandidate
+                    ? {
+                        recoveryId: "studio/recovery/index.html",
+                        recoveryEn: "en/studio/recovery/index.html",
+                      }
+                    : {}),
                   ...(v5UX
                     ? {
                         loopId: "loop-station/index.html",
@@ -130,6 +148,7 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: {
           order: "pre",
           handler(html, context) {
+            if (context.path.includes("/studio/recovery/")) return html;
             if (context.path.includes("/loop-station/"))
               return v5UX
                 ? publicCandidateHTML(html, {

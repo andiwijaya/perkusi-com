@@ -1,0 +1,58 @@
+[
+  {
+    "id": "schema0-beatbox",
+    "file": "schema0-beatbox.perkusi.json",
+    "schemaVersion": 0,
+    "bytes": 619,
+    "sha256": "ea7056a909082f2d1888435e0f3f3aebb45c5b6c776d65c14044064ad11d24f8"
+  },
+  {
+    "id": "schema1-zero-master",
+    "file": "schema1-zero-master.perkusi.json",
+    "schemaVersion": 1,
+    "bytes": 820,
+    "sha256": "acd9c708c7e27e0969831b7e22b567eb42f2677fc60dbe23f03c5368f77696a4"
+  },
+  {
+    "id": "schema2-rhythm-ab",
+    "file": "schema2-rhythm-ab.perkusi.json",
+    "schemaVersion": 2,
+    "bytes": 5341,
+    "sha256": "eebb071af45ce65b0b7855511ee5a1d0ebd23f326c042a98bc85abef9a151f08"
+  },
+  {
+    "id": "schema3-fifteen-lanes",
+    "file": "schema3-fifteen-lanes.perkusi.json",
+    "schemaVersion": 3,
+    "bytes": 12755,
+    "sha256": "7c0e19e3f46effcd083339f705c14cf901323d9a08d92cf32af6fcfca0545ba7"
+  },
+  {
+    "id": "schema4-multibar",
+    "file": "schema4-multibar.perkusi.json",
+    "schemaVersion": 4,
+    "bytes": 20062,
+    "sha256": "e73c06bb10f34e8c203854dbe328cd1791e7dd7e3cc59b5a406964774cd13ae5"
+  },
+  {
+    "id": "schema4-independent-clocks",
+    "file": "schema4-independent-clocks.perkusi.json",
+    "schemaVersion": 4,
+    "bytes": 20061,
+    "sha256": "8f256d73a2478a02147c62f0411a3a8314beb3bfe9923b585a1b2336cf45893b"
+  },
+  {
+    "id": "schema5-eq-overdub-alignment",
+    "file": "schema5-eq-overdub-alignment.perkusi.json",
+    "schemaVersion": 5,
+    "bytes": 25805,
+    "sha256": "7338102be371bb77ce4e8225d5fb98d47553c2b5e45112a2bebf4219c2f95058"
+  },
+  {
+    "id": "schema5-nonzero-offset",
+    "file": "schema5-nonzero-offset.perkusi.json",
+    "schemaVersion": 5,
+    "bytes": 25020,
+    "sha256": "664e7a52ffb36562fb86680569f547583a33894fec4d88c7b7bb915054e6d952"
+  }
+]

@@ -24,6 +24,8 @@ const pairs = {
   pause: ["Jeda", "Pause"],
   stop: ["Kembali ke awal", "Return to start"],
   demo: ["Muat demo", "Load demo"],
+  canonicalEntry: ["Studio terpadu Preview", "Unified Studio Preview"],
+  canonicalRecovery: ["Pemulihan proyek Preview", "Preview project recovery"],
   clear: ["Kosongkan pola", "Clear pattern"],
   kit: ["Kit suara", "Sound kit"],
   demoKind: ["Demo groove", "Demo groove"],

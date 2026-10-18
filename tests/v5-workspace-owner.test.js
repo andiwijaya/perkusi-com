@@ -31,6 +31,80 @@ const param = () => ({
     this.calls.push(["cancel", t]);
   },
 });
+
+test("stopped warm plan does not reserve future playback voices during export; ending rows still own slots", async () => {
+  const f = await fixture({ voices: 9, peak: 0.01 });
+  try {
+    const plan = f.session.plan;
+    assert.equal(f.owner.bounds().maxOwned, 9);
+    assert.throws(() => f.owner.reserveRender(plan), { code: "voiceLimit" });
+    f.context.holdEnded = true;
+    f.session.stop();
+    assert.equal(f.session.rows.size, 9);
+    assert.throws(() => f.owner.reserveRender(plan), { code: "voiceLimit" });
+    // A stop request alone is not a release receipt. Count remaining owners,
+    // including future-scheduled nodes, until their real ended callbacks run.
+    for (const s of f.context.sources.slice(0, 2)) s.onended();
+    assert.equal(f.session.rows.size, 7);
+    const overlapping = f.owner.reserveRender(plan);
+    assert.equal(f.owner.renders.size, 1);
+    overlapping.release();
+    for (const s of f.context.sources) s.onended?.();
+    await f.session.waitVoices();
+    for (const owners of [f.owner.claims, f.owner.playbacks, f.owner.renders]) {
+      const claim = { voices: 8 };
+      owners.add(claim);
+      assert.throws(() => f.owner.reserveRender(plan), { code: "voiceLimit" });
+      owners.delete(claim);
+    }
+    f.owner.producers.set("track-2", { voices: 8 });
+    assert.throws(() => f.owner.reserveRender(plan), { code: "voiceLimit" });
+    f.owner.producers.delete("track-2");
+    for (let cycle = 0; cycle < 3; cycle++) {
+      const ticket = f.owner.reserveRender(plan);
+      assert.throws(() => f.owner.reserveRender(plan), { code: "voiceLimit" });
+      assert.throws(() => f.session.play(), { code: "voiceLimit" });
+      ticket.release();
+      ticket.release();
+      f.context.holdEnded = false;
+      f.session.play();
+      if (cycle % 2) f.session.pause();
+      else f.session.stop();
+      await tick();
+      await f.session.waitVoices();
+      assert.equal(f.owner.renders.size, 0);
+      assert.equal(f.session.rows.size, 0);
+    }
+  } finally {
+    await f.cleanup();
+  }
+});
+
+test("Loop playhead follows the fixed audio clock with pause freeze and a real tail interval", async () => {
+  const f = await fixture();
+  try {
+    const before = JSON.stringify(f.document),
+      origin = f.session.transport.origin;
+    assert.equal(f.session.playhead().state, "waiting");
+    f.context.currentTime = origin + 33295 / 48000;
+    assert.equal(f.session.playhead().step, 8);
+    assert.equal(f.session.playhead().state, "playing");
+    f.context.currentTime = origin + 70000 / 48000;
+    assert.equal(f.session.playhead().state, "tail");
+    assert.equal(f.session.playhead().step, null);
+    assert.equal(f.session.playhead().phase, 1);
+    f.session.pause();
+    const p = f.session.playhead();
+    f.context.currentTime += 1;
+    assert.deepEqual(f.session.playhead(), p);
+    assert.equal(p.state, "paused");
+    f.session.stop();
+    assert.equal(f.session.playhead().step, null);
+    assert.equal(JSON.stringify(f.document), before);
+  } finally {
+    await f.cleanup();
+  }
+});
 class Node extends EventTarget {
   constructor(context) {
     super();

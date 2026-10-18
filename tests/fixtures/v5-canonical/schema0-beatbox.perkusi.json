@@ -1,0 +1,37 @@
+ 
+{
+  "format": "perkusi-project",
+  "schemaVersion": 0,
+  "title": "Asli — irama 0",
+  "packId": "original-groove",
+  "packVersion": "0.1.0-candidate",
+  "bpm": 96,
+  "volume": 0.17,
+  "layers": {
+    "kick": {
+      "enabled": true,
+      "variant": 1
+    },
+    "snare": {
+      "enabled": false,
+      "variant": 2
+    },
+    "hat": {
+      "enabled": true,
+      "variant": 1
+    },
+    "vocal-bass": {
+      "enabled": false,
+      "variant": 2
+    },
+    "hum": {
+      "enabled": true,
+      "variant": 1
+    },
+    "percussion-fx": {
+      "enabled": false,
+      "variant": 2
+    }
+  },
+  "exportBars": 4
+}

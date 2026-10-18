@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Preview project recovery · Perkusi.com</title>
+    <link rel="canonical" href="https://perkusi.com/en/studio/recovery/" />
+    <link
+      rel="alternate"
+      hreflang="id"
+      href="https://perkusi.com/studio/recovery/"
+    />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://perkusi.com/en/studio/recovery/"
+    />
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a id="recovery-legacy" href="/en/studio/?workspace=legacy&amp;lang=en"
+          >Previous Studio</a
+        ><a
+          id="recovery-preview"
+          href="/en/studio/?candidate=canonical&amp;lang=en"
+          >Return to Studio</a
+        ><a id="recovery-language" href="/studio/recovery/">Bahasa Indonesia</a>
+      </nav>
+      <h1 id="recovery-title">Recover saved Preview projects</h1>
+      <p id="recovery-intro"></p>
+      <label id="recovery-list-label" for="recovery-list">Saved projects</label
+      ><select id="recovery-list">
+        <option value="current">Current project</option></select
+      ><button id="recovery-read" type="button">Read saved project</button
+      ><button id="recovery-next" type="button" hidden>Next</button
+      ><label id="recovery-file-label" for="recovery-file"
+        >Open a backup file</label
+      ><input id="recovery-file" type="file" accept=".perkusi,.json" />
+      <h2 id="recovery-project"></h2>
+      <p id="recovery-status" role="status" aria-live="polite"></p>
+      <button id="recovery-download" type="button" disabled>
+        Download complete .perkusi</button
+      ><button id="recovery-original" type="button" disabled>
+        Download original source
+      </button>
+      <footer><a href="/en/privacy/">Privacy</a> · Perkusi.com Preview</footer>
+    </main>
+    <script type="module" src="/src/studio/canonical-recovery.js"></script>
+  </body>
+</html>

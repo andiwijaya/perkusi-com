@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Pemulihan proyek Preview · Perkusi.com</title>
+    <link rel="canonical" href="https://perkusi.com/studio/recovery/" />
+    <link
+      rel="alternate"
+      hreflang="id"
+      href="https://perkusi.com/studio/recovery/"
+    />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://perkusi.com/en/studio/recovery/"
+    />
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a id="recovery-legacy" href="/studio/?workspace=legacy&amp;lang=id"
+          >Studio sebelumnya</a
+        ><a
+          id="recovery-preview"
+          href="/studio/?candidate=canonical&amp;lang=id"
+          >Kembali ke Studio</a
+        ><a id="recovery-language" href="/en/studio/recovery/">English</a>
+      </nav>
+      <h1 id="recovery-title">Pulihkan proyek Preview tersimpan</h1>
+      <p id="recovery-intro"></p>
+      <label id="recovery-list-label" for="recovery-list"
+        >Proyek tersimpan</label
+      ><select id="recovery-list">
+        <option value="current">Proyek saat ini</option></select
+      ><button id="recovery-read" type="button">Baca proyek tersimpan</button
+      ><button id="recovery-next" type="button" hidden>Berikutnya</button
+      ><label id="recovery-file-label" for="recovery-file"
+        >Buka berkas cadangan</label
+      ><input id="recovery-file" type="file" accept=".perkusi,.json" />
+      <h2 id="recovery-project"></h2>
+      <p id="recovery-status" role="status" aria-live="polite"></p>
+      <button id="recovery-download" type="button" disabled>
+        Unduh .perkusi lengkap</button
+      ><button id="recovery-original" type="button" disabled>
+        Unduh sumber asli
+      </button>
+      <footer>
+        <a href="/privacy.html?lang=id">Privasi</a> · Perkusi.com Preview
+      </footer>
+    </main>
+    <script type="module" src="/src/studio/canonical-recovery.js"></script>
+  </body>
+</html>

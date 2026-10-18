@@ -346,6 +346,27 @@ body.v5-gamelan-page {
   width: 24px;
   min-height: 24px;
 }
+.gs-grid [data-gs-step].st-playhead,
+.combined-grid [data-step].st-playhead,
+.combined-note.st-playhead,
+.event-list button.st-playhead {
+  box-shadow: inset 0 0 0 3px var(--st-gold, #f2c66c);
+}
+.gs-grid th.st-playhead,
+.combined-head .st-playhead {
+  color: var(--st-gold, #f2c66c);
+  background: #3c3420;
+}
+.combined-head span {
+  text-align: center;
+  font-weight: 700;
+  padding: 8px 2px;
+}
+.combined-chain [data-combined-chain].st-playhead {
+  color: var(--st-gold, #f2c66c);
+  outline: 2px solid var(--st-gold, #f2c66c);
+  outline-offset: 2px;
+}
 .v5-gamelan .gs-grid-scroll {
   max-width: 100%;
   overflow-x: auto;
@@ -410,4 +431,9 @@ body.v5-gamelan-page {
 }
 .v5-gamelan .combined-mix {
   grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+}
+
+.v5-gamelan .studio-page .combined-grid button[data-step] {
+  padding-inline: 4px;
+  white-space: nowrap;
 }
