@@ -576,7 +576,11 @@ progress {
   padding: 8px;
 }
 .event-list button {
+  flex: 0 0 auto;
+  min-width: 0;
   text-align: left;
+  line-height: 1.4;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .instrument-studio form {

@@ -65,13 +65,19 @@ function missingPageMiddleware(server, preview = false) {
   };
 }
 export default defineConfig(({ mode }) => {
-  const gamelan = gamelanBuildMode(mode);
-  const publicCandidate = mode === "gamelan-public-candidate";
+  const v5UX = ["gamelan-v5-ux", "gamelan-v5-public-candidate"].includes(mode);
+  const gamelan = gamelanBuildMode(mode) || v5UX;
+  const publicCandidate = [
+    "gamelan-public-candidate",
+    "gamelan-v5-public-candidate",
+  ].includes(mode);
   const delivery =
-    process.env.PERKUSI_GAMELAN_DELIVERY || (publicCandidate ? "flac" : "pcm");
+    process.env.PERKUSI_GAMELAN_DELIVERY ||
+    (publicCandidate || v5UX ? "flac" : "pcm");
   return {
     appType: "mpa",
     define: {
+      "import.meta.env.GAMELAN_V5_UX": JSON.stringify(v5UX),
       "import.meta.env.GAMELAN_BUILD": JSON.stringify(gamelan),
       "import.meta.env.GAMELAN_PUBLIC_BUILD": JSON.stringify(publicCandidate),
       "import.meta.env.GAMELAN_DELIVERY": JSON.stringify(
@@ -96,6 +102,12 @@ export default defineConfig(({ mode }) => {
             : gamelan
               ? {
                   ...buildEntries,
+                  ...(v5UX
+                    ? {
+                        loopId: "loop-station/index.html",
+                        loopEn: "en/loop-station/index.html",
+                      }
+                    : {}),
                   gamelanId: "gamelan/index.html",
                   gamelanEn: "en/gamelan/index.html",
                   gamelanCreditsId: "gamelan/credits/index.html",
@@ -109,6 +121,7 @@ export default defineConfig(({ mode }) => {
         ? [
             gamelanPreviewAssets(root, {
               delivery,
+              localV5: v5UX,
             }),
           ]
         : []),
@@ -117,18 +130,27 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: {
           order: "pre",
           handler(html, context) {
+            if (context.path.includes("/loop-station/"))
+              return v5UX
+                ? publicCandidateHTML(html, {
+                    loop: true,
+                    locale: context.path.startsWith("/en/") ? "en" : "id",
+                  })
+                : html;
             const match = html.match(
               /<!-- perkusi-page:(home|beatbox|studio|privacy|notFound):(id|en) -->/,
             );
             let rendered = match ? renderDocument(match[1], match[2]) : html;
-            if (publicCandidate)
+            if (publicCandidate || v5UX)
               rendered = publicCandidateHTML(rendered, {
+                v5UX,
                 page: match?.[1] || null,
                 locale:
                   match?.[2] || (context.path.startsWith("/en/") ? "en" : "id"),
                 credits: context.path.includes("/credits/"),
               });
-            return mode === "gamelan-preview" && match?.[1] === "studio"
+            return (mode === "gamelan-preview" || (v5UX && !publicCandidate)) &&
+              match?.[1] === "studio"
               ? rendered.replace(
                   "<head>",
                   '<head><meta name="robots" content="noindex,nofollow">',

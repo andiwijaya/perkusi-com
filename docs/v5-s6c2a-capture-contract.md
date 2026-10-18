@@ -1,0 +1,31 @@
+# S6C2A: skip-link closure candidate and canonical capture-clock spike
+
+15October2026, after independent limited ACCEPT of the three C1 repairs at ZIP13e8a84e65c649753926963b6cbb0b87448ec70fb35b2fcc3c18800f2390a1e0. Local only. This checkpoint does not complete S6C/V5 or authorize microphone/header/upload/deploy.
+
+The P3 skip-link fix is a three-line shared CSS change: an unfocused absolute link is translated by its own100% intrinsic height above top0; keyboard focus restores transform:none at top12px. It remains keyboard reachable, visibly focused and targets main. Pointer brand/locale/menu and keyboard skip are exercised at100/200/300% ID/EN. Current source P2 protections are unchanged.
+
+## Clock adapter, not a product recorder
+
+`freezeCaptureProject` returns a new validated schema5 manifest with the already accepted fixed-bar policy; it never changes a running transport, immutable original text or PCM. A manifest with existing recordings cannot be silently converted from a musical clock. Rate and active looping recording geometry must match; incompatible old133179-frame two-bar material is preserved/rejected rather than repaired.
+
+`MasterCaptureClock` adapts the existing LoopClock/CaptureSession interface to this exact stored bar quantum and the caller's existing Transport/currentTime. Every1/2/4/8bar window is bars*framesPerBar; count-in is an integer number of that same bar. Start/end are offset from the same integral transport origin. Tempo mismatch, non-integral epoch, suspended/stopped state and invalid geometry reject before a plan is returned. Returned bpm remains nominal; effectiveBpm explicitly describes the frozen period. No per-take re-rounding, pitch change, resample, crop or pad. Caller must freeze/load before arming, and cancel capture on global stop/seek/dispose; this small adapter is not that integrated capture owner.
+
+No record button, new input permission, microphone, portable take export or waveform is added to the product. The adapter is currently imported only by tests and separate QA. Default and ordinary opt-in app entry graphs exclude it. Existing S5CaptureSession/Worklet/TakePool, C1playback/session/shared-draft/schema and all assets are unchanged. Actual low-level QA captures a deterministic stereo buffer while8real existing sample tracks use the same context, transport, frozen manifest and memory ledger. Captured-loop output is measured into a muted QA sink. App admission and QA observer/source buffers are explicitly distinct; joint capture-owner voice/headroom admission, per-track routing and live recording UI remain future gates.
+
+## Native gate: HOLD
+
+Five focused tests pass, including two rates/six tempos/1-2-4-8bar/count-in/distant epochs; old duration rounding mismatch; owner-state/rate/epoch guards; incompatible recordings/input preservation; variable-block exact PCM close/repeat. Full native integration does not pass all browsers.
+
+Firefox completes all8windows at48k/44.1k. Independent Python recomputes every original sample and first two repeats from the known QA source; exact Float32 matches and wrong10ms phase controls reject. No hardware/listening claim.
+
+Chromium reproduces a production-worklet capture frameGap and/or a nonmatching repeat block. The sequential output recorder uses the same disclosed pre-music-only startup-anchor/full-PCM method as C1; no post-music correction and no product guard was weakened. Independent Edge reanalysis finds capture exact and128frames wrong in each output channel (one128-frame quantum), at repeat indices108005..108132, while the canonical stored period is66590frames. Additional QA-only diagnostic worklet copying the production algorithm shows a stale raw timestamp: expected179328, reported179200, but input0.119140625 matches the sequential position rather than the label's0.05859375. This is evidence of a mismatch between raw stamp and samples, not a proven browser-only root cause or a safe workaround for unknown mic input. Original product worker is not patched or relabeled accepted.
+
+A native-label-indexed observer initially also failed geometry in Chromium; retaining sequential output and comparing the full waveform distinguishes that observer limitation from actual wrong output. Initial simultaneous runs, isolated runs and diagnostic results remain separate. Early cleanup measurements were taken before native closed events; the final helper awaits worker.closed after context closure and verifies declared memory zero. No foreign lease or caller context is released prematurely by product code.
+
+Do not enable capture UI or broaden audio integration until the new Chromium counterexamples are understood and repaired with an authoritative per-quantum frame/phase contract, preserving detection of actual gaps. Do not ignore currentFrame errors, pad missing data, hide mismatched samples or claim a silent loop is successful. The smaller next audio checkpoint should reproduce the stale-label/one-quantum repeat failure before a narrowly reviewed worklet change, then repeat both-rate windows, partial/cancel/ownership/overdub guards and independent full PCM comparison. The earlier independent303sec stage remains interrupted240sec; no new independent long-run claim follows here.
+
+## Remaining full V5 work
+
+Legacy Repeat remains HOLD: existing finite end-faded legacy PCM cannot be looped as natural carry. A continuous original voice/choke/mastering adapter or proven equivalent representation is still required. This capture-clock spike does not remove or close that P0. Record count-in UX, per-track capture/close-repeat routing, nondestructive overdub/history, global stop/seek cancellation, waveform, EQ/limiter, guitar/suling and three starter projects, durable recorded bytes/portable bundle/final mixed WAV, actual mic permission/header/calibration, cultural/listening/Safari/physical-device and release gates remain open. Synthetic capture only; real input/monitoring remains unauthorized and UNVERIFIED.
+
+Deliver P3-only53-file source ZIP for focused independent closure and a separate56-file capture-clock spike ZIP labeledHOLD, plus retained native failure/partial/output and Python evidence. Keep accepted C1/S5/S6B archives and the three closed P2 regressions intact. No stage/commit/push/deploy/Actions/security/header/upload action.

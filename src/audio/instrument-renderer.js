@@ -8,6 +8,13 @@ import { fail } from "../project/instrument-contract.js";
 import { OwnedOutput } from "./owned-output.js";
 import { prepareLegacyBus } from "./legacy-bus.js";
 import { addInstrumentFrames, renderYield } from "./frame-dsp.js";
+import { gamelanPlaybackScale } from "./gamelan-level.js";
+import { programmeSample } from "./programme-output.js";
+import {
+  ProgrammeMeter,
+  programmeGain,
+  PROGRAMME_SCRATCH_BYTES,
+} from "./programme-level.js";
 
 export const RENDER_CHUNK_FRAMES = 65536;
 export const MAX_RENDER_SECONDS = 90;
@@ -125,6 +132,8 @@ export async function renderInstrumentWav(
     yieldTask = renderYield,
     onProgress = () => {},
     attribution = "",
+    matchProgramme = false,
+    analysisOnly = false,
   },
 ) {
   cancelled(signal);
@@ -139,7 +148,10 @@ export async function renderInstrumentWav(
       );
     metadata = wavAttributionChunk(attribution);
     const encodedBytes = 44 + plan.frames * 4 + metadata.length;
-    encoded = memory.reserve(encodedBytes * 2, "WAV staging + Blob copy");
+    encoded = memory.reserve(
+      analysisOnly ? 4096 : encodedBytes * 2,
+      "WAV staging + Blob copy",
+    );
   } catch (error) {
     metadataMemory?.release();
     throw error;
@@ -149,92 +161,147 @@ export async function renderInstrumentWav(
     energy = 0,
     nonzero = false,
     passes = 0,
-    legacy = null;
+    legacy = null,
+    meterLease;
   try {
     legacy = await prepareLegacyBus(plan.project, { memory, rate, signal });
-    const wav = instrumentWavHeader(plan.frames, rate, metadata);
-    for (let start = 0; start < plan.frames; start += RENDER_CHUNK_FRAMES) {
-      cancelled(signal);
-      const frames = Math.min(RENDER_CHUNK_FRAMES, plan.frames - start),
-        mixMemory = memory.reserve(frames * 8, "render accumulator");
-      const mixed = [new Float32Array(frames), new Float32Array(frames)];
-      try {
-        if (legacy)
-          for (let c = 0; c < 2; c++) {
-            const data = legacy.buffer.getChannelData(c);
-            mixed[c].set(
-              data.subarray(start, Math.min(start + frames, data.length)),
-            );
-          }
-        const sounding = plan.voices.filter(
-            (v) => v.startFrame < start + frames && v.endFrame > start,
-          ),
-          groups = new Map();
-        for (const v of sounding) {
-          const list = groups.get(v.key) ?? [];
-          list.push(v);
-          groups.set(v.key, list);
-        }
-        for (const [, voices] of [...groups].sort(([a], [b]) =>
-          a.localeCompare(b),
-        )) {
-          cancelled(signal);
-          const first = voices[0];
-          let loaded, held, scratch;
-          try {
-            loaded = await cache.acquire(
-              first.bankId,
-              first.version,
-              first.sampleId,
-              { signal },
-            );
-            held = loaded.retain();
-            loaded.release();
-            loaded = null;
-            cancelled(signal);
-            scratch = memory.reserve(8192, "deterministic voice/frame scratch");
-            for (const voice of voices) {
-              addInstrumentFrames(
-                mixed,
-                held.buffer,
-                voice,
-                start,
-                rate,
-                plan.project.composition.master.volume,
-              );
-              passes++;
-              await yieldTask();
-              cancelled(signal);
-            }
-          } finally {
-            scratch?.release();
-            held?.release();
-            loaded?.release();
-          }
-        }
-
-        for (let i = 0; i < frames; i++)
-          for (let c = 0; c < 2; c++) {
-            const v = mixed[c][i];
-            if (!Number.isFinite(v) || Math.abs(v) > 0.950001)
-              fail("unsafeOutput");
-            peak = Math.max(peak, Math.abs(v));
-            energy += v * v;
-            const sample = Math.round(v * 32767);
-            nonzero ||= sample !== 0;
-            wav.view.setInt16(44 + ((start + i) * 2 + c) * 2, sample, true);
-          }
-        onProgress({
-          phase: "rendering",
-          value: (start + frames) / plan.frames,
-        });
-      } finally {
-        mixMemory.release();
+    const wav = analysisOnly
+      ? null
+      : instrumentWavHeader(plan.frames, rate, metadata);
+    if (matchProgramme || analysisOnly)
+      meterLease = memory.reserve(
+        PROGRAMME_SCRATCH_BYTES,
+        "programme-export-meter",
+      );
+    const meter =
+      matchProgramme || analysisOnly ? new ProgrammeMeter(rate) : null;
+    let calibration = { gain: 1, metrics: null };
+    const iterations = matchProgramme && !analysisOnly ? 2 : 1;
+    for (let iteration = 0; iteration < iterations; iteration++) {
+      if (iteration === 1) {
+        const metrics = meter.result();
+        calibration = {
+          gain: programmeGain(metrics, plan.project.composition.master.volume),
+          metrics,
+        };
+        peak = 0;
+        energy = 0;
       }
-      await yieldTask();
+      for (let start = 0; start < plan.frames; start += RENDER_CHUNK_FRAMES) {
+        cancelled(signal);
+        const frames = Math.min(RENDER_CHUNK_FRAMES, plan.frames - start),
+          mixMemory = memory.reserve(frames * 8, "render accumulator");
+        const mixed = [new Float32Array(frames), new Float32Array(frames)];
+        try {
+          if (legacy)
+            for (let c = 0; c < 2; c++) {
+              const data = legacy.buffer.getChannelData(c);
+              mixed[c].set(
+                data.subarray(start, Math.min(start + frames, data.length)),
+              );
+            }
+          const sounding = plan.voices.filter(
+              (v) => v.startFrame < start + frames && v.endFrame > start,
+            ),
+            groups = new Map();
+          for (const v of sounding) {
+            const list = groups.get(v.key) ?? [];
+            list.push(v);
+            groups.set(v.key, list);
+          }
+          for (const [, voices] of [...groups].sort(([a], [b]) =>
+            a.localeCompare(b),
+          )) {
+            cancelled(signal);
+            const first = voices[0];
+            let loaded, held, scratch;
+            try {
+              loaded = await cache.acquire(
+                first.bankId,
+                first.version,
+                first.sampleId,
+                { signal },
+              );
+              held = loaded.retain();
+              loaded.release();
+              loaded = null;
+              cancelled(signal);
+              scratch = memory.reserve(
+                8192,
+                "deterministic voice/frame scratch",
+              );
+              for (const voice of voices) {
+                addInstrumentFrames(
+                  mixed,
+                  held.buffer,
+                  {
+                    ...voice,
+                    mix: {
+                      ...voice.mix,
+                      volume:
+                        voice.mix.volume *
+                        gamelanPlaybackScale(
+                          registry.bank(voice.bankId, voice.version),
+                          held.metrics.peak,
+                        ),
+                    },
+                  },
+                  start,
+                  rate,
+                  plan.project.composition.master.volume,
+                );
+                passes++;
+                await yieldTask();
+                cancelled(signal);
+              }
+            } finally {
+              scratch?.release();
+              held?.release();
+              loaded?.release();
+            }
+          }
+
+          if (meter && iteration === 0) meter.push(mixed[0], mixed[1]);
+          for (let i = 0; i < frames; i++)
+            for (let c = 0; c < 2; c++) {
+              const raw = mixed[c][i] * calibration.gain,
+                v =
+                  matchProgramme && iteration === 1
+                    ? programmeSample(raw)
+                    : raw;
+              if (!Number.isFinite(v) || Math.abs(v) > 0.950001)
+                fail("unsafeOutput");
+              peak = Math.max(peak, Math.abs(v));
+              energy += v * v;
+              const sample = Math.round(v * 32767);
+              nonzero ||= sample !== 0;
+              if (wav)
+                wav.view.setInt16(44 + ((start + i) * 2 + c) * 2, sample, true);
+            }
+          onProgress({
+            phase: "rendering",
+            value: (iteration + (start + frames) / plan.frames) / iterations,
+          });
+        } finally {
+          mixMemory.release();
+        }
+        await yieldTask();
+      }
     }
     cancelled(signal);
     if (!nonzero) fail("emptyMix");
+    if (analysisOnly) {
+      const metrics = meter.result();
+      return {
+        frames: plan.frames,
+        sampleRate: rate,
+        peak,
+        programmeCalibration: {
+          gain: programmeGain(metrics, plan.project.composition.master.volume),
+          metrics,
+        },
+      };
+    }
     const blob = new Blob([wav.bytes], { type: "audio/wav" });
     completed = true;
     return Object.assign(new OwnedOutput(blob, encoded), {
@@ -244,9 +311,11 @@ export async function renderInstrumentWav(
       peak,
       rms: Math.sqrt(energy / plan.frames / 2),
       passes,
+      programmeCalibration: calibration,
     });
   } finally {
     legacy?.release();
+    meterLease?.release();
     // eslint-disable-next-line no-useless-assignment -- Drop the transient metadata before releasing its scratch admission.
     metadata = null;
     metadataMemory?.release();

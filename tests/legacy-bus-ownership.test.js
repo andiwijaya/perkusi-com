@@ -28,6 +28,9 @@ function fixture(t) {
       renders: 0,
       decodeGate: null,
       renderGate: null,
+      nativeCloseGate: null,
+      nativeRenders: 0,
+      contexts: [],
     };
   const pcm = (frames, rate, channels = 1) => ({
     length: frames,
@@ -56,38 +59,47 @@ function fixture(t) {
     connect() {},
     disconnect() {},
   });
-  const contextFactory = (frames, rate) => ({
-    sampleRate: rate,
-    currentTime: 0,
-    destination: {},
-    createGain: node,
-    createStereoPanner: node,
-    createWaveShaper: node,
-    createChannelMerger: node,
-    createBufferSource: () => ({
-      ...node(),
-      playbackRate: { value: 1 },
-      start() {},
-      stop() {},
-    }),
-    async decodeAudioData(data) {
-      state.decodes++;
-      await state.decodeGate?.promise;
-      return pcm(
-        Math.round(JSON.parse(new TextDecoder().decode(data)).seconds * rate),
-        rate,
-      );
-    },
-    async startRendering() {
-      state.renders++;
-      await state.renderGate?.promise;
-      return pcm(frames, rate, 2);
-    },
-  });
+  const contextFactory = (frames, rate) => {
+    const context = {
+      state: "suspended",
+      sampleRate: rate,
+      currentTime: 0,
+      destination: {},
+      createGain: node,
+      createStereoPanner: node,
+      createWaveShaper: node,
+      createChannelMerger: node,
+      createBufferSource: () => ({
+        ...node(),
+        playbackRate: { value: 1 },
+        start() {},
+        stop() {},
+      }),
+      async decodeAudioData(data) {
+        state.decodes++;
+        await state.decodeGate?.promise;
+        return pcm(
+          Math.round(JSON.parse(new TextDecoder().decode(data)).seconds * rate),
+          rate,
+        );
+      },
+      async startRendering() {
+        state.renders++;
+        state.nativeRenders++;
+        await state.renderGate?.promise;
+        await state.nativeCloseGate?.promise;
+        context.state = "closed";
+        return pcm(frames, rate, 2);
+      },
+    };
+    state.contexts.push(context);
+    return context;
+  };
   t.after(() => {
     globalThis.fetch = prior;
     state.decodeGate?.resolve();
     state.renderGate?.resolve();
+    state.nativeCloseGate?.resolve();
   });
   const composition = newComposition();
   composition.patterns[0].steps.kick[0] = 0.2;
@@ -201,4 +213,64 @@ test("Combined successful legacy preparation shrinks to one borrowed Float32 bus
     () => bus.buffer,
     (e) => e.code === "memoryReleased",
   );
+});
+
+test("successful canonical preparation keeps admission and withholds the bus until its native decoder context closes", async (t) => {
+  const f = fixture(t),
+    memory = new AudioMemory();
+  f.state.nativeCloseGate = deferred();
+  let published = false;
+  const job = prepareLegacyBus(f.project, {
+    memory,
+    rate: 44100,
+    contextFactory: f.contextFactory,
+    yieldTask: f.yieldTask,
+  }).then((bus) => {
+    published = true;
+    return bus;
+  });
+  await until(() => f.state.nativeRenders === 1);
+  assert.equal(published, false);
+  assert.equal(f.state.contexts[0].state, "suspended");
+  assert.ok(memory.snapshot().bytes > Math.round(2.5 * 44100) * 8 + 4096);
+  f.state.nativeCloseGate.resolve();
+  const bus = await job;
+  assert.equal(f.state.contexts[0].state, "closed");
+  assert.equal(f.state.nativeRenders, 1);
+  assert.equal(memory.snapshot().bytes, bus.frames * 8 + 4096);
+  bus.release();
+  assert.equal(memory.snapshot().bytes, 0);
+});
+
+test("cancelled preparation settles physical decode and native close before rejecting or releasing its admission", async (t) => {
+  const f = fixture(t),
+    memory = new AudioMemory(),
+    abort = new AbortController();
+  f.state.decodeGate = deferred();
+  f.state.nativeCloseGate = deferred();
+  let rejected = false;
+  const job = prepareLegacyBus(f.project, {
+    memory,
+    rate: 48000,
+    signal: abort.signal,
+    contextFactory: f.contextFactory,
+    yieldTask: f.yieldTask,
+  });
+  const checked = assert
+    .rejects(job, (e) => e.code === "cancelled")
+    .then(() => {
+      rejected = true;
+    });
+  await until(() => f.state.decodes >= 2);
+  abort.abort();
+  f.state.decodeGate.resolve();
+  await until(() => f.state.nativeRenders === 1);
+  assert.equal(rejected, false);
+  assert.ok(memory.snapshot().bytes > 0);
+  assert.equal(f.state.contexts[0].state, "suspended");
+  f.state.nativeCloseGate.resolve();
+  await checked;
+  assert.equal(f.state.contexts[0].state, "closed");
+  assert.equal(f.state.nativeRenders, 1);
+  assert.equal(memory.snapshot().bytes, 0);
 });

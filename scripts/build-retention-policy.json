@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "source": "qa-artifacts/disk-retention-policy-2026-10-17/SAFE-ALLOWLIST.json",
+  "sourceSHA256": "118cc427e3e81d2db09be90ff3388c71685702b05c6de2b8ff6c4827ce30c95f",
+  "rules": [
+    {
+      "copyRelativeRoot": "source-forms/cdm-porto-candidate-1.0.0",
+      "extension": ".zip",
+      "canonicalRelativeRoot": "internal/gamelan-source-forms/archives",
+      "mapping": "same relative filename"
+    },
+    {
+      "copyRelativeRoot": "sounds/cdm-porto-flac-candidate/44100",
+      "extension": ".flac",
+      "canonicalRelativeRoot": "internal/gamelan-flac/audio/44100",
+      "mapping": "same relative filename"
+    },
+    {
+      "copyRelativeRoot": "sounds/cdm-porto-flac-candidate/48000",
+      "extension": ".flac",
+      "canonicalRelativeRoot": "internal/gamelan-flac/audio/48000",
+      "mapping": "same relative filename"
+    }
+  ]
+}

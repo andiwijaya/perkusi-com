@@ -40,7 +40,7 @@ const pcm = (frames = 8, rate = 48000, level = 0.01) => ({
 });
 const body = new Uint8Array(32).fill(17);
 function catalog(rate) {
-  return {
+  const result = {
     banks: [
       {
         id: "cdm-pelog",
@@ -70,12 +70,21 @@ function catalog(rate) {
       },
     ],
   };
+  result.banks[0].samples.push({
+    ...result.banks[0].samples[0],
+    id: "s2",
+    instrumentId: "bonang-barung",
+    assetPath: "/sounds/qa-second.wav",
+  });
+  return result;
 }
-function fixture(t) {
+function fixture(t, { recordedSet = false, level = 0.01 } = {}) {
   const oldFetch = globalThis.fetch,
     oldOffline = globalThis.OfflineAudioContext;
   const controls = {
     contexts: [],
+    sourceStarts: [],
+    gains: [],
     closeGate: null,
     resumeGate: null,
     renderGate: null,
@@ -138,20 +147,26 @@ function fixture(t) {
             },
             addEventListener() {},
             removeEventListener() {},
-            createGain: node,
+            createGain() {
+              const gain = node();
+              controls.gains.push(gain);
+              return gain;
+            },
             createBufferSource() {
               return {
                 playbackRate: { value: 1 },
                 connect() {},
                 disconnect() {},
-                start() {},
+                start(when) {
+                  controls.sourceStarts.push(when);
+                },
                 stop() {
                   queueMicrotask(() => this.onended?.());
                 },
               };
             },
             async decodeAudioData() {
-              return pcm();
+              return pcm(8, 48000, level);
             },
           };
           this.context = c;
@@ -178,8 +193,12 @@ function fixture(t) {
     };
     return engine;
   };
+  const catalogs = { 44100: catalog(44100), 48000: catalog(48000) };
+  if (recordedSet)
+    for (const cat of Object.values(catalogs))
+      for (const bank of cat.banks) bank.setId = "cdm-porto-recorded-candidate";
   const session = new InstrumentSession({
-    catalogs: { 44100: catalog(44100), 48000: catalog(48000) },
+    catalogs,
     engineFactory,
     renderYield: async () => {
       controls.renderEntered = true;
@@ -203,6 +222,78 @@ function fixture(t) {
   };
   return { session, controls, record };
 }
+
+test("quiet trusted Gamelan audition applies fixed gain and counts it before the tenth overlapping strike", async (t) => {
+  const { session, controls } = fixture(t, { recordedSet: true, level: 0.16 });
+  await session.enable({ gesture: true });
+  for (let n = 0; n < 9; n++) session.strike("cdm-pelog", "s1");
+  assert(controls.gains.filter((g) => g.gain.value === 4).length >= 9);
+  assert.throws(() => session.strike("cdm-pelog", "s1"), {
+    code: "voiceHeadroom",
+  });
+});
+
+test("explicit Stop resets resume/transport without altering events and refuses during a recording", async (t) => {
+  const { session, record } = fixture(t);
+  await record();
+  const text = session.toJSON();
+  await session.replay();
+  session.audioContext.currentTime = session.snapshot().clock.origin + 0.01;
+  session.pause();
+  assert.equal(session.snapshot().canResume, true);
+  session.stopPlayback();
+  assert.equal(session.snapshot().canResume, false);
+  assert.equal(session.snapshot().clock.beat, 0);
+  assert.equal(session.snapshot().clock.running, false);
+  assert.equal(session.toJSON(), text);
+  await session.enable({ gesture: true });
+  await session.startRecording();
+  assert.throws(() => session.stopPlayback(), { code: "recordBusy" });
+  session.finishRecording();
+});
+
+test("periodic replay advances fixed cycles and paused repeat resumes without rewriting the source", async (t) => {
+  const { session, record, controls } = fixture(t);
+  await record();
+  const text = session.toJSON();
+  controls.sourceStarts = [];
+  await session.replay({ repeat: true });
+  assert.equal(session.snapshot().repeating, true);
+  assert.equal(controls.sourceStarts.length, 1);
+  const origin = controls.sourceStarts[0];
+  session.audioContext.currentTime = origin + 1.9;
+  await until(() => controls.sourceStarts.length >= 2);
+  assert.ok(Math.abs(controls.sourceStarts[1] - origin - 2.5) < 1 / 48000);
+  session.audioContext.currentTime = origin + 2.1;
+  session.pause();
+  assert.equal(session.snapshot().canResume, true);
+  await session.enable({ gesture: true });
+  await session.replay({ resume: true });
+  assert.equal(session.snapshot().repeating, true);
+  assert.equal(session.toJSON(), text);
+  session.stopPlayback();
+  assert.equal(session.snapshot().repeating, false);
+  assert.equal(session.snapshot().canResume, false);
+  assert.equal(session.toJSON(), text);
+});
+
+test("multi-instrument paused repeat transitions release previous replay leases as well as focus", async (t) => {
+  const { session, record } = fixture(t);
+  await record();
+  const p = structuredClone(session.project);
+  p.events.push({ ...p.events[0], id: "second", sampleId: "s2", tick: 960000 });
+  session.importJSON(JSON.stringify(p));
+  const text = session.toJSON();
+  for (let i = 0; i < 3; i++) {
+    await session.enable({ gesture: true });
+    await session.replay({ repeat: true });
+    session.audioContext.currentTime = session.snapshot().clock.origin + 0.1;
+    session.pause();
+  }
+  await session.closeAudio();
+  assert.equal(session.memory.snapshot().bytes, 0);
+  assert.equal(session.toJSON(), text);
+});
 
 test("S3 export lock precedes async close and observer reentry; failures/cancel allow a later export", async (t) => {
   const { session, controls, record } = fixture(t);
@@ -487,5 +578,22 @@ test("V4 live play-along mute changes are atomic, preserve events/focus, refuse 
   assert.deepEqual(session.project.instrumentMix, []);
   assert.deepEqual(session.project.events, []);
   await session.dispose();
+  assert.equal(session.memory.snapshot().bytes, 0);
+});
+
+test("repeat fails closed after a missed scheduling horizon without catching up late hits or changing the project", async (t) => {
+  const { session, record, controls } = fixture(t);
+  await record();
+  const text = session.toJSON();
+  controls.sourceStarts = [];
+  await session.replay({ repeat: true });
+  const origin = controls.sourceStarts[0];
+  session.audioContext.currentTime = origin + 10;
+  await until(() => !session.snapshot().repeating);
+  assert.equal(session.snapshot().error, "replayLate");
+  assert.equal(controls.sourceStarts.length, 1);
+  assert.equal(session.toJSON(), text);
+  session.stopPlayback();
+  await session.closeAudio();
   assert.equal(session.memory.snapshot().bytes, 0);
 });

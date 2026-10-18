@@ -48,6 +48,10 @@ export function initLocalization() {
     document.querySelectorAll("[data-gamelan-link]").forEach((el) => {
       el.href = locale === "en" ? "/en/gamelan/" : "/gamelan/?lang=id";
     });
+    document.querySelectorAll("[data-loop-link]").forEach((el) => {
+      el.href =
+        locale === "en" ? "/en/loop-station/" : "/loop-station/?lang=id";
+    });
     document.querySelectorAll("[data-home-anchor]").forEach((el) => {
       el.href =
         page === "home"

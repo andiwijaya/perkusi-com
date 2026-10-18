@@ -9,6 +9,8 @@ import {
   trackGain,
 } from "./sequencing.js";
 import { disconnectVoice } from "./voice.js";
+import { calibratePCM, PROGRAMME_SCRATCH_BYTES } from "./programme-level.js";
+import { programmeSample } from "./programme-output.js";
 
 export function studioExportBudget(
   project,
@@ -55,6 +57,7 @@ export class StudioWavExporter {
     retainedBytes = () => 0,
     bankOptions,
     extensions = null,
+    matchProgramme = false,
     contextFactory = (frames) => new OfflineAudioContext(2, frames, 48000),
   }) {
     Object.assign(this, {
@@ -65,6 +68,7 @@ export class StudioWavExporter {
       bankOptions,
       contextFactory,
       extensions,
+      matchProgramme,
     });
     this.active = null;
     this.disposed = false;
@@ -83,6 +87,14 @@ export class StudioWavExporter {
       ),
       controller = new AbortController();
     this.active = controller;
+    if (
+      this.matchProgramme &&
+      budget.bytes + PROGRAMME_SCRATCH_BYTES > 32 * 1024 * 1024
+    ) {
+      this.active = null;
+      throw new ProjectError("exportLimit");
+    }
+    if (this.matchProgramme) budget.bytes += PROGRAMME_SCRATCH_BYTES;
     const { signal } = controller;
     const cancelExternal = () => controller.abort();
     pcmOptions?.signal?.addEventListener("abort", cancelExternal);
@@ -201,6 +213,19 @@ export class StudioWavExporter {
       throwIfCancelled(signal);
       const pcm = await context.startRendering();
       throwIfCancelled(signal);
+      const calibration = this.matchProgramme
+        ? calibratePCM(
+            [pcm.getChannelData(0), pcm.getChannelData(1)],
+            rate,
+            budget.valid.master.volume,
+          )
+        : { gain: 1, metrics: null };
+      if (this.matchProgramme && !pcmOptions?.uncalibrated)
+        for (let c = 0; c < 2; c++) {
+          const a = pcm.getChannelData(c);
+          for (let i = 0; i < a.length; i++)
+            a[i] = programmeSample(a[i] * calibration.gain);
+        }
       // Optional admitted Float32 bus keeps the original score and DSP. The
       // ordinary V1-V3 WAV path and its 48kHz encoding remain unchanged.
       const encoded = pcmOptions
@@ -209,6 +234,7 @@ export class StudioWavExporter {
       throwIfCancelled(signal);
       return {
         ...encoded,
+        programmeCalibration: calibration,
         seconds: budget.seconds,
         estimatedBytes: budget.bytes,
         project: budget.valid,

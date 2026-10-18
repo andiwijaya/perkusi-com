@@ -46,7 +46,7 @@ export function gamelanDeliveryAliases(root, delivery) {
 }
 export function gamelanPreviewAssets(
   root,
-  { delivery: deliveryKind = "pcm" } = {},
+  { delivery: deliveryKind = "pcm", localV5 = false } = {},
 ) {
   gamelanDeliveryAliases(root, deliveryKind);
   let output;
@@ -56,7 +56,9 @@ export function gamelanPreviewAssets(
       output = gamelanOutputPath(
         root,
         config.build.outDir,
-        config.mode === "gamelan-public-candidate",
+        ["gamelan-public-candidate", "gamelan-v5-public-candidate"].includes(
+          config.mode,
+        ),
       );
     },
     async writeBundle() {
@@ -174,6 +176,32 @@ export function gamelanPreviewAssets(
           );
       }
       // Carry complete notices, source metadata and reference recipes with the files.
+      // New note recordings are installed only in the explicit V5 distribution.
+      // The manifest links every derivative to the preserved licensed original.
+      if (localV5) {
+        const m = await load("internal/loop-instruments/manifest.json");
+        for (const a of m.assets)
+          await add(
+            "internal/loop-instruments/" + a.derivative.path,
+            "/sounds/loop-instruments/" +
+              a.profileRate +
+              "/" +
+              a.sampleId +
+              ".wav",
+            a.derivative,
+          );
+        const walkNotes = async (dir) => {
+          for (const entry of await readdir(resolve(root, dir), {
+            withFileTypes: true,
+          })) {
+            const p = dir + "/" + entry.name;
+            if (entry.isDirectory()) await walkNotes(p);
+            else if (entry.isFile() && !p.includes("/audio/"))
+              await add(p, "/" + p);
+          }
+        };
+        await walkNotes("internal/loop-instruments");
+      }
       for (const dir of [
         "gamelan-delivery",
         ...(deliveryKind === "flac" ? ["gamelan-flac"] : []),

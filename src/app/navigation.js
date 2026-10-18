@@ -7,13 +7,12 @@ export function initNavigation() {
     navigation.classList.toggle("is-open", expanded);
   };
   const close = () => setExpanded(false);
-  toggle.addEventListener("click", () =>
-    setExpanded(toggle.getAttribute("aria-expanded") !== "true"),
-  );
-  navigation.addEventListener("click", (event) => {
+  const onToggle = () =>
+    setExpanded(toggle.getAttribute("aria-expanded") !== "true");
+  const onNavigate = (event) => {
     if (event.target.closest("a")) close();
-  });
-  document.addEventListener("keydown", (event) => {
+  };
+  const onKey = (event) => {
     if (
       event.key === "Escape" &&
       toggle.getAttribute("aria-expanded") === "true"
@@ -21,5 +20,13 @@ export function initNavigation() {
       close();
       toggle.focus();
     }
-  });
+  };
+  toggle.addEventListener("click", onToggle);
+  navigation.addEventListener("click", onNavigate);
+  document.addEventListener("keydown", onKey);
+  return () => {
+    toggle.removeEventListener("click", onToggle);
+    navigation.removeEventListener("click", onNavigate);
+    document.removeEventListener("keydown", onKey);
+  };
 }

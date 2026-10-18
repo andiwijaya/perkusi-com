@@ -1,6 +1,6 @@
 # Perkusi.com
 
-Browser-based Beatbox Playground with six original characters and two procedural vocal-percussion variations per role. Indonesian is the default; English has full UI and metadata parity. This uncommitted V1 release candidate is ready for independent engineering review. Listening, physical-device QA and production release verification remain pending; Studio and other tools remain upcoming.
+Browser-based Beatbox Playground, Rhythm Studio, Gamelan Preview and Loop Station Preview. Indonesian is the default; English has UI and metadata parity. V5 adds eight-track arranging, local recording, audio-bearing projects, mixer/FX and bounded WAV exports. Audio stays in the browser; no account or database is required. See the [V5 Preview release notes](docs/v5-preview-release.md) for the accepted scope and remaining device, latency and cultural limitations.
 
 ## Development
 

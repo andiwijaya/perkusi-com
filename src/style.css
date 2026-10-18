@@ -49,7 +49,8 @@ button:focus-visible {
 }
 .skip-link {
   position: absolute;
-  top: -60px;
+  top: 0;
+  transform: translateY(-100%);
   left: 20px;
   background: var(--green);
   color: #121513;
@@ -58,6 +59,7 @@ button:focus-visible {
 }
 .skip-link:focus {
   top: 12px;
+  transform: none;
 }
 .site-header {
   min-height: 108px;
@@ -416,6 +418,65 @@ h2 {
   align-items: center;
   justify-content: flex-start;
   color: var(--green);
+}
+/* First-party bilah/rack symbol; inherits the other tool cards' icon slot. */
+body[data-v5-ux] .tool-card {
+  display: flex;
+  flex-direction: column;
+}
+body[data-v5-ux] .card-bottom {
+  margin-top: auto;
+}
+.gamelan-symbol {
+  position: relative;
+  gap: 4px;
+  padding-bottom: 12px;
+}
+.gamelan-symbol i {
+  width: 10px;
+  height: 44px;
+  background: #c3f36b22;
+  border: 1px solid #a8ce71;
+  border-radius: 3px;
+}
+.gamelan-symbol i:nth-child(2) {
+  height: 42px;
+  background: var(--green);
+}
+.gamelan-symbol i:nth-child(3) {
+  height: 40px;
+}
+.gamelan-symbol i:nth-child(4) {
+  height: 38px;
+}
+.gamelan-symbol i:nth-child(5) {
+  height: 36px;
+  background: #c3f36b55;
+}
+.gamelan-symbol i:nth-child(6) {
+  height: 34px;
+}
+.gamelan-symbol i:nth-child(7) {
+  height: 32px;
+}
+.gamelan-symbol::before {
+  content: "";
+  position: absolute;
+  top: 70px;
+  left: -3px;
+  width: 102px;
+  height: 9px;
+  border: 1px solid #a8ce71;
+  border-radius: 3px;
+}
+.gamelan-symbol::after {
+  content: "";
+  position: absolute;
+  top: 79px;
+  left: 3px;
+  width: 90px;
+  height: 9px;
+  border-inline: 1px solid #a8ce71;
 }
 .drum-symbol {
   gap: 6px;

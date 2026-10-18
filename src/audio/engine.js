@@ -126,23 +126,28 @@ export class AudioEngine {
     this.disposePromise = null;
     this.disposalClosePending = false;
     this.closeRetryPromise = null;
+    this.contextStateBoundary = null;
     this.onContextState = () => {
       if (this.context.state !== "running") {
-        this.playbackRequested = false;
-        ++this.operation;
-        this.startPromise = null;
-        for (const bank of this.banks) bank.cancelLoading();
-        this.rememberSequencePosition(this.context.currentTime);
-        if (this.transport.running)
-          this.transport.pause(this.context.currentTime);
-        this.clearTimer();
-        this.clearVoices();
-        this.pending.clear();
-        this.status =
-          this.context.state === "closed" ? "error" : this.context.state;
-        if (this.context.state === "closed") this.error = "context-closed";
-        if (this.context.state === "closed")
-          for (const capture of [...this.captures]) capture.dispose();
+        const contain = () => {
+          this.playbackRequested = false;
+          ++this.operation;
+          this.startPromise = null;
+          for (const bank of this.banks) bank.cancelLoading();
+          this.rememberSequencePosition(this.context.currentTime);
+          if (this.transport.running)
+            this.transport.pause(this.context.currentTime);
+          this.clearTimer();
+          this.clearVoices();
+          this.pending.clear();
+          this.status =
+            this.context.state === "closed" ? "error" : this.context.state;
+          if (this.context.state === "closed") this.error = "context-closed";
+          if (this.context.state === "closed")
+            for (const capture of [...this.captures]) capture.dispose();
+        };
+        if (this.contextStateBoundary) this.contextStateBoundary(contain);
+        else contain();
       }
     };
   }

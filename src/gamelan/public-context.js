@@ -6,7 +6,11 @@ export function gamelanHostAllowed(host, publicBuild = false) {
   );
 }
 export function gamelanBuildMode(mode) {
-  return mode === "gamelan-preview" || mode === "gamelan-public-candidate";
+  return [
+    "gamelan-preview",
+    "gamelan-public-candidate",
+    "gamelan-v5-public-candidate",
+  ].includes(mode);
 }
 export function gamelanPublicMetadata(
   locale,
@@ -39,7 +43,30 @@ export function gamelanPublicMetadata(
   };
 }
 export function syncGamelanPublicMetadata(locale, options) {
-  const meta = gamelanPublicMetadata(locale, options);
+  return syncPublicMetadata(gamelanPublicMetadata(locale, options));
+}
+export function loopPublicMetadata(locale) {
+  const en = locale === "en",
+    path = "/loop-station/",
+    heading = en ? "Loop Station - Preview" : "Loop Station - Pratinjau";
+  return {
+    heading,
+    title: "Perkusi - " + heading,
+    description: en
+      ? "Arrange eight tracks, record local takes and save projects with audio. Monitoring is optional; device timing and cultural validation remain unverified."
+      : "Susun delapan track, rekam take lokal dan simpan proyek dengan audio. Monitoring bersifat opsional; timing perangkat dan validasi budaya belum terverifikasi.",
+    canonical: "https://perkusi.com" + (en ? "/en" : "") + path,
+    alternates: {
+      id: "https://perkusi.com" + path,
+      en: "https://perkusi.com/en" + path,
+      "x-default": "https://perkusi.com" + path,
+    },
+  };
+}
+export function syncLoopPublicMetadata(locale) {
+  return syncPublicMetadata(loopPublicMetadata(locale));
+}
+function syncPublicMetadata(meta) {
   document.title = meta.title;
   const set = (tag, attribute, value, attributes) => {
     let node = document.head.querySelector(

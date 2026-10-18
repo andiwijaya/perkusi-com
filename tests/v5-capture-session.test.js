@@ -1,0 +1,230 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { CaptureSession } from "../src/loop-station/capture-session.js";
+import { LoopClock } from "../src/loop-station/loop-clock.js";
+import { TakePool } from "../src/loop-station/take-pool.js";
+import { AudioMemory } from "../src/audio/audio-memory.js";
+import { Transport } from "../src/audio/transport.js";
+
+class Context extends EventTarget {
+  state = "running";
+  sampleRate = 48000;
+  currentTime = 0;
+  audioWorklet = { addModule: async () => {} };
+}
+class Node extends EventTarget {
+  constructor(context) {
+    super();
+    this.context = context;
+    this.port = {
+      sent: [],
+      postMessage(m) {
+        this.sent.push(m);
+      },
+      close() {
+        this.closed = true;
+      },
+    };
+  }
+  connect() {}
+  disconnect() {
+    this.disconnected = true;
+  }
+  send(m) {
+    this.port.onmessage({ data: m });
+  }
+}
+function fixture() {
+  const context = new Context(),
+    memory = new AudioMemory(),
+    pool = new TakePool(memory),
+    transport = new Transport();
+  transport.start(0);
+  const node = new Node(context),
+    plan = { startFrame: 1000, endFrame: 1256, sampleRate: 48000 };
+  const options = {
+    clock: new LoopClock(context, transport),
+    memory,
+    pool,
+    destination: { context },
+    moduleURL: "https://local.test/capture.js",
+    plan,
+    nodeFactory: () => node,
+  };
+  return { context, memory, pool, node, plan, options };
+}
+const chunk = () => ({
+  type: "pcm",
+  sequence: 0,
+  offset: 0,
+  frames: 128,
+  buffers: [new Float32Array(128).fill(0.25).buffer],
+});
+test("partial take and worker/native ownership settle independently and never claim durable save", async () => {
+  const f = fixture(),
+    s = await CaptureSession.open(f.options);
+  f.node.send(chunk());
+  f.node.send({
+    type: "complete",
+    ...f.plan,
+    capacity: 256,
+    channels: 1,
+    frames: 128,
+    reason: "userStop",
+    blockSizes: [128],
+  });
+  const take = await s.ready;
+  assert.equal(take.frames, 128);
+  assert.equal(take.partial, true);
+  assert.equal(take.persistence, "memory-only");
+  assert.ok(f.memory.snapshot().bytes > take.bytes);
+  f.node.send({ type: "closed" });
+  await s.closed;
+  assert.equal(f.memory.snapshot().bytes, take.bytes);
+  f.pool.release(take.id);
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
+test("context suspension preserves acknowledged prefix and pending worker budget until closed/ack", async () => {
+  const f = fixture(),
+    s = await CaptureSession.open(f.options);
+  f.node.send(chunk());
+  f.context.state = "suspended";
+  f.context.dispatchEvent(new Event("statechange"));
+  assert.equal(s.take, undefined);
+  assert.equal(s.state, "closing");
+  assert.ok(f.memory.snapshot().bytes > 256 * 4);
+  assert.equal(f.node.disconnected, true);
+  f.context.state = "closed";
+  f.context.dispatchEvent(new Event("statechange"));
+  const t = await s.ready;
+  assert.equal(t.reason, "suspended");
+  assert.equal(t.frames, 128);
+  assert.equal(s.outcome.workerFlushConfirmed, false);
+  assert.equal(s.outcome.deliveryProof, "confirmed-context-close-prefix");
+  await s.closed;
+  assert.equal(f.memory.snapshot().bytes, t.bytes);
+  f.pool.release(t.id);
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
+
+test("suspend defers immutable publication and accepts the ordered late suffix before confirmed close", async () => {
+  const f = fixture(),
+    s = await CaptureSession.open(f.options);
+  const first = chunk();
+  first.frames = 127;
+  first.buffers = [new Float32Array(127).fill(0.125).buffer];
+  f.node.send(first);
+  f.context.state = "suspended";
+  f.context.dispatchEvent(new Event("statechange"));
+  assert.equal(s.take, undefined);
+  f.node.send({
+    type: "pcm",
+    sequence: 1,
+    offset: 127,
+    frames: 65,
+    buffers: [new Float32Array(65).fill(0.75).buffer],
+  });
+  assert.equal(s.acknowledgedFrames, 192);
+  assert.deepEqual(f.node.port.sent.at(-1), { type: "ack", sequence: 1 });
+  f.context.state = "closed";
+  f.context.dispatchEvent(new Event("statechange"));
+  const take = await s.ready;
+  assert.equal(take.frames, 192);
+  assert.equal(take.partial, true);
+  assert.equal(take.reason, "suspended");
+  const copy = f.pool.copyPCM(take.id);
+  assert.equal(copy.buffer.byteLength, 192 * 4);
+  assert([...new Float32Array(copy.buffer, 0, 127)].every((x) => x === 0.125));
+  assert([...new Float32Array(copy.buffer, 127 * 4)].every((x) => x === 0.75));
+  copy.release();
+  await s.closed;
+  f.pool.release(take.id);
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
+test("module-load cancellation, foreign memory owner and constructor failure do not leak or arm", async () => {
+  const f = fixture(),
+    abort = new AbortController();
+  let resolve;
+  f.context.audioWorklet.addModule = () =>
+    new Promise((r) => {
+      resolve = r;
+    });
+  const pending = CaptureSession.open({ ...f.options, signal: abort.signal });
+  abort.abort();
+  resolve();
+  await assert.rejects(pending, /captureCancelled/);
+  assert.equal(f.memory.snapshot().bytes, 0);
+  await assert.rejects(
+    CaptureSession.open({
+      ...f.options,
+      pool: new TakePool(new AudioMemory()),
+    }),
+    /invalidCaptureSession/,
+  );
+  const g = fixture();
+  await assert.rejects(
+    CaptureSession.open({
+      ...g.options,
+      nodeFactory() {
+        throw Error("native creation failed");
+      },
+    }),
+  );
+  assert.equal(g.memory.snapshot().bytes, 0);
+});
+test("processor error and invalid completion preserve prior takes, resolve and release only terminated worker", async () => {
+  const f = fixture(),
+    s = await CaptureSession.open(f.options);
+  f.node.send(chunk());
+  f.node.dispatchEvent(new Event("processorerror"));
+  const t = await s.ready;
+  await s.closed;
+  assert.equal(t.reason, "processorError");
+  assert.equal(f.memory.snapshot().bytes, t.bytes);
+  f.pool.release(t.id);
+  const g = fixture(),
+    other = await CaptureSession.open(g.options);
+  g.node.send({ type: "complete", frames: 256 });
+  assert.equal(await other.ready, null);
+  assert.equal(other.state, "closing");
+  g.node.send({ type: "closed" });
+  await other.closed;
+  assert.equal(g.memory.snapshot().bytes, 0);
+});
+
+test("failed take adoption reports error instead of a retained take and leaves an earlier recording intact", async () => {
+  const f = fixture();
+  const reservation = f.pool.reserve({
+    capacity: 256,
+    channels: 1,
+    sampleRate: 48000,
+  });
+  const previous = f.pool.adopt(
+    reservation,
+    { ...reservation, startFrame: 0, frames: 256, reason: "complete" },
+    [new Float32Array(256).fill(0.5).buffer],
+  );
+  f.pool.adopt = () => {
+    throw Error("simulated transfer failure");
+  };
+  const s = await CaptureSession.open(f.options);
+  f.node.send(chunk());
+  f.node.send({
+    type: "complete",
+    ...f.plan,
+    capacity: 256,
+    channels: 1,
+    frames: 128,
+    reason: "userStop",
+    blockSizes: [128],
+  });
+  assert.equal(await s.ready, null);
+  assert.equal(s.state, "error");
+  assert.equal(s.outcome.reason, "takeAdoptionFailed");
+  assert.equal(f.pool.describe(previous.id).peak, 0.5);
+  f.node.send({ type: "closed" });
+  await s.closed;
+  assert.equal(f.memory.snapshot().bytes, previous.bytes);
+  f.pool.release(previous.id);
+  assert.equal(f.memory.snapshot().bytes, 0);
+});

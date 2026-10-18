@@ -9,9 +9,25 @@ import { validateFocus, focusSelection } from "../gamelan/instrument-focus.js";
 import { ExtensionOwners } from "./extension-owners.js";
 import { instrumentVoice, INSTRUMENT_LEVEL } from "./instrument-voice.js";
 import { renderInstrumentWav, plannedHeadroom } from "./instrument-renderer.js";
+import { gamelanPlaybackScale } from "./gamelan-level.js";
+import {
+  createProgrammeOutputStage,
+  isProgrammeOutputStage,
+} from "./programme-output.js";
+import {
+  auditionGain,
+  auditionMetricsReady,
+  PROGRAMME_SCRATCH_BYTES,
+} from "./programme-level.js";
 import { prepareLegacyBus } from "./legacy-bus.js";
 import { DAMP_SECONDS } from "./instrument-voice.js";
 import { groupMix } from "../project/instrument-mix.js";
+import {
+  gamelanRepeatPlan,
+  repeatedVoice,
+  repeatAdmission,
+  REPEAT_LOOKAHEAD,
+} from "../project/gamelan-repeat.js";
 import {
   emptyInstrumentTake,
   appendInstrumentEvent,
@@ -39,7 +55,19 @@ const defaultEngine = () =>
       undefined,
       (path) => "/sounds/original-groove/" + path.split("/").at(-1),
     ),
+    { outputStageFactory: createProgrammeOutputStage },
   );
+function auditionTrim(item, engine) {
+  if (!isProgrammeOutputStage(engine.outputStage)) return 1;
+  if (!auditionMetricsReady(item.lease.buffer)) fail("instrumentNotReady");
+  return (
+    auditionGain(
+      item.lease.buffer,
+      gamelanPlaybackScale(item.bank, item.lease.metrics.peak),
+      0.65,
+    ) / (engine.outputStage.programmeGain ?? 1)
+  );
+}
 
 // A candidate presentation of the existing engine's context/master/Transport.
 // No second live clock and no automatic AudioContext on construction.
@@ -85,6 +113,7 @@ export class InstrumentSession {
   #legacySource = null;
   #replaySettled = null;
   #resumeFrame = 0;
+  #resumeRepeat = false;
   #attributionFactory;
   #renderYield;
   constructor({
@@ -158,6 +187,7 @@ export class InstrumentSession {
       this.pause();
       this.#requested = { ...focus };
       this.#resumeFrame = 0;
+      this.#resumeRepeat = false;
     }
     if (
       this.#engine?.playbackRequested &&
@@ -265,11 +295,15 @@ export class InstrumentSession {
     if (!engine.playbackRequested) fail("cancelled");
     if (!this.#focus.length || focusChanged) {
       const cursor = this.#resumeFrame,
+        repeatCursor = this.#resumeRepeat,
         project = this.#project;
       await this.setFocus(this.#requested);
       // Reloading the same physical focus to re-enable audio must not erase
       // the paused arrangement position. Explicit focus/project edits still do.
-      if (project === this.#project) this.#resumeFrame = cursor;
+      if (project === this.#project) {
+        this.#resumeFrame = cursor;
+        this.#resumeRepeat = repeatCursor;
+      }
       this.#notify();
     }
     return this.snapshot();
@@ -283,6 +317,7 @@ export class InstrumentSession {
     const generation = ++this.#generation;
     this.#requested = { ...spec };
     this.#resumeFrame = 0;
+    this.#resumeRepeat = false;
     this.#error = null;
     this.#replay = null;
     this.#legacy = false;
@@ -320,6 +355,21 @@ export class InstrumentSession {
           lease: held,
           key: key(item.bank.id, item.descriptor.id),
         });
+        if (isProgrammeOutputStage(this.#engine.outputStage)) {
+          const meter = this.#memory.reserve(
+            PROGRAMME_SCRATCH_BYTES,
+            "prepared-audition-meter",
+          );
+          try {
+            auditionGain(
+              held.buffer,
+              gamelanPlaybackScale(item.bank, held.metrics.peak),
+              0.65,
+            );
+          } finally {
+            meter.release();
+          }
+        }
       }
       if (controller.signal.aborted || generation !== this.#generation)
         fail("cancelled");
@@ -405,8 +455,12 @@ export class InstrumentSession {
     const volume = this.#engine.volume,
       existing = [...this.#voices].reduce((n, v) => n + this.#voicePeak(v), 0),
       mix = spec?.mix ?? { volume: 1, pan: 0 },
+      playbackScale =
+        gamelanPlaybackScale(item.bank, item.lease.metrics.peak) *
+        (spec ? 1 : auditionTrim(item, this.#engine)),
       peak =
         item.lease.metrics.peak *
+        playbackScale *
         velocity *
         INSTRUMENT_LEVEL *
         volume *
@@ -421,6 +475,7 @@ export class InstrumentSession {
       peak,
       velocity,
       mix,
+      playbackScale,
       dynamicMix,
       voice: null,
       pendingPeak: null,
@@ -438,9 +493,9 @@ export class InstrumentSession {
         pan.connect(output);
         output = pan;
       }
-      if (spec && (mix.volume !== 1 || dynamicMix)) {
+      if (playbackScale !== 1 || (spec && (mix.volume !== 1 || dynamicMix))) {
         mixGain = this.audioContext.createGain();
-        mixGain.gain.value = mix.volume;
+        mixGain.gain.value = mix.volume * playbackScale;
         mixGain.connect(output);
         output = mixGain;
       }
@@ -504,6 +559,7 @@ export class InstrumentSession {
   }
   strike(bankId, sampleId, velocity = 1) {
     this.#assert();
+    if (this.#replay?.repeat) fail("recordBusy");
     if (this.#status !== "ready" || !finite(velocity, Number.MIN_VALUE, 1))
       fail("instrumentNotReady");
     const item = this.#focus.find((item) => item.key === key(bankId, sampleId));
@@ -555,13 +611,22 @@ export class InstrumentSession {
       )
         fail("recordBusy");
       const metrics = new Map(
-        this.#replayAssets.map((i) => [i.key, i.lease.metrics]),
+        this.#replayAssets.map((i) => [
+          i.key,
+          {
+            ...i.lease.metrics,
+            peak:
+              i.lease.metrics.peak *
+              gamelanPlaybackScale(i.bank, i.lease.metrics.peak),
+          },
+        ]),
       );
       const transitioning = new Map();
       for (const row of this.#voices)
         if (row.dynamicMix) {
           const denominator =
             row.item.lease.metrics.peak *
+            row.playbackScale *
             row.velocity *
             INSTRUMENT_LEVEL *
             this.#engine.volume *
@@ -614,12 +679,16 @@ export class InstrumentSession {
           const conservative = this.#voicePeak(row);
           param.cancelScheduledValues(now);
           param.setValueAtTime(param.value, now);
-          param.linearRampToValueAtTime(mix.volume, now + 0.004);
+          param.linearRampToValueAtTime(
+            mix.volume * row.playbackScale,
+            now + 0.004,
+          );
           row.peak = conservative;
           row.pendingPeak = {
             until: now + 0.004,
             next:
               row.item.lease.metrics.peak *
+              row.playbackScale *
               row.velocity *
               INSTRUMENT_LEVEL *
               this.#engine.volume *
@@ -685,6 +754,8 @@ export class InstrumentSession {
     )
       fail("recordBusy");
     if (this.#project.events.length >= 4000) fail("eventLimit");
+    this.#resumeFrame = 0;
+    this.#resumeRepeat = false;
     const generation = this.#generation;
     this.#when();
     this.#armingRecord = true;
@@ -760,6 +831,8 @@ export class InstrumentSession {
   clearRecording() {
     this.#assert();
     this.pause();
+    this.#resumeFrame = 0;
+    this.#resumeRepeat = false;
     const next = structuredClone(this.#project);
     next.events = [];
     next.banks = [];
@@ -849,17 +922,27 @@ export class InstrumentSession {
       }
       if (this.#replay) {
         const p = this.#replay;
-        while (
-          p.index < p.plan.voices.length &&
-          p.time +
-            Math.max(p.offset, p.plan.voices[p.index].startFrame) / this.#rate -
-            p.offset / this.#rate <
-            horizon
-        ) {
-          const v = p.plan.voices[p.index++],
-            item = this.#replayAssets.find((i) => i.key === v.key);
+        const ahead = p.repeat
+          ? this.audioContext.currentTime + REPEAT_LOOKAHEAD
+          : horizon;
+        let scheduled = 0;
+        while (p.repeat || p.index < p.plan.voices.length) {
+          const v = p.repeat
+            ? repeatedVoice(p.plan, p.cycle, p.index)
+            : p.plan.voices[p.index];
           const from = Math.max(p.offset, v.startFrame),
             when = p.time + (from - p.offset) / this.#rate;
+          if (when >= ahead) break;
+          p.index++;
+          if (p.repeat && p.index === p.plan.voices.length) {
+            p.index = 0;
+            p.cycle++;
+          }
+          if (v.endFrame <= p.offset) continue;
+          if (p.repeat && when < this.audioContext.currentTime - 0.01)
+            fail("replayLate");
+          if (++scheduled > 4096) fail("voiceLimit");
+          const item = this.#replayAssets.find((i) => i.key === v.key);
           this.#start(item, v.velocity, when, {
             record: false,
             spec: v,
@@ -872,6 +955,7 @@ export class InstrumentSession {
           }
         }
         if (
+          !p.repeat &&
           p.index === p.plan.voices.length &&
           this.#voices.size === 0 &&
           !this.#legacySource &&
@@ -880,6 +964,7 @@ export class InstrumentSession {
         ) {
           this.#replay = null;
           this.#resumeFrame = 0;
+          this.#resumeRepeat = false;
           this.#releaseReplay();
           this.#notify();
         }
@@ -894,7 +979,7 @@ export class InstrumentSession {
     this.#replayAssets.forEach((i) => i.lease.release());
     this.#replayAssets = [];
   }
-  async replay({ resume = false, playAlong = false } = {}) {
+  async replay({ resume = false, playAlong = false, repeat = false } = {}) {
     this.#assert();
     this.#when();
     if (
@@ -905,6 +990,9 @@ export class InstrumentSession {
       this.#replaySettled
     )
       fail("recordBusy");
+    if (typeof repeat !== "boolean") fail("invalidLoopPlan");
+    const repeatMode = resume ? this.#resumeRepeat : repeat;
+    if (repeatMode) playAlong = false;
     const offset = resume ? this.#resumeFrame : 0;
     let settled;
     this.#replaySettled = new Promise((r) => {
@@ -927,14 +1015,20 @@ export class InstrumentSession {
         )
       )
         this.#releaseFocus();
-      else this.#releaseReplay();
+      // Previous replay assets have their own leases, including paused tails.
+      // Voices have settled above; release these even when focus is also shed.
+      this.#releaseReplay();
       this.#cache.trim();
-      const originalPlan = takePlan(this.#project, this.#registry, this.#rate, {
-          includeMuted: playAlong,
-        }),
+      const originalPlan = repeatMode
+          ? gamelanRepeatPlan(this.#project, this.#registry, this.#rate)
+          : takePlan(this.#project, this.#registry, this.#rate, {
+              includeMuted: playAlong,
+            }),
         plan = {
           ...originalPlan,
-          voices: originalPlan.voices.filter((v) => v.endFrame > offset),
+          voices: repeatMode
+            ? originalPlan.voices
+            : originalPlan.voices.filter((v) => v.endFrame > offset),
         },
         items = [],
         metrics = new Map(),
@@ -971,12 +1065,22 @@ export class InstrumentSession {
             lease,
             key: v.key,
           });
-          metrics.set(v.key, lease.metrics);
+          metrics.set(v.key, {
+            ...lease.metrics,
+            peak:
+              lease.metrics.peak *
+              gamelanPlaybackScale(
+                this.#registry.bank(v.bankId, v.version),
+                lease.metrics.peak,
+              ),
+          });
         }
+        if (repeatMode) repeatAdmission(plan, metrics, this.#engine.volume);
         if (
+          !repeatMode &&
           plannedHeadroom(plan, metrics, this.#engine.volume) +
             (bus?.peak ?? 0) >
-          0.95
+            0.95
         )
           fail("voiceHeadroom");
         const edges = plan.voices
@@ -997,17 +1101,47 @@ export class InstrumentSession {
         )
           fail("cancelled");
         this.#replayAssets = items;
+        if (!resume && isProgrammeOutputStage(engine.outputStage)) {
+          const analysis = await renderInstrumentWav(this.#project, {
+            registry: this.#registry,
+            cache,
+            memory: this.#memory,
+            rate: this.#rate,
+            signal: controller.signal,
+            yieldTask: this.#renderYield,
+            analysisOnly: true,
+          });
+          if (
+            controller.signal.aborted ||
+            generation !== this.#generation ||
+            engine !== this.#engine
+          )
+            fail("cancelled");
+          engine.outputStage.setProgrammeGain(
+            analysis.programmeCalibration.gain,
+          );
+        }
         this.#engine.playbackRequested = true;
         const token = this.#owners.begin("instrument");
         this.#owners.adopt(token, () => this.#stopVoices());
-        const time = this.#when();
+        const time = repeatMode
+          ? Math.max(
+              this.#when(),
+              Math.ceil((engine.context.currentTime + 0.1) * this.#rate) /
+                this.#rate,
+            )
+          : this.#when();
         if (bus && offset < bus.frames) {
           const source = engine.context.createBufferSource();
           source.buffer = bus.buffer;
           source.playbackRate.value = 1;
           source.loop = false;
           // The legacy Float32 bus already includes its master and mastering.
-          source.connect(engine.context.destination);
+          source.connect(
+            isProgrammeOutputStage(engine.outputStage)
+              ? engine.outputStage.programmeInput
+              : engine.context.destination,
+          );
           this.#legacyBus = bus;
           this.#legacySource = source;
           const ownedBus = bus;
@@ -1040,7 +1174,22 @@ export class InstrumentSession {
         this.#engine.transport.position =
           offset / this.#rate / this.#engine.transport.beatSeconds;
         this.#engine.transport.start(time);
-        this.#replay = { plan, index: 0, time, offset, playAlong };
+        this.#replay = {
+          plan,
+          index: 0,
+          time,
+          offset,
+          playAlong,
+          repeat: repeatMode,
+          cycle: repeatMode
+            ? Math.max(
+                0,
+                Math.floor(offset / plan.periodFrames) -
+                  Math.ceil(plan.maxTailFrames / plan.periodFrames) -
+                  1,
+              )
+            : 0,
+        };
         this.#status = "ready";
         this.#startTimer();
         this.#pump();
@@ -1066,9 +1215,12 @@ export class InstrumentSession {
   }
   pause() {
     if (this.#disposed) return;
-    if (this.#replay && this.audioContext)
+    if (this.#replay && this.audioContext) {
+      this.#resumeRepeat = this.#replay.repeat === true;
       this.#resumeFrame = Math.min(
-        this.#replay.plan.frames - 1,
+        this.#resumeRepeat
+          ? Number.MAX_SAFE_INTEGER
+          : this.#replay.plan.frames - 1,
         this.#replay.offset +
           Math.max(
             0,
@@ -1077,6 +1229,7 @@ export class InstrumentSession {
             ),
           ),
       );
+    }
     if (this.#record && this.audioContext) {
       const now = this.audioContext.currentTime,
         notPlayed = new Set(
@@ -1118,6 +1271,16 @@ export class InstrumentSession {
       this.#timer = null;
     }
     this.#status = this.#focus.length ? "ready" : "needsAudio";
+    this.#notify();
+  }
+  stopPlayback() {
+    this.#assert();
+    if (this.#record || this.#armingRecord || this.#exportController)
+      fail("recordBusy");
+    this.pause();
+    this.#resumeFrame = 0;
+    this.#resumeRepeat = false;
+    this.#engine?.transport.reset();
     this.#notify();
   }
   async closeAudio() {
@@ -1180,6 +1343,7 @@ export class InstrumentSession {
     this.pause();
     ++this.#generation;
     this.#resumeFrame = 0;
+    this.#resumeRepeat = false;
     this.#project = project;
     this.#eventId = 0;
     this.#error = null;
@@ -1204,6 +1368,7 @@ export class InstrumentSession {
   }
   async exportWav({ pauseAndRelease = false, onProgress = () => {} } = {}) {
     this.#assert();
+    if (this.#replay?.repeat) fail("recordBusy");
     if (this.#exportController || this.#record) fail("exportBusy");
     // Acquire before any await or observer notification (including releaseExport).
     const controller = new AbortController();
@@ -1242,6 +1407,7 @@ export class InstrumentSession {
         owned = true;
       }
       const result = await renderInstrumentWav(this.#project, {
+        matchProgramme: true,
         registry: this.#registry,
         cache,
         memory: this.#memory,
@@ -1323,6 +1489,7 @@ export class InstrumentSession {
       recording: !!this.#record,
       armingRecord: this.#armingRecord,
       replaying: !!this.#replay,
+      repeating: this.#replay?.repeat === true,
       canResume: this.#resumeFrame > 0,
       legacyBusActive: !!this.#legacySource,
       legacyGuide: this.#legacy,

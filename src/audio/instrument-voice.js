@@ -3,25 +3,44 @@ import { frameTime, dampFrames } from "./frame-dsp.js";
 
 export const INSTRUMENT_LEVEL = 0.25;
 export const DAMP_SECONDS = 0.02;
-// Full one-shot source at native rate; only an explicit damp changes its tail.
+// Native-rate source; an internal complete recorded period may opt into looping.
+// Ordinary instrument tails still change only through explicit damping.
 export function instrumentVoice(
   context,
   output,
   buffer,
   when,
   velocity = 1,
-  { offset = 0, initialLevel = 1, release = () => {} } = {},
+  {
+    offset = 0,
+    initialLevel = 1,
+    release = () => {},
+    loopFrames = null,
+    releaseSeconds = DAMP_SECONDS,
+  } = {},
 ) {
   if (
     !buffer ||
     !finite(when, 0, Number.MAX_VALUE) ||
     !finite(velocity, Number.MIN_VALUE, 1) ||
     !finite(offset, 0, buffer.duration) ||
-    !finite(initialLevel, 0, 1)
+    !finite(initialLevel, 0, 1) ||
+    !finite(releaseSeconds, DAMP_SECONDS, 1.5) ||
+    (loopFrames !== null &&
+      (!Number.isSafeInteger(loopFrames) ||
+        loopFrames < 128 ||
+        loopFrames !== buffer.length ||
+        buffer.sampleRate !== context.sampleRate ||
+        offset >= buffer.duration))
   )
     fail("invalidInstrumentVoice");
   when = frameTime(when, context.sampleRate);
   offset = frameTime(offset, context.sampleRate);
+  if (
+    loopFrames !== null &&
+    Math.round(offset * context.sampleRate) >= loopFrames
+  )
+    fail("invalidInstrumentVoice");
   const source = context.createBufferSource(),
     gain = context.createGain();
   const level = velocity * INSTRUMENT_LEVEL;
@@ -29,7 +48,11 @@ export function instrumentVoice(
   // The source must never inherit createGain's unity default before that event.
   gain.gain.value = level * initialLevel;
   source.buffer = buffer;
-  source.loop = false;
+  source.loop = loopFrames !== null;
+  if (source.loop) {
+    source.loopStart = 0;
+    source.loopEnd = loopFrames / context.sampleRate;
+  }
   source.playbackRate.value = 1;
   gain.gain.setValueAtTime(level * initialLevel, when);
   source.connect(gain);
@@ -55,13 +78,18 @@ export function instrumentVoice(
     gain,
     when,
     level,
-    end: when + buffer.duration - offset,
+    end: loopFrames === null ? when + buffer.duration - offset : Infinity,
     damp: (time) => {
       if (ended || (dampAt !== null && time >= dampAt)) return;
       dampAt = frameTime(Math.max(when, time), context.sampleRate);
       gain.gain.cancelScheduledValues(dampAt);
       gain.gain.setValueAtTime(level * initialLevel, dampAt);
-      const end = dampAt + dampFrames(context.sampleRate) / context.sampleRate;
+      const end =
+        dampAt +
+        (releaseSeconds === DAMP_SECONDS
+          ? dampFrames(context.sampleRate)
+          : Math.round(releaseSeconds * context.sampleRate)) /
+          context.sampleRate;
       gain.gain.linearRampToValueAtTime(0, end);
       voice.end = Math.min(voice.end, end);
       try {
@@ -70,7 +98,7 @@ export function instrumentVoice(
         finish();
       }
     },
-    stop: () => {
+    stop: (at = context.currentTime) => {
       if (ended) return;
       if (context.state === "closed") {
         finish();
@@ -84,7 +112,7 @@ export function instrumentVoice(
         } catch {
           finish();
         }
-      } else voice.damp(context.currentTime);
+      } else voice.damp(at);
       // Keep the source pin until real onended. A suspended owner closes its
       // context and invokes disconnect only after native close resolves.
     },

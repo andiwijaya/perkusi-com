@@ -10,6 +10,7 @@ import { legacyAudible } from "../project/instrument-mix.js";
 import { fail } from "../project/instrument-contract.js";
 import { canonicalLegacyRender } from "./canonical-legacy.js";
 import { decodeCanonicalWav, renderYield } from "./frame-dsp.js";
+import { legacyCycleGeometry, renderLegacyCycles } from "./legacy-cycles.js";
 
 // Trusted existing assets, served only by the local candidate server. No new
 // recording, oscillator, transposition or schema3 flattening is introduced.
@@ -83,7 +84,7 @@ export function legacyOutputStage(context, input) {
   };
 }
 
-export async function prepareLegacyBus(
+async function prepareLegacyResource(
   project,
   {
     memory,
@@ -91,6 +92,7 @@ export async function prepareLegacyBus(
     signal,
     contextFactory = (frames, r) => new OfflineAudioContext(2, frames, r),
     yieldTask = renderYield,
+    periodFrames = null,
   },
 ) {
   if (!legacyAudible(project.composition)) return null;
@@ -119,22 +121,65 @@ export async function prepareLegacyBus(
       ? fusion.instrument.assets
       : []),
   ];
+  const geometry =
+      periodFrames === null ? null : legacyCycleGeometry(p, rate, periodFrames),
+    // Native output + getChannelData views for every first/steady terminal state.
+    // Decoded source conversion has one-frame tolerance, plus the explicit loop
+    // release. Reserve before fetching/allocating anything.
+    maxTail =
+      Math.ceil(
+        Math.max(
+          0,
+          ...selected.map((a) => a.durationSeconds),
+          ...(p.patterns.some((a) => a.notes.some(Boolean))
+            ? fusion.instrument.assets.map((a) => a.durationSeconds)
+            : []),
+        ) * rate,
+      ) + 2,
+    cycleBytes = geometry
+      ? geometry.states *
+          (periodFrames + maxTail + Math.round(0.004 * rate)) *
+          16 +
+        4096
+      : 0;
   // All encoded stream chunks/joined/decoder inputs + declared output/native
   // copies, all banks, curve/native-copy and graph allowance admitted upfront.
+  const preparationBytes = Math.ceil(
+    budget.bytes +
+      assets.reduce((n, a) => n + a.bytes * 3, 0) +
+      1048576 +
+      cycleBytes,
+  );
+  // A valid long continuous score can exceed the entire pool, not just its
+  // currently free part. Report the same actionable budget refusal before the
+  // ledger's owner-shape guard (and before fetch/context/buffer allocation).
+  if (preparationBytes > memory.snapshot().maxBytes)
+    fail("combinedMemoryLimit");
   const allocation = memory.reserve(
-    Math.ceil(
-      budget.bytes + assets.reduce((n, a) => n + a.bytes * 3, 0) + 1048576,
-    ),
+    preparationBytes,
     "legacy Float32 preparation/decodes/graph",
   );
+  let decoderContext, closePromise;
+  const finishDecoder = () => {
+    if (!decoderContext || decoderContext.state === "closed")
+      return Promise.resolve();
+    closePromise ??= Promise.resolve().then(() =>
+      decoderContext.startRendering(),
+    );
+    return closePromise;
+  };
   const exporter = new StudioWavExporter({
     catalog: compositionRegistry,
     packForKit: kit,
     outputStageFactory: legacyOutputStage,
     extensions,
-    contextFactory,
+    contextFactory: (frames, r) => {
+      decoderContext = contextFactory(frames, r);
+      return decoderContext;
+    },
   });
   let result,
+    cycles,
     peak = 0,
     success = false;
   try {
@@ -143,8 +188,15 @@ export async function prepareLegacyBus(
       signal,
       acquireDecode: memory.cachePolicy(exporter).acquireDecode,
       decodeAudioData: decodeCanonicalWav,
-      renderCanonical: (options) =>
-        canonicalLegacyRender({ ...options, yieldTask }),
+      renderCanonical: async (options) => {
+        if (!geometry) return canonicalLegacyRender({ ...options, yieldTask });
+        cycles = await renderLegacyCycles({
+          ...options,
+          yieldTask,
+          periodFrames,
+        });
+        return cycles.states[0].buffer;
+      },
     });
     for (let c = 0; c < 2; c++)
       for (const value of result.pcm.getChannelData(c)) {
@@ -153,7 +205,12 @@ export async function prepareLegacyBus(
         peak = Math.max(peak, Math.abs(value));
       }
     if (signal?.aborted) fail("cancelled");
-    allocation.resize(result.frames * 8 + 4096);
+    // Canonical rendering uses this one-frame native context only for decoding
+    // and AudioBuffer creation. Finish its silent destination before shrinking
+    // the admitted preparation resources; the prepared PCM is unchanged.
+    await finishDecoder();
+    if (signal?.aborted) fail("cancelled");
+    allocation.resize(cycles ? cycles.bytes : result.frames * 8 + 4096);
     let active = true;
     success = true;
     return {
@@ -161,20 +218,47 @@ export async function prepareLegacyBus(
         if (!active) fail("memoryReleased");
         return result.pcm;
       },
-      peak,
-      frames: result.frames,
+      peak: cycles?.peak ?? peak,
+      frames: cycles?.frames ?? result.frames,
+      ...(cycles
+        ? {
+            periodFrames,
+            phases: cycles.phases,
+            maxLogicalVoices: cycles.maxLogicalVoices,
+            cycle(index) {
+              if (!active) fail("memoryReleased");
+              if (!Number.isSafeInteger(index) || index < 0)
+                fail("invalidLoopPlan");
+              return cycles.states[
+                index === 0 ? 0 : 1 + ((index - 1) % cycles.phases)
+              ];
+            },
+          }
+        : {}),
       release() {
         if (!active) return;
         active = false;
         result = null;
+        cycles = null;
         allocation.release();
       },
     };
   } finally {
     exporter.dispose();
+    // Error/cancellation also owns the decoder through its real completion.
+    await finishDecoder();
     if (!success) {
       result = null;
+      cycles = null;
       allocation.release();
     }
   }
 }
+
+export const prepareLegacyBus = (project, options) =>
+  prepareLegacyResource(project, { ...options, periodFrames: null });
+export const prepareLegacyContinuous = (project, options) => {
+  if (!Number.isSafeInteger(options?.periodFrames))
+    fail("legacyLoopClockUnsupported");
+  return prepareLegacyResource(project, options);
+};

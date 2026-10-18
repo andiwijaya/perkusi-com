@@ -3,6 +3,7 @@ import "./style.css";
 import { AudioEngine } from "../audio/engine.js";
 import { StudioWavExporter } from "../audio/studio-exporter.js";
 import { createBeatboxOutputStage } from "../beatbox/output-stage.js";
+import { createProgrammeOutputStage } from "../audio/programme-output.js";
 import { originalGroovePack } from "../beatbox/pack.js";
 import {
   CompositionPlayback,
@@ -47,7 +48,8 @@ export function initStudio() {
   const engine = new AudioEngine(studioPack(1), {
     variantPacks: [studioPack(2), studioPack(3)],
     sequenceCatalog: studioCatalog,
-    outputStageFactory: createBeatboxOutputStage,
+    outputStageFactory: (context, input) =>
+      createProgrammeOutputStage(context, input, createBeatboxOutputStage),
   });
   engine.arrangement = true;
   $("chain-mode").checked = true;
@@ -69,6 +71,7 @@ export function initStudio() {
       instrumentPack,
     }),
     outputStageFactory: createBeatboxOutputStage,
+    matchProgramme: true,
     retainedBytes: () => engine.cacheBounds().bytes,
   });
   let locale,
@@ -76,6 +79,7 @@ export function initStudio() {
     errors,
     disposed = false,
     busy = false,
+    calibrating = false,
     reading = false,
     receiving = false,
     readyFile = null,
@@ -280,18 +284,21 @@ export function initStudio() {
     const s = engine.snapshot();
     text(
       $("status"),
-      s.error
-        ? c.errorAudio
-        : s.status === "playing"
-          ? c.playing
-          : s.status === "loading"
-            ? c.loadingAudio
-            : ["paused", "suspended", "interrupted"].includes(s.status)
-              ? c.paused
-              : c.idle,
+      calibrating
+        ? c.loadingAudio
+        : s.error
+          ? c.errorAudio
+          : s.status === "playing"
+            ? c.playing
+            : s.status === "loading"
+              ? c.loadingAudio
+              : ["paused", "suspended", "interrupted"].includes(s.status)
+                ? c.paused
+                : c.idle,
     );
-    $("play").disabled = s.status === "loading";
-    $("pause").disabled = !["loading", "playing"].includes(s.status);
+    $("play").disabled = busy || s.status === "loading";
+    $("pause").disabled =
+      !calibrating && !["loading", "playing"].includes(s.status);
     text(
       $("position"),
       `${Math.floor(s.beat / 4) + 1} : ${Math.floor(s.beat % 4) + 1}`,
@@ -358,6 +365,51 @@ export function initStudio() {
     sync();
   }
   async function play() {
+    if (busy || disposed || engine.status === "playing") return;
+    const operation = engine.operation;
+    const requested = project(),
+      signature = JSON.stringify(requested);
+    const calibrationLocks = new Map(
+      [...root.querySelectorAll("button,input,select")]
+        .filter((el) => !["st-pause", "st-stop", "st-cancel"].includes(el.id))
+        .map((el) => [el, el.disabled]),
+    );
+    const context = engine.ensureContext();
+    const resumed = context.resume();
+    setBusy(true);
+    calibrating = true;
+    for (const el of calibrationLocks.keys()) el.disabled = true;
+    root.setAttribute("aria-busy", "true");
+    renderStatus();
+    try {
+      await resumed;
+      const programme = engine.arrangement
+        ? requested
+        : { ...requested, chain: [requested.activePattern] };
+      const measured = await exporter.render(programme, () => {}, {
+        rate: 48000,
+        uncalibrated: true,
+      });
+      if (
+        disposed ||
+        engine.operation !== operation ||
+        JSON.stringify(project()) !== signature
+      )
+        return;
+      engine.outputStage.setProgrammeGain(measured.programmeCalibration.gain);
+    } catch (e) {
+      if (!disposed) fail(e);
+      return;
+    } finally {
+      if (!disposed) {
+        calibrating = false;
+        for (const [el, disabled] of calibrationLocks) el.disabled = disabled;
+        root.removeAttribute("aria-busy");
+        setBusy(false);
+        sync();
+        renderStatus();
+      }
+    }
     const before = engine.stats.starts;
     const job = engine.play();
     renderStatus();
@@ -369,9 +421,11 @@ export function initStudio() {
     }
   }
   async function pad(role) {
+    if (busy || disposed) return;
     const button = root.querySelector(`[data-st-pad="${role}"]`);
     button.classList.add("st-hit");
     try {
+      if (engine.status !== "playing") engine.outputStage?.setProgrammeGain(1);
       await engine.triggerPad(role);
     } catch {
       engine.error = "audio-start";
@@ -600,10 +654,12 @@ export function initStudio() {
           await play();
           break;
         case "st-pause":
+          if (calibrating) exporter.cancel();
           engine.pause();
           renderStatus();
           break;
         case "st-stop":
+          if (calibrating) exporter.cancel();
           engine.rewind();
           renderStatus();
           break;

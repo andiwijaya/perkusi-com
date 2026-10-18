@@ -68,7 +68,7 @@ function validateBank(bank) {
       ].every(identifier) ||
       seen.has(s.id) ||
       typeof s.assetPath !== "string" ||
-      !/^\/sounds\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(wav|mp3|flac)$/.test(
+      !/^(?:\/sounds\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(wav|mp3|flac)|\/internal\/studio-kits\/audio\/(ruang|arus)-[a-z-]+\.wav)$/.test(
         s.assetPath,
       ) ||
       s.assetPath.length > 256 ||

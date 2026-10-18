@@ -1,0 +1,120 @@
+{
+  "banks": [
+    {
+      "id": "freepats-bass-yr",
+      "version": "candidate-1.0.0",
+      "kind": "instrument-bank",
+      "setId": "freepats-recorded-plucked",
+      "tradition": "recorded-contemporary",
+      "laras": "none",
+      "samples": [
+        {
+          "id": "bass-e1",
+          "instrumentId": "electric-bass",
+          "pitchId": "midi-28",
+          "articulation": "picked",
+          "assetPath": "/sounds/loop-instruments/44100/bass-e1.wav",
+          "sha256": "c6c19403eab9e17185cfa4b531217ae2e0b471a18f70abf9a5a92e84e4e7bd18",
+          "sourceWorkId": "freepats-bass-e1",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 809644,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 202400,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        },
+        {
+          "id": "bass-g1",
+          "instrumentId": "electric-bass",
+          "pitchId": "midi-31",
+          "articulation": "picked",
+          "assetPath": "/sounds/loop-instruments/44100/bass-g1.wav",
+          "sha256": "cd6b7cc16dd8c5d6d9becac4382fab706e68c05b9eae68b664cd33d8e8f771b5",
+          "sourceWorkId": "freepats-bass-g1",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 573132,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 143272,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        },
+        {
+          "id": "bass-b1",
+          "instrumentId": "electric-bass",
+          "pitchId": "midi-35",
+          "articulation": "picked",
+          "assetPath": "/sounds/loop-instruments/44100/bass-b1.wav",
+          "sha256": "b943aa5d859875fbb5d860f3dc422c5c0761ded590a002e5c7f98a7ed72f616b",
+          "sourceWorkId": "freepats-bass-b1",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 497340,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 124324,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        }
+      ]
+    },
+    {
+      "id": "freepats-classical-guitar",
+      "version": "candidate-1.0.0",
+      "kind": "instrument-bank",
+      "setId": "freepats-recorded-plucked",
+      "tradition": "recorded-contemporary",
+      "laras": "none",
+      "samples": [
+        {
+          "id": "guitar-b2",
+          "instrumentId": "classical-guitar",
+          "pitchId": "midi-47",
+          "articulation": "plucked",
+          "assetPath": "/sounds/loop-instruments/44100/guitar-b2.wav",
+          "sha256": "05a050340deb537e2c08709401d3d4f44b60b8c9a9255e0db15ff0bc234d5944",
+          "sourceWorkId": "freepats-guitar-b2",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 682244,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 170550,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        },
+        {
+          "id": "guitar-e3",
+          "instrumentId": "classical-guitar",
+          "pitchId": "midi-52",
+          "articulation": "plucked",
+          "assetPath": "/sounds/loop-instruments/44100/guitar-e3.wav",
+          "sha256": "cbc2b02096bb0ab857744f1bc2c18b89c360c707e38f7a73496f604c7ca74172",
+          "sourceWorkId": "freepats-guitar-e3",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 837972,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 209482,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        },
+        {
+          "id": "guitar-g3",
+          "instrumentId": "classical-guitar",
+          "pitchId": "midi-55",
+          "articulation": "plucked",
+          "assetPath": "/sounds/loop-instruments/44100/guitar-g3.wav",
+          "sha256": "f54ceb450a0855ce23229c9dca76993ae196f5a9c51772c348c7ab3cb4ae5267",
+          "sourceWorkId": "freepats-guitar-g3",
+          "licenseId": "cc0-1-0",
+          "encodedBytes": 822296,
+          "sampleRate": 44100,
+          "channels": 1,
+          "frames": 205563,
+          "gainTrim": 1,
+          "voicePolicy": "polyphonic"
+        }
+      ]
+    }
+  ]
+}

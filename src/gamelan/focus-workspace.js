@@ -49,7 +49,7 @@ export const session = new InstrumentSession({
 const routeContext = instrumentRouteContext(
   location.pathname,
   location.search,
-  import.meta.env.MODE,
+  import.meta.env.GAMELAN_V5_UX ? "gamelan-preview" : import.meta.env.MODE,
 );
 const routeStore = routeContext
   ? new InstrumentRouteStore(session.registry)
@@ -70,7 +70,8 @@ let locale = resolveLocale({
   shareMessage = "",
   demoSignature = "",
   firstNote = false;
-let routePanel = null;
+let routePanel = null,
+  v5Shell = null;
 const host = document.querySelector("#instrument-workspace"),
   keys = ["a", "s", "d", "f", "g", "h", "j"],
   heldKeys = new Set();
@@ -266,9 +267,10 @@ function render(s) {
     s.disposing ||
     s.disposed;
   $("if-cancel-export").classList.toggle("hidden", !s.exporting);
-  $("if-export").disabled = !hasAudio || s.recording || s.exporting || sharing;
+  $("if-export").disabled =
+    !hasAudio || s.repeating || s.recording || s.exporting || sharing;
   $("if-pause-export").disabled =
-    !hasAudio || s.recording || s.exporting || sharing;
+    !hasAudio || s.repeating || s.recording || s.exporting || sharing;
   $("if-progress").classList.toggle("hidden", !s.exporting);
   if (progress !== null) $("if-progress").value = progress;
   const code = noticeCode ?? s.error;
@@ -372,13 +374,16 @@ function render(s) {
     }
   }
   for (const b of host.querySelectorAll("[data-sample]"))
-    b.disabled = studioView || s.status !== "ready" || !s.playbackRequested;
+    b.disabled =
+      studioView || s.repeating || s.status !== "ready" || !s.playbackRequested;
   renderStage(s);
   if (studioView) studio.render(s);
+  v5Shell?.render(s, studioView);
 }
 function renderDemos(s) {
   const r = readinessCopy[locale],
     busy =
+      s.repeating ||
       s.recording ||
       s.armingRecord ||
       s.exporting ||
@@ -929,6 +934,54 @@ if (routeContext) {
       session.pause();
       error("routeConflict");
     }
+  });
+}
+if (import.meta.env.GAMELAN_V5_UX) {
+  const { initV5Shell } = await import("./v5-shell.js");
+  v5Shell = initV5Shell({
+    host,
+    session,
+    studio,
+    locale: () => locale,
+    act,
+    setLocale: (language) => {
+      locale = language;
+      const url = new URL(location.href);
+      url.searchParams.set("lang", language);
+      history.replaceState(null, "", url);
+      render(session.snapshot());
+    },
+    flushDraft: () => {
+      if (!library.flush())
+        throw Object.assign(Error("draft was not saved"), {
+          code: noticeCode ?? "storageUnavailable",
+        });
+      // Check the route revision even when there is no debounced pending write.
+      // A concurrent tab-draft replacement must not be silently abandoned.
+      routeStore?.prepare(session.project);
+      return true;
+    },
+    blocked: () => {
+      const s = session.snapshot();
+      return (
+        sharing ||
+        modeChanging ||
+        s.recording ||
+        s.armingRecord ||
+        s.exporting ||
+        s.disposing ||
+        s.disposed ||
+        s.status === "loading" ||
+        s.status === "starting"
+      );
+    },
+    releaseOutputs: () => {
+      library.close();
+      routePanel?.close();
+      projectOutput?.release();
+      projectOutput = null;
+      inputs.clear({ damp: false });
+    },
   });
 }
 session.subscribe(render);

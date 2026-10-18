@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build --mode gamelan-public-candidate",
+    "build": "node scripts/local-build.mjs --mode gamelan-v5-public-candidate",
+    "build:v5": "node scripts/local-build.mjs --mode gamelan-v5-ux --outDir qa-artifacts/v5-current-build",
+    "cleanup:builds": "node scripts/build-housekeeping.mjs",
     "build:gamelan-candidate": "node scripts/build-gamelan-candidate.mjs",
     "build:gamelan-public": "node scripts/build-gamelan-public.mjs",
     "preview": "vite preview --host 127.0.0.1",
@@ -14,7 +16,7 @@
     "test": "node --test tests/*.test.js",
     "test:e2e": "node scripts/test-browser.mjs",
     "fixtures:audio": "python scripts/make-audio-fixtures.py",
-    "build:audio-prototype": "vite build --mode audio-prototype --outDir qa-artifacts/s2-2026-10-11/prototype-dist",
+    "build:audio-prototype": "node scripts/local-build.mjs --mode audio-prototype --outDir qa-artifacts/audio-prototype-current",
     "test:audio": "node scripts/test-audio.mjs",
     "format": "prettier --write index.html 404.html privacy.html en beatbox studio src tests scripts/test-browser.mjs public/privacy.css vite.config.js eslint.config.js package.json README.md"
   },

@@ -1,5 +1,12 @@
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  "common.loopPreview": ["Loop Station Preview", "Loop Station Preview"],
+  "home.loopPreviewCopy": [
+    "Susun delapan track, rekam take lokal dan gunakan FX. Simpan proyek dengan audio; pengujian perangkat dan listening tetap terbuka.",
+    "Arrange eight tracks, record local takes and use FX. Save projects with audio; device and listening validation remain open.",
+  ],
+  "home.loopPreviewAction": ["Buka Loop Station", "Open Loop Station"],
+
   "meta.home.title": [
     "Perkusi.com — Mainkan Irama. Ciptakan Musikmu.",
     "Perkusi.com - Make Rhythm. Build Loops. Play.",
@@ -183,14 +190,15 @@ const pairs = {
   "home.backTop": ["Kembali ke ketukan pertama", "Back to the first beat"],
   "privacy.heading": ["Privasi", "Privacy"],
   "common.gamelanPreview": ["Gamelan Preview", "Gamelan Preview"],
+  "common.previewStatus": ["Pratinjau", "Preview"],
   "common.gamelanPlay": ["Main Gamelan Preview", "Play Gamelan Preview"],
   "home.gamelanPreviewCopy": [
     "Mainkan bank Pelog dan Slendro, rekam event, lalu lanjutkan di Studio. Validasi budaya, listening dan perangkat masih tertunda.",
     "Play Pelog and Slendro banks, record events and continue in Studio. Culture, listening and physical-device validation remain pending.",
   ],
   "privacy.updated": [
-    "Diperbarui 15 Oktober 2026.",
-    "Updated October 15, 2026.",
+    "Diperbarui 17 Oktober 2026.",
+    "Updated October 17, 2026.",
   ],
   "privacy.analytics": [
     "Perkusi.com menggunakan Google Analytics 4 untuk memahami penggunaan situs. Analytics dapat mengumpulkan halaman yang dikunjungi, jenis perangkat dan browser, sumber kunjungan, serta perkiraan lokasi, dan dapat menyimpan cookie pihak pertama di perangkatmu.",
@@ -205,8 +213,8 @@ const pairs = {
     "When you switch languages, your preference is saved in the browser on this device. You can remove it through your browser's site storage settings. New visitors always receive Bahasa Indonesia. An explicitly chosen URL language takes priority.",
   ],
   "privacy.projects": [
-    "Proyek tersimpan dan pemulihan edit memakai penyimpanan lokal di browser ini. Nama dan pola tetap di perangkatmu; hapus proyek melalui tombol Hapus atau hapus semua data situs melalui pengaturan browser. File impor dibaca lokal. WAV dibuat lokal. Saat kamu memilih Bagikan, file diserahkan ke layanan atau aplikasi yang kamu pilih; kebijakan mereka berlaku.",
-    "Saved projects and edit recovery use local storage in this browser. Names and patterns stay on your device; delete projects with Delete or remove all site data in browser settings. Imported project files are read locally. WAV files are rendered locally. When you choose Share, the file is handed to your selected service or app; its policy applies.",
+    "Proyek tersimpan dan pemulihan edit memakai penyimpanan lokal di browser ini. Nama, pola dan rekaman tersimpan tetap di perangkatmu; hapus proyek melalui tombol Hapus atau hapus semua data situs melalui pengaturan browser. Profil offset opsional menyimpan nama pilihanmu dan angka manual di browser, tanpa identitas perangkat atau penerapan otomatis; hapus melalui kontrol profil. File impor dibaca lokal. WAV dibuat lokal. Saat kamu memilih Bagikan, file diserahkan ke layanan atau aplikasi yang kamu pilih; kebijakan mereka berlaku.",
+    "Saved projects and edit recovery use local storage in this browser. Names, patterns and saved recordings stay on your device; delete projects with Delete or remove all site data in browser settings. Optional offset profiles store your chosen label and manual value in the browser, without device identifiers or automatic application; delete them through the profile controls. Imported project files are read locally. WAV files are rendered locally. When you choose Share, the file is handed to your selected service or app; its policy applies.",
   ],
   "privacy.block": [
     "Kamu dapat memblokir analytics lewat pengaturan privasi browser, pemblokir konten, atau add-on opt-out Google Analytics.",
@@ -218,8 +226,8 @@ const pairs = {
   ],
   "privacy.policy": ["Kebijakan privasi Google", "Google's privacy policy"],
   "privacy.unavailable": [
-    "Beatbox, Studio, dan Gamelan memuat suara dari situs ini serta memproses proyek dan WAV di browser. Tidak ada mikrofon atau upload audio pada fitur ini. Event analytics mencatat penggunaan fitur secara agregat: pembukaan workspace, suara pertama, aktivasi layer, pemutaran demo, perpindahan mode, perubahan bahasa, kategori kesalahan umum, penyimpanan proyek, dan hasil ekspor. Nama proyek, isi file, pola, nada individual, nama suara, dan audio tidak dimasukkan ke parameter event kami.",
-    "Beatbox, Studio and Gamelan load sounds from this site and process projects and WAV files in your browser. These features do not use a microphone or upload audio. Analytics events count aggregate feature use: workspace visits, first sound, layer activation, demos, mode transfers, language changes, general error categories, project saves and export outcomes. Our event parameters do not include project names, file content, patterns, individual notes, sound names or audio.",
+    "Beatbox, Studio, dan Gamelan memuat suara dari situs ini serta memproses proyek dan WAV di browser, tanpa mikrofon. Loop Station menyediakan mikrofon opsional setelah aktivasi sadar dan izin browser; Stop Mic menghentikan akses. Audio diproses lokal, tidak diunggah ke Perkusi; monitoring memerlukan pilihan terpisah. Event analytics mencatat penggunaan fitur secara agregat: pembukaan workspace, suara pertama, aktivasi layer, pemutaran demo, perpindahan mode, perubahan bahasa, kategori kesalahan umum, penyimpanan proyek, dan hasil ekspor. Nama proyek, isi file, pola, nada individual, nama suara, audio, dan profil perangkat tidak dimasukkan ke parameter event kami.",
+    "Beatbox, Studio and Gamelan load sounds from this site and process projects and WAV files in your browser, without a microphone. Loop Station provides an optional microphone after explicit activation and browser permission; Stop Mic ends access. Audio is processed locally and is not uploaded to Perkusi; monitoring requires a separate choice. Analytics events count aggregate feature use: workspace visits, first sound, layer activation, demos, mode transfers, language changes, general error categories, project saves and export outcomes. Our event parameters do not include project names, file content, patterns, individual notes, sound names, audio or device profiles.",
   ],
   "soon.beatbox.heading": ["Beatbox Playground", "Beatbox Playground"],
   "soon.beatbox.copy": [

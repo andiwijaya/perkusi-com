@@ -15,15 +15,16 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const root = fileURLToPath(new URL("../", import.meta.url));
-  const outDir = candidateOutput(
-    root,
-    process.argv[2] || "qa-artifacts/gamelan-production-candidate",
-  );
+  const outDir = process.argv[2] || "qa-artifacts/gamelan-production-candidate";
   process.env.PERKUSI_GAMELAN_DELIVERY = "flac";
-  const { build } = await import("vite");
-  await build({
-    root,
-    mode: "gamelan-preview",
-    build: { outDir, emptyOutDir: false },
-  });
+  const { runLocalBuild } = await import("./local-build.mjs");
+  const result = await runLocalBuild({ root, mode: "gamelan-preview", outDir });
+  console.log(
+    JSON.stringify({
+      buildStatus: result.buildStatus,
+      cleanup: result.cleanup,
+      receipt: result.receiptPath,
+    }),
+  );
+  process.exitCode = result.buildExit ?? 1;
 }

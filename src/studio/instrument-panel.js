@@ -312,11 +312,35 @@ export function initInstrumentStudio({
   }))
     $(name).onclick = () => fileAction(target);
   return {
+    historyBridge() {
+      if (!bridge) {
+        bridge = new InstrumentStudioBridge(
+          session.project,
+          session.registry,
+          (p) => session.importJSON(JSON.stringify(p)),
+        );
+        lastProject = session.project;
+      } else if (lastProject !== session.project) {
+        bridge.replace(session.project);
+        lastProject = session.project;
+      }
+      return bridge;
+    },
+    editProject(change) {
+      const current = this.historyBridge();
+      return transact(() => current.loadProject(change(current.project)));
+    },
+    historyAction(action) {
+      if (!["undo", "redo"].includes(action)) return;
+      const current = this.historyBridge();
+      return transact(() => current[action]());
+    },
     async enter() {
       const project = await session.prepareStudio();
-      bridge = new InstrumentStudioBridge(project, session.registry, (p) =>
-        session.importJSON(JSON.stringify(p)),
-      );
+      if (!import.meta.env.GAMELAN_V5_UX || !bridge || lastProject !== project)
+        bridge = new InstrumentStudioBridge(project, session.registry, (p) =>
+          session.importJSON(JSON.stringify(p)),
+        );
       lastProject = session.project;
       lastLocale = null;
       page = 0;
