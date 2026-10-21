@@ -1,4 +1,5 @@
 import { compileCanonicalTimeline } from "../project/canonical-timeline.js";
+import { canonicalGridStep } from "./canonical-grid-position.js";
 import {
   canonicalData,
   canonicalFrozenCopy,
@@ -7,13 +8,20 @@ import {
 import { fail, integer } from "../project/instrument-contract.js";
 import { renderCanonicalRun } from "./canonical-dynamic-render.js";
 import { gamelanPlaybackScale } from "./gamelan-level.js";
-import { eqBound, fxBytes } from "../loop-station/fx-model.js";
+import {
+  eqBound,
+  fxBytes,
+  limiterEnabled,
+  BYPASS_LIMITER,
+} from "../loop-station/fx-model.js";
 import { panPeakFactor } from "../loop-station/pan-headroom.js";
 import { bakeCanonicalPlayback } from "./canonical-playback.js";
 import {
   hasCanonicalSourceBatch,
   reserveCanonicalSourceBatch,
+  canonicalSourceHasVerifiedRecording,
 } from "./canonical-source-batch.js";
+import { canonicalRecordingLoanHash } from "./canonical-recordings.js";
 
 const states = new WeakMap();
 export function canonicalSoundKey(r) {
@@ -122,6 +130,7 @@ export async function prepareCanonicalScore(
     command,
     signal,
     yieldTask,
+    sharedMaster = false,
   } = {},
 ) {
   if (
@@ -146,7 +155,8 @@ export async function prepareCanonicalScore(
     published = false,
     freed = false,
     cleanupAttempted = false,
-    playback = null;
+    playback = null,
+    sharedPlayback = null;
   const check = () => {
     if (signal?.aborted) fail("cancelled");
   };
@@ -158,6 +168,7 @@ export async function prepareCanonicalScore(
     }
     cleanupAttempted = true;
     playback?.dispose();
+    sharedPlayback?.dispose();
     let cleanupError;
     for (const l of loans)
       try {
@@ -331,7 +342,8 @@ export async function prepareCanonicalScore(
           x.descriptor.hashKind === "decoded-pcm" ||
           x.request.kind === "recording"
         )
-          sourceBytes += 2 * pcm;
+          if (!canonicalSourceHasVerifiedRecording(provider, x.request, memory))
+            sourceBytes += 2 * pcm;
       } else {
         sourceBytes += 3 * pcm + 2 * x.descriptor.encodedBytes + 8192;
         retainedSourceBytes += 2 * pcm + 8192;
@@ -449,12 +461,30 @@ export async function prepareCanonicalScore(
           peak = Math.max(peak, Math.abs(n));
         }
       }
-      if (d.hashKind === "decoded-pcm" || x.request.kind === "recording") {
+      if (canonicalSourceHasVerifiedRecording(provider, x.request, memory)) {
+        // This module-private loan verified the original digest and every
+        // native Float32 bit before borrowing the exclusive buffer. Keep the
+        // full finite/peak scan above; project receipts grant no authority.
+        if (
+          canonicalRecordingLoanHash(loan, memory) !== d.contentHash ||
+          d.contentHash !== x.request.asset.sha256
+        )
+          fail("recordingIdentityMismatch");
+      } else if (
+        d.hashKind === "decoded-pcm" ||
+        x.request.kind === "recording"
+      ) {
         const raw = new Uint8Array(d.frames * d.channels * 4),
           view = new DataView(raw.buffer);
         for (let f = 0; f < d.frames; f++)
           for (let c = 0; c < d.channels; c++)
-            view.setFloat32((f * d.channels + c) * 4, data[c][f], true);
+            view.setFloat32(
+              (x.request.kind === "recording"
+                ? c * d.frames + f
+                : f * d.channels + c) * 4,
+              data[c][f],
+              true,
+            );
         const hash = await hashBytes(raw);
         check();
         if (
@@ -566,6 +596,12 @@ export async function prepareCanonicalScore(
         events.push({
           id: `native/${p.id}/${e.localId}`,
           trackId: p.trackId,
+          nativeIdentity: Object.freeze({
+            sourceId: e.sourceId,
+            eventId: e.localId,
+            originalPlacementId: p.originalId,
+            occurrenceId: p.occurrenceId,
+          }),
           spec: {
             buffer: x.entry.buffer,
             frames: x.descriptor.frames,
@@ -682,9 +718,11 @@ export async function prepareCanonicalScore(
       refs: 0,
       cleanup,
       memory,
-      getPlayback: () => playback,
-      setPlayback: (value) => {
-        playback = value;
+      loopMaterial: Object.freeze({ runs, entry, requests, registry }),
+      getPlayback: (shared = false) => (shared ? sharedPlayback : playback),
+      setPlayback: (value, shared = false) => {
+        if (shared) sharedPlayback = value;
+        else playback = value;
       },
       createBuffer,
       yieldTask,
@@ -730,6 +768,7 @@ export async function prepareCanonicalScore(
         createBuffer,
         signal,
         yieldTask,
+        sharedMaster,
       });
     published = true;
     return score;
@@ -751,28 +790,39 @@ export function retainCanonicalScore(score, memory = null) {
   };
 }
 
+// Internal capability: decoded originals remain under the prepared score's
+// real source loans. Caller must retain that score for the producer lifetime.
+export function canonicalLoopMaterial(score, memory) {
+  const state = states.get(score);
+  if (!state || state.disposed || state.memory !== memory)
+    fail("invalidCanonicalScore");
+  return state.loopMaterial;
+}
+
 export async function prepareCanonicalPlayback(
   score,
-  { memory, createBuffer, signal, yieldTask } = {},
+  { memory, createBuffer, signal, yieldTask, sharedMaster = false } = {},
 ) {
   const release = retainCanonicalScore(score, memory),
     state = states.get(score);
   let candidate = null;
+  const shared = sharedMaster && limiterEnabled(score.project.master);
   const check = () => {
     if (signal?.aborted || state.disposed) fail("cancelled");
   };
   try {
     check();
-    if (state.getPlayback()) return score;
+    if (state.getPlayback(shared)) return score;
     candidate = await bakeCanonicalPlayback(score, {
       memory: state.memory,
       createBuffer: createBuffer ?? state.createBuffer,
       yieldTask: yieldTask ?? state.yieldTask,
       check,
+      sharedMaster: shared,
     });
     check();
-    if (state.getPlayback()) candidate.dispose();
-    else state.setPlayback(candidate);
+    if (state.getPlayback(shared)) candidate.dispose();
+    else state.setPlayback(candidate, shared);
     candidate = null;
     return score;
   } finally {
@@ -780,9 +830,14 @@ export async function prepareCanonicalPlayback(
     release();
   }
 }
-export function canonicalPlaybackView(score, fromFrame = 0) {
+export function canonicalPlaybackView(
+  score,
+  fromFrame = 0,
+  { sharedMaster = false } = {},
+) {
   const state = states.get(score);
   if (!state || state.disposed) fail("invalidCanonicalScore");
+  const shared = sharedMaster && limiterEnabled(score.project.master);
   const needs =
     score.program.events.length > 16 ||
     (fromFrame > 0 &&
@@ -792,11 +847,22 @@ export function canonicalPlaybackView(score, fromFrame = 0) {
           (t.eq.lowDb !== 0 || t.eq.midDb !== 0 || t.eq.highDb !== 0),
       ));
   if (needs) {
-    const ready = state.getPlayback();
+    const ready = state.getPlayback(shared);
     if (!ready) fail("canonicalPlaybackNotPrepared");
     return ready.view;
   }
-  return score;
+  return shared
+    ? Object.freeze({
+        ...score,
+        project: Object.freeze({
+          ...score.project,
+          master: Object.freeze({
+            ...score.project.master,
+            limiter: BYPASS_LIMITER,
+          }),
+        }),
+      })
+    : score;
 }
 export function canonicalScoreFrame(score, frame) {
   const state = states.get(score);
@@ -844,6 +910,14 @@ export function canonicalScoreFrame(score, frame) {
         trackId: e.trackId,
         sha256: e.recordingIdentity.sha256,
         placementIds: e.placementIds,
+        originalPlacementIds: Object.freeze(
+          e.placementIds
+            .map(
+              (id) =>
+                score.timeline.placements.find((p) => p.id === id)?.originalId,
+            )
+            .filter(Boolean),
+        ),
         rawFrame:
           (((frame - s.startFrame + (s.phaseOffsetFrames ?? 0)) % n) + n) % n,
       });
@@ -862,6 +936,15 @@ export function canonicalScoreFrame(score, frame) {
         startFrame: e.spec.startFrame,
         endFrame: e.spec.endFrame,
         dampFrame: e.spec.dampFrame,
+        ...e.nativeIdentity,
+        audible:
+          e.spec.scale > 0 &&
+          e.spec.velocity > 0 &&
+          project.master.volume > 0 &&
+          project.tracks.some(
+            (t) =>
+              t.id === e.trackId && !t.mute && (!solo || t.solo) && t.gain > 0,
+          ),
       }),
     );
   const compositions = score.timeline.placements.flatMap((placement) => {
@@ -883,6 +966,13 @@ export function canonicalScoreFrame(score, frame) {
           (p) => p.id === segment.patternId,
         ).name,
         bar: segment.bar,
+        step: canonicalGridStep(frame, {
+          startTick: placement.startTick,
+          bar: segment.bar,
+          timing: score.timeline.project.timing,
+          rate,
+          swing: source.programme.timing.swing,
+        }),
         startFrame: segment.startFrame,
         endFrame: segment.endFrame,
       }),
@@ -898,6 +988,33 @@ export function canonicalScoreFrame(score, frame) {
           : frame >= program.bodyFrames
             ? "natural-tail"
             : "body",
+    occurrences: Object.freeze(
+      score.timeline.occurrences
+        .filter((o) => o.startFrame <= frame && frame < o.endFrame)
+        .map((o) =>
+          Object.freeze({
+            ...o,
+            sectionName: score.timeline.project.sections.find(
+              (s) => s.id === o.sectionId,
+            ).name,
+          }),
+        ),
+    ),
+    nativePlacements: Object.freeze(
+      score.timeline.placements
+        .filter((p) => p.native && p.startFrame <= frame && frame < p.endFrame)
+        .map((p) =>
+          Object.freeze({
+            sourceId: p.sourceRef.id,
+            placementId: p.id,
+            originalPlacementId: p.originalId,
+            occurrenceId: p.occurrenceId,
+            startFrame: p.startFrame,
+            endFrame: p.endFrame,
+            progress: (frame - p.startFrame) / (p.endFrame - p.startFrame),
+          }),
+        ),
+    ),
     phases: Object.freeze(phases),
     recordings: Object.freeze(recordings),
     voices: Object.freeze(voices),

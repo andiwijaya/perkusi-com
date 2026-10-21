@@ -15,6 +15,77 @@ import {
 import { prepareCanonicalScore } from "../src/audio/canonical-score.js";
 import { FLAT_EQ } from "../src/loop-station/fx-model.js";
 
+for (const explicit of [false, true])
+  test(`native startup ${explicit ? "refuses an expired explicit origin" : "anchors the default origin after graph preparation"}`, async () => {
+    const memory = new AudioMemory(),
+      foreign = memory.reserve(313, "foreign"),
+      fixture = await canonicalScoreFixture(48000, memory, qaBuffer, {
+        profile: "single",
+      }),
+      project = structuredClone(fixture.canonical);
+    project.master.limiter.bypass = true;
+    for (const t of project.tracks) t.fx.eq = { ...FLAT_EQ };
+    const score = await prepareCanonicalScore(project, {
+        ...fixture,
+        rate: 48000,
+        memory,
+        createBuffer: qaBuffer,
+        yieldTask: async () => {},
+      }),
+      f = fake(),
+      ctx = f.context,
+      make = ctx.createGain.bind(ctx);
+    let graphPrepared = false,
+      job;
+    ctx.createGain = () => {
+      if (!graphPrepared) {
+        graphPrepared = true;
+        ctx.currentTime += 0.3;
+      }
+      return { ...make(), context: ctx };
+    };
+    ctx.close = async () => {
+      ctx.state = "closed";
+    };
+    const session = await createCanonicalNativeSession({
+      rate: 48000,
+      memory,
+      contextFactory: () => ctx,
+      outputFactory: () => ({ context: ctx }),
+      printFactory: () => {},
+    });
+    try {
+      if (explicit) {
+        assert.throws(
+          () => {
+            job = session.start(score, { whenFrame: 4800 });
+            job.done.catch(() => {});
+          },
+          (e) => e.code === "invalidCanonicalSession",
+        );
+        assert.equal(f.calls.filter((c) => c[0] === "start").length, 0);
+        assert.equal(canonicalVoiceOwners(memory).count, 0);
+      } else {
+        job = session.start(score);
+        job.done.catch(() => {});
+        assert(
+          job.originFrame >= Math.round(ctx.currentTime * 48000) + 0.08 * 48000,
+        );
+        assert(f.calls.some((c) => c[0] === "start"));
+        for (const c of f.calls.filter((c) => c[0] === "start"))
+          assert(c[1] >= ctx.currentTime + 0.02);
+        assert(canonicalVoiceOwners(memory).count > 0);
+      }
+    } finally {
+      score.dispose();
+      await session.dispose();
+      await job?.done.catch(() => {});
+    }
+    assert.equal(canonicalVoiceOwners(memory).count, 0);
+    assert.equal(memory.snapshot().bytes, 313);
+    foreign.release();
+  });
+
 test("aborted native construction whose actual close fails exposes a retryable cleanup capability", async () => {
   const memory = new AudioMemory(),
     foreign = memory.reserve(313, "foreign"),

@@ -196,7 +196,7 @@ test("recording handles retain raw signed PCM and credits without asserting comm
   assert.equal(handle.recordings[0].rights.rawRedistribution, null);
   assert.equal(loan.sourceHash, asset.sha256);
   assert.equal(Object.is(loan.buffer.getChannelData(0)[0], -0), true);
-  assert.equal(loan.buffer.getChannelData(1)[0], fixturePCM()[0][1]);
+  assert.equal(loan.buffer.getChannelData(1)[0], fixturePCM()[0][asset.frames]);
   await assert.rejects(
     handle.dispose(),
     (e) => e.code === "canonicalRecordingStillOwned",

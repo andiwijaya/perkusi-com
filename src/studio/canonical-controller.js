@@ -2,7 +2,8 @@ import {
   canonicalData,
   canonicalFrozenCopy,
 } from "../project/canonical-data.js";
-import { fail } from "../project/instrument-contract.js";
+import { fail, integer } from "../project/instrument-contract.js";
+import { canonicalPadWhenFrame } from "./canonical-pad-time.js";
 
 // Injected only. Owns admitted capabilities, never the editor document/history.
 // A factory must retain its real resources until its dispose acknowledges close.
@@ -14,6 +15,7 @@ export function createCanonicalStudioController({
   let generation = 0,
     current = null,
     closed = false,
+    repeatEnabled = false,
     status = "idle",
     error = null;
   const owners = new Set(),
@@ -26,6 +28,9 @@ export function createCanonicalStudioController({
       capability: current?.capability ?? null,
       pendingOwners: owners.size,
       closed,
+      repeatEnabled,
+      cycle: current?.job?.cycle ?? current?.cycle ?? 0,
+      finishing: current?.finishing ?? false,
     });
   const emit = () => {
     try {
@@ -43,6 +48,14 @@ export function createCanonicalStudioController({
     if (i.retirement) return i.retirement;
     i.abort.abort();
     i.retirement = (async () => {
+      // Close an exclusive native context before awaiting a worklet ready/ACK
+      // action. Source/adapter retirement still waits for producer work below.
+      // A failed early close is retried by the ordinary owned dispose path.
+      try {
+        await i.owner?.interrupt?.();
+      } catch {
+        /* actual dispose retries */
+      }
       await i.work?.catch(() => {});
       await Promise.allSettled([...i.actions]);
       let fault;
@@ -56,6 +69,14 @@ export function createCanonicalStudioController({
         else await i.constructionCleanup?.();
       } catch (e) {
         fault ??= e;
+      }
+      for (const a of i.auxiliary ?? []) {
+        try {
+          a.score.dispose();
+          i.auxiliary.delete(a);
+        } catch (e) {
+          fault ??= e;
+        }
       }
       if (fault) throw fault;
       owners.delete(i);
@@ -120,9 +141,94 @@ export function createCanonicalStudioController({
     );
     return task;
   }
-  return Object.freeze({
+  async function startJob(i, fromFrame = 0) {
+    check(i);
+    const job = i.owner.start(i.score, {
+      fromFrame,
+      signal: i.abort.signal,
+      repeat: repeatEnabled,
+    });
+    i.job = job;
+    job.faulted?.then((e) => {
+      if (valid(i) && i.job === job) {
+        invalidate("error");
+        error = e.code ?? e.message;
+        emit();
+      }
+    });
+    await job.ready;
+    check(i);
+    i.cycle = (i.cycle ?? 0) + 1;
+    job.done.then(
+      () => {
+        if (!valid(i) || i.job !== job) return;
+        if (!repeatEnabled || job.continuous) {
+          i.finishing = true;
+          emit();
+          void Promise.allSettled(
+            [...i.auxiliary].map((a) => a.job?.done),
+          ).then(() => {
+            if (valid(i)) invalidate("ended");
+          });
+          return;
+        }
+        // Native done acknowledges the complete programme, natural tails and
+        // graph/voice release. Reuse the admitted score only after that boundary.
+        try {
+          void startJob(i).catch((e) => {
+            if (valid(i)) {
+              invalidate("error");
+              error = e.code ?? e.message;
+              emit();
+            }
+          });
+          emit();
+        } catch (e) {
+          if (valid(i)) {
+            invalidate("error");
+            error = e.code ?? e.message;
+            emit();
+          }
+        }
+      },
+      (e) => {
+        if (valid(i) && i.job === job) {
+          invalidate("error");
+          error = e.code ?? e.message;
+          emit();
+        }
+      },
+    );
+  }
+  const api = Object.freeze({
     snapshot,
-    play(value, { command, fromFrame = 0 } = {}) {
+    setRepeat(enabled) {
+      if (closed) fail("canonicalControllerClosed");
+      if (typeof enabled !== "boolean") fail("invalidCanonicalRepeat");
+      if (
+        enabled &&
+        current?.job &&
+        !current.job.continuous &&
+        ["playing", "paused", "prepared"].includes(status)
+      )
+        fail("canonicalRepeatNeedsRestart");
+      if (enabled && current?.finishing) fail("canonicalRepeatFinishing");
+      repeatEnabled = enabled;
+      if (!enabled && current?.job?.continuous && !current.finishing) {
+        current.job.finish();
+        current.finishing = true;
+      }
+      emit();
+    },
+    play(
+      value,
+      {
+        command,
+        fromFrame = 0,
+        prepareOnly = false,
+        pausedIntent = false,
+      } = {},
+    ) {
       if (closed) fail("canonicalControllerClosed");
       if (status === "cleanup-pending") fail("canonicalCleanupPending");
       // Snapshot before the first await; caller's document remains authoritative.
@@ -140,6 +246,9 @@ export function createCanonicalStudioController({
           Object.assign(Error("cancelled"), { code: "cancelled" }),
         );
       const i = {
+        document,
+        intentCommand,
+        fromFrame,
         id: intentGeneration,
         abort: new AbortController(),
         owner: null,
@@ -149,6 +258,8 @@ export function createCanonicalStudioController({
         work: null,
         retirement: null,
         actions: new Set(),
+        auxiliary: new Set(),
+        finishing: false,
       };
       owners.add(i);
       current = i;
@@ -162,6 +273,7 @@ export function createCanonicalStudioController({
         i.score = await i.owner.prepare(document, {
           signal: i.abort.signal,
           command: intentCommand,
+          repeat: repeatEnabled,
         });
         check(i);
         const a = i.score.admission;
@@ -178,28 +290,28 @@ export function createCanonicalStudioController({
           fail("canonicalNotAdmitted");
         await i.owner.resume();
         check(i);
-        i.job = i.owner.start(i.score, { fromFrame, signal: i.abort.signal });
-        i.job.done.then(
-          () => {
-            if (valid(i)) invalidate("ended");
-          },
-          (e) => {
-            if (valid(i)) {
-              invalidate("error");
-              error = e.code ?? e.message;
-              emit();
-            }
-          },
-        );
+        if (prepareOnly && pausedIntent) {
+          await i.owner.pause();
+          check(i);
+        }
+        if (!prepareOnly) await startJob(i, fromFrame);
         check(i);
         i.capability = Object.freeze({
           generation: i.id,
-          admission: i.job.admission ?? a,
+          admission: i.job?.admission ?? a,
           rate: i.score.program.rate,
           frames: i.score.program.frames,
+          bodyFrames:
+            i.score.timeline?.bodyFrames ??
+            i.score.program.bodyFrames ??
+            i.score.program.frames,
           provenance: i.score.provenance,
         });
-        status = "playing";
+        status = prepareOnly
+          ? pausedIntent
+            ? "paused"
+            : "prepared"
+          : "playing";
         error = null;
         emit();
         check(i);
@@ -218,10 +330,148 @@ export function createCanonicalStudioController({
       emit();
       return i.work;
     },
+    async startPrepared() {
+      const i = current;
+      if (
+        !i?.capability ||
+        !valid(i) ||
+        !["prepared", "paused"].includes(status) ||
+        i.job
+      )
+        fail("canonicalNotReady");
+      const task = (async () => {
+        await i.owner.resume();
+        check(i);
+        await startJob(i, i.fromFrame);
+        status = "playing";
+        emit();
+        check(i);
+        return i.capability;
+      })();
+      i.actions.add(task);
+      try {
+        return await task;
+      } catch (e) {
+        if (valid(i)) {
+          error = e.code ?? e.message;
+          status = "error";
+          emit();
+        }
+        throw e;
+      } finally {
+        i.actions.delete(task);
+      }
+    },
+    async audition(value, { quantize = false, swing = 0 } = {}) {
+      if (typeof quantize !== "boolean") fail("invalidCanonicalPadGrid");
+      const i = current;
+      if (
+        !i?.capability ||
+        !valid(i) ||
+        i.finishing ||
+        !["playing", "prepared"].includes(status)
+      )
+        fail("canonicalNotReady");
+      const document = canonicalFrozenCopy(value);
+      const task = (async () => {
+        const score = await i.owner.prepare(document, {
+          signal: i.abort.signal,
+          command: { kind: "once", bars: null, cycles: 1 },
+          audition: true,
+        });
+        const a = { score, job: null };
+        i.auxiliary.add(a);
+        try {
+          check(i);
+          if (i.finishing || !["playing", "prepared"].includes(status))
+            fail("canonicalNotReady");
+          const admission = score.admission;
+          if (
+            !score.playableVerified ||
+            !admission ||
+            !Number.isInteger(admission.maxOwned) ||
+            admission.maxOwned < 0 ||
+            admission.maxOwned > 16 ||
+            !Number.isFinite(admission.maxPeak) ||
+            admission.maxPeak < 0 ||
+            admission.maxPeak > 0.95
+          )
+            fail("canonicalNotAdmitted");
+          a.job = i.owner.start(score, {
+            signal: i.abort.signal,
+            audition: true,
+            whenFrame:
+              quantize && status === "playing" && i.job
+                ? canonicalPadWhenFrame({
+                    timing: i.score.timeline.project.timing,
+                    rate: i.score.program.rate,
+                    swing,
+                    nowFrame: Math.ceil(
+                      i.owner.context.currentTime * i.score.program.rate,
+                    ),
+                    originFrame: i.job.originFrame,
+                    fromFrame: i.job.fromFrame,
+                  })
+                : null,
+          });
+          const cleanup = () => {
+            score.dispose();
+            i.auxiliary.delete(a);
+          };
+          a.job.done.then(cleanup, cleanup).catch((e) => {
+            if (valid(i)) {
+              error = e.code ?? e.message;
+              status = "cleanup-pending";
+              emit();
+            }
+          });
+          return a.job;
+        } catch (e) {
+          score.dispose();
+          i.auxiliary.delete(a);
+          throw e;
+        }
+      })();
+      i.actions.add(task);
+      try {
+        return await task;
+      } finally {
+        i.actions.delete(task);
+      }
+    },
     pause: () => action("pause"),
-    resume: () => action("resume"),
+    resume: () => (current?.job ? action("resume") : api.startPrepared()),
+    seek(frame) {
+      const i = current;
+      if (
+        !i?.capability ||
+        !valid(i) ||
+        !["playing", "paused"].includes(status) ||
+        !integer(frame, 0, i.capability.bodyFrames - 1)
+      )
+        fail("canonicalNotReady");
+      const pausedIntent = status === "paused";
+      return api.play(i.document, {
+        command: i.intentCommand,
+        fromFrame: frame,
+        prepareOnly: pausedIntent,
+        pausedIntent,
+      });
+    },
     position() {
-      return current?.job?.position ?? null;
+      if (current?.job) return current.job.position ?? null;
+      if (!current?.capability || !["prepared", "paused"].includes(status))
+        return null;
+      return {
+        ...(current.owner.position?.(current.score, current.fromFrame) ?? {
+          frame: current.fromFrame,
+          stage: "body",
+          occurrences: [],
+          nativePlacements: [],
+          compositions: [],
+        }),
+        started: false,
+      };
     },
     exportWav({ signal, onProgress } = {}) {
       const i = current;
@@ -243,4 +493,5 @@ export function createCanonicalStudioController({
       return drain();
     },
   });
+  return api;
 }

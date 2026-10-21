@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { loadConfigFromFile } from "vite";
 import { pagesReleaseMode } from "../scripts/pages-release-policy.mjs";
 
-test("approved Pages main build selects opt-in release; local and branch builds remain canonical-off", () => {
+test("Pages main build selects optional Preview with ordinary Studio default; local and branches keep requested modes", () => {
   const mode = "gamelan-v5-public-candidate";
   assert.equal(pagesReleaseMode(mode, {}), mode);
   assert.equal(
@@ -21,6 +21,10 @@ test("approved Pages main build selects opt-in release; local and branch builds 
   };
   assert.equal(pagesReleaseMode(mode, env), "gamelan-v5-canonical-release");
   assert.throws(
+    () => pagesReleaseMode("gamelan-v5-final", env),
+    /unreviewedPagesProductionMode/,
+  );
+  assert.throws(
     () => pagesReleaseMode(mode, { ...env, CF_PAGES_COMMIT_SHA: "local" }),
     /missingPagesCommitIdentity/,
   );
@@ -35,6 +39,7 @@ test("all current public build modes retain the schema6 recovery reader, includi
     "gamelan-public-candidate",
     "gamelan-v5-public-candidate",
     "gamelan-v5-canonical-release",
+    "gamelan-v5-final",
   ]) {
     const result = await loadConfigFromFile(
       { command: "build", mode },

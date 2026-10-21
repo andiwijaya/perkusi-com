@@ -643,6 +643,7 @@
     gap: 20px;
   }
   .st-intro {
+    flex-wrap: wrap;
     margin-bottom: 20px;
   }
   .st-panel-top {

@@ -1,3 +1,7 @@
+import {
+  withUnitNativeClock,
+  nativeParameters,
+} from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 let Processor;
@@ -13,10 +17,48 @@ globalThis.AudioWorkletProcessor = class {
 };
 globalThis.registerProcessor = (name, p) => {
   assert.equal(name, "perkusi-mic-meter-v5");
-  Processor = p;
+  Processor = withUnitNativeClock(p);
 };
 globalThis.currentFrame = 0;
 await import("../src/loop-station/mic-meter-worklet.js");
+
+test("native monitor timing survives a stale global but refuses a repeated native block and closes with silent output", () => {
+  const p = new Processor(),
+    out = [[new Float32Array(128), new Float32Array(128)]];
+  p.port.onmessage({
+    data: { type: "monitor", id: 1, enabled: true, frame: 128 },
+  });
+  globalThis.currentFrame = 0;
+  p.process(
+    [[new Float32Array(128).fill(0.25)]],
+    out,
+    nativeParameters(0, 128),
+  );
+  assert(out[0].every((c) => c.every((x) => x === 0)));
+  p.process(
+    [[new Float32Array(128).fill(0.25)]],
+    out,
+    nativeParameters(128, 128),
+  );
+  assert(out[0].every((c) => c.every((x) => x === 0.0625)));
+  assert.equal(
+    p.port.messages.find((m) => m.type === "monitor-state").frame,
+    128,
+  );
+  assert.equal(
+    p.process(
+      [[new Float32Array(128).fill(0.25)]],
+      out,
+      nativeParameters(128, 128),
+    ),
+    false,
+  );
+  assert(out[0].every((c) => c.every((x) => x === 0)));
+  assert.deepEqual(p.port.messages.slice(-2), [
+    { type: "clock-error" },
+    { type: "closed" },
+  ]);
+});
 test("real meter processor emits bounded scalar receipts with no live audio and sticky invalid/topology faults", () => {
   const p = new Processor(),
     out = [[new Float32Array(128).fill(0.8)]];
@@ -35,8 +77,10 @@ test("real meter processor emits bounded scalar receipts with no live audio and 
   );
   assert.equal(p.port.messages[0].peak, 0.25);
   assert.equal(p.port.messages[0].rms, 0.25);
+  globalThis.currentFrame += 128;
   p.process([[new Float32Array(128).fill(NaN), new Float32Array(128)]], out);
   p.port.onmessage({ data: { type: "ack" } });
+  globalThis.currentFrame += 128;
   p.process([[new Float32Array(128)]], out);
   assert.equal(p.port.messages.at(-1).invalid, true);
   assert.equal(p.port.messages.at(-1).changed, true);

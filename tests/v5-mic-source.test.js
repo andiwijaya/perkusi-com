@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -18,9 +19,65 @@ import { TakePool } from "../src/loop-station/take-pool.js";
 import { emptyLoopProject } from "../src/loop-station/model.js";
 import { freezeCaptureProject } from "../src/loop-station/master-capture-clock.js";
 const tick = () => new Promise((r) => setImmediate(r));
+
+for (const boundary of ["worker-close", "context-close"])
+  test(`host meter clock failure cancels monitoring and retains its own lease until ${boundary}`, async (t) => {
+    let callback;
+    t.mock.method(globalThis, "setInterval", (fn) => {
+      callback = fn;
+      return { unref() {} };
+    });
+    t.mock.method(globalThis, "clearInterval", () => {});
+    const f = fixture(),
+      foreign = f.memory.reserve(313, "foreign"),
+      opening = createMicSource(f.options);
+    await tick();
+    f.meter.send({ type: "meter", channels: 1, frame: 128, peak: 0.2 });
+    const source = await opening,
+      faults = [],
+      monitoring = setMicMonitor(source, new Node(f.context), true);
+    let monitorResult;
+    monitoring.then((v) => (monitorResult = v));
+    source.onFault((f) => faults.push(f));
+    f.meter.parameters.get("framePhase").linearRampToValueAtTime = () => {
+      throw Error("QAHostMeterClockFailure");
+    };
+    const held = f.memory.snapshot().bytes;
+    t.after(async () => {
+      f.context.state = "closed";
+      f.context.dispatchEvent(new Event("statechange"));
+      await closeMicSource(source).catch(() => {});
+      foreign.release();
+    });
+    f.context.currentTime = (1.1 * 1048576) / 48000;
+    callback();
+    await tick();
+    assert.equal(faults.length, 1);
+    assert.equal(source.snapshot().fault.reason, "micClockDiscontinuity");
+    assert.equal(source.isCurrent(), false);
+    assert.equal(source.monitoring, "disabled");
+    assert.deepEqual(monitorResult, { cancelled: true });
+    assert.equal(f.memory.snapshot().bytes, held);
+    f.meter.port.postMessage = () => {};
+    let closed = false;
+    const closing = closeMicSource(source).then(() => (closed = true));
+    await tick();
+    assert.equal(closed, false);
+    assert.equal(f.memory.snapshot().bytes, held);
+    if (boundary === "worker-close") f.meter.send({ type: "closed" });
+    else {
+      f.context.state = "closed";
+      f.context.dispatchEvent(new Event("statechange"));
+    }
+    await closing;
+    callback();
+    assert.equal(faults.length, 1);
+    assert.equal(f.memory.snapshot().bytes, 313);
+  });
 class Node {
   constructor(context) {
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.gain = { value: 1 };
     this.edges = new Set();
     this.port = {
@@ -91,12 +148,45 @@ function fixture() {
     },
   };
 }
+
+test("clock installation refusal still consumes the real close receipt and releases preparation exactly", async () => {
+  const f = fixture();
+  await assert.rejects(
+    createMicSource({
+      ...f.options,
+      nodeFactory() {
+        const n = new Node(f.context);
+        n.parameters.clear();
+        return n;
+      },
+    }),
+    /workletClockStartMissed/,
+  );
+  assert.equal(f.mic.state, "closed");
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
+
+test("native meter clock fault cancels pending monitor, invalidates only its epoch and preserves truthful input loss", async () => {
+  const f = fixture(),
+    pending = createMicSource(f.options);
+  await tick();
+  f.meter.send({ type: "meter", channels: 1, peak: 0.2 });
+  const source = await pending,
+    monitor = setMicMonitor(source, new Node(f.context), true);
+  f.meter.send({ type: "clock-error" });
+  assert.deepEqual(await monitor, { cancelled: true });
+  assert.equal(source.monitoring, "disabled");
+  assert.equal(source.isCurrent(), false);
+  assert.equal(source.snapshot().fault.reason, "micClockDiscontinuity");
+  await closeMicSource(source);
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
 for (const channels of [1, 2])
   test(`actual ${channels}channel probe brands only the same owner; hardware settings do not rewrite channels/rate; monitoring stays zero`, async () => {
     const f = fixture(),
       pending = createMicSource(f.options);
     await tick();
-    assert.equal(f.memory.snapshot().bytes, 51200);
+    assert.equal(f.memory.snapshot().bytes, 55296);
     assert.equal(f.mic.input.channelCountMode, "max");
     f.meter.send({
       type: "meter",

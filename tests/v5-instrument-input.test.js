@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -5,10 +6,13 @@ import {
   createInstrumentInput,
   captureInputChannels,
   captureReservedBytes,
+  activateInstrumentMonitor,
+  instrumentMonitorPeak,
 } from "../src/loop-station/instrument-input.js";
 import { InstrumentRegistry } from "../src/audio/instrument-registry.js";
 import { AudioMemory } from "../src/audio/audio-memory.js";
 import { Transport } from "../src/audio/transport.js";
+import { createProgrammeOutputStage } from "../src/audio/programme-output.js";
 import { LoopStationSession } from "../src/loop-station/session.js";
 import { WorkspaceAudioOwner } from "../src/loop-station/workspace-owner.js";
 import { CaptureSession } from "../src/loop-station/capture-session.js";
@@ -30,6 +34,7 @@ class Node extends EventTarget {
   constructor(c) {
     super();
     this.context = c;
+    this.parameters = fakeWorkletParams();
     this.gain = param();
     this.pan = param();
     this.offset = param();
@@ -61,6 +66,9 @@ class Context extends EventTarget {
   createStereoPanner() {
     return new Node(this);
   }
+  createWaveShaper() {
+    return new Node(this);
+  }
   createBufferSource() {
     const n = new Node(this);
     this.sources.push(n);
@@ -88,7 +96,7 @@ class Context extends EventTarget {
     return this.createBuffer(2, 4096, 48000);
   }
 }
-async function fixture(t, { recordedSet = false } = {}) {
+async function fixture(t, { recordedSet = false, live = false } = {}) {
   t.mock.method(globalThis, "fetch", async () => new Response(bytes));
   const c = new Context(),
     memory = new AudioMemory(),
@@ -183,6 +191,7 @@ async function fixture(t, { recordedSet = false } = {}) {
   s.status = "playing";
   transport.start(0.1); // Unit admission fixture; no fake rendering claim.
   const source = await createInstrumentInput({
+    live,
     context: c,
     transport,
     memory,
@@ -234,6 +243,104 @@ async function fixture(t, { recordedSet = false } = {}) {
   return f;
 }
 
+test("live certified peak includes reentrant pending strikes, refuses before native allocation and holds until actual ended", async (t) => {
+  const f = await fixture(t, { live: true }),
+    peak = () => instrumentMonitorPeak(f.source, f.c, f.memory, f.s.transport);
+  let reentered = false;
+  try {
+    assert.equal(peak(), 0);
+    assert.throws(
+      () =>
+        instrumentMonitorPeak({ ...f.source }, f.c, f.memory, f.s.transport),
+      (e) => e.code === "invalidCaptureSource",
+    );
+    activateInstrumentMonitor(f.source, {
+      destination: f.c.createGain(),
+      admitVoice: () => {
+        if (peak() > 0.14)
+          throw Object.assign(Error("voiceHeadroom"), {
+            code: "voiceHeadroom",
+          });
+        if (peak() > 0 && !reentered) {
+          reentered = true;
+          assert.throws(
+            () => f.source.strike("note-b"),
+            (e) => e.code === "voiceHeadroom",
+          );
+        }
+      },
+    });
+    f.source.press("first", "note-a");
+    assert.equal(peak(), 0.125);
+    assert(reentered);
+    assert.equal(f.source.snapshot().voices.length, 1);
+    assert.equal(f.source.snapshot().fault, null);
+    const count = f.c.sources.length;
+    assert.throws(
+      () => f.source.press("second", "note-b"),
+      (e) => e.code === "voiceHeadroom",
+    );
+    assert.equal(f.c.sources.length, count);
+    assert.equal(peak(), 0.125);
+    f.c.currentTime = 20;
+    assert.equal(
+      peak(),
+      0.125,
+      "elapsed endTime is not a native ended acknowledgement",
+    );
+    f.c.sources.find((s) => s.buffer).onended();
+    assert.equal(peak(), 0);
+    assert.equal(f.source.snapshot().fault, null);
+  } finally {
+    await f.close();
+  }
+});
+
+test("whole-song record-only owner admits each actual input strike against the unchanged .95 output guard", async (t) => {
+  const f = await fixture(t, { live: true });
+  try {
+    f.owner.captureReplay = false;
+    f.owner.externalBacking = {
+      context: f.c,
+      memory: f.memory,
+      voices: 1,
+      peak: 0.9,
+    };
+    f.owner.engine.outputStage = createProgrammeOutputStage(
+      f.c,
+      f.owner.engine.master,
+    );
+    f.owner.engine.output = f.owner.engine.outputStage.output;
+    const graph = { gain: f.c.createGain() };
+    f.s.graphs.set("selected", graph);
+    await f.owner.installProducer(
+      "selected",
+      f.source,
+      graph,
+      f.owner.generation,
+    );
+    assert.equal(f.owner.snapshot().producers[0].prePeak, 0);
+    f.source.press("first", "note-a");
+    assert.equal(f.owner.snapshot().producers[0].prePeak, 0.125);
+    const count = f.c.sources.length;
+    assert.throws(() => f.source.press("second", "note-b"), {
+      code: "voiceHeadroom",
+    });
+    assert.equal(f.c.sources.length, count);
+    assert.equal(f.source.snapshot().fault, null);
+    f.c.currentTime = 10;
+    assert.throws(() => f.source.press("second", "note-b"), {
+      code: "voiceHeadroom",
+    });
+    f.c.sources.find((s) => s.buffer).onended();
+    assert.equal(f.owner.snapshot().producers[0].prePeak, 0);
+    f.source.press("second", "note-b");
+    assert.equal(f.owner.snapshot().producers[0].prePeak, 0.125);
+  } finally {
+    await f.close();
+  }
+});
+
 test("Gamelan capture producer declares the same calibrated peak as its native input trim", async (t) => {
   const f = await fixture(t, { recordedSet: true });
   try {
@@ -281,13 +388,13 @@ test("stereo capability cannot be forged, relabeled or admitted under mono guard
 test("stereo root/workspace reserve all channel copies/pages/route before async preparation", async (t) => {
   const f = await fixture(t);
   try {
-    assert.equal(captureReservedBytes(1, 133180), 8 * 133180 + 49152);
-    assert.equal(captureReservedBytes(2, 133180), 2212800);
+    assert.equal(captureReservedBytes(1, 133180), 8 * 133180 + 53248);
+    assert.equal(captureReservedBytes(2, 133180), 2216896);
     const h = f.arm(),
       claim = [...f.owner.claims][0];
     assert.equal(claim.channels, 2);
     assert.equal(claim.voices, 4);
-    assert.equal(claim.futureBytes, 2212800);
+    assert.equal(claim.futureBytes, 2216896);
     await h.prepared;
     assert.equal(h.node.options.processorOptions.channels, 2);
     assert.deepEqual(h.node.options.outputChannelCount, [2]);

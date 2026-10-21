@@ -18,6 +18,42 @@ import {
 import { exportAudioBundle } from "../src/loop-station/audio-bundle.js";
 import { createCanonicalWorkflow } from "../src/studio/canonical-workflow.js";
 
+test("one immutable original Blob shared with input backup stays owned once through independent consumers", async () => {
+  const f = await specimen(),
+    origin = f.bundle.project.origins.find((o) => o.kind === "file"),
+    original = f.bundle.originals.get(origin.sha256),
+    originals = new Map([[origin.sha256, original]]),
+    before = f.memory.snapshot().bytes;
+  const shared = await createCanonicalBundle(f.bundle.project, {
+    registry,
+    memory: f.memory,
+    originals,
+    backup: original,
+  });
+  const sharedBytes = f.memory.snapshot().bytes - before;
+  assert.equal(sharedBytes, original.size + 8192);
+  const distinct = await createCanonicalBundle(f.bundle.project, {
+    registry,
+    memory: f.memory,
+    originals,
+    backup: new Blob([original]),
+  });
+  assert.equal(
+    f.memory.snapshot().bytes - before - sharedBytes,
+    sharedBytes + original.size,
+  );
+  const retained = retainCanonicalBundle(shared);
+  shared.dispose();
+  f.bundle.dispose();
+  assert.equal(retained.backup, original);
+  assert.equal(retained.originals.get(origin.sha256), original);
+  assert.deepEqual(new Uint8Array(await retained.backup.arrayBuffer()), f.raw);
+  distinct.dispose();
+  assert.equal(f.memory.snapshot().bytes, sharedBytes);
+  retained.dispose();
+  assert.equal(f.memory.snapshot().bytes, 0);
+});
+
 test("released bundle access refuses while an independent retained consumer preserves the exact original owner", async () => {
   const f = await specimen(),
     retained = retainCanonicalBundle(f.bundle),

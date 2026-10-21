@@ -145,6 +145,36 @@ test("storage denial/quota never reports a successful save or silently resets or
   assert.throws(() => denied.clear(), { code: "profileStorageUnavailable" });
 });
 
+for (const name of ["QuotaExceededError", "SecurityError"]) {
+  test(`native ${name} maps to storage unavailable and preserves the previous profile`, () => {
+    const f = fixture();
+    f.store.save(simulated);
+    const original = f.data.get(DEVICE_PROFILE_KEY);
+    const error = new DOMException("storage rejected", name);
+    assert.equal(typeof error.code, "number");
+    let attempts = 0;
+    f.storage.setItem = () => {
+      attempts++;
+      throw error;
+    };
+    assert.throws(
+      () =>
+        f.store.save({
+          ...simulated,
+          label: "Valid new profile",
+          advanceMs: 10,
+        }),
+      { code: "profileStorageUnavailable" },
+    );
+    assert.equal(attempts, 1);
+    assert.equal(f.data.get(DEVICE_PROFILE_KEY), original);
+    const denied = new DeviceProfileStore(() => {
+      throw error;
+    });
+    assert.throws(() => denied.read(), { code: "profileStorageUnavailable" });
+  });
+}
+
 test("an observed conflicting write is surfaced rather than acknowledged as saved", () => {
   const f = fixture();
   f.storage.setItem = (key) => f.data.set(key, "other-tab");

@@ -83,13 +83,19 @@ export function initCanonicalAuthoringPanel({
     if (!finite) {
       const bars = el("select", "", {
         "data-song-window": "",
-        "aria-label": say("Jendela rantai Loop", "Loop chain window"),
+        "aria-label": say(
+          "Jendela pemutaran dan rantai Loop",
+          "Loop playback and chain window",
+        ),
       });
       for (const n of [4, 8]) bars.add(new Option(n + say(" bar", " bars"), n));
       if (p.transport.kind === "legacy-continuous")
         box.append(
           label(
-            say("Jendela Loop untuk rantai", "Loop window for chain"),
+            say(
+              "Jendela pemutaran / rantai Loop",
+              "Loop playback / chain window",
+            ),
             bars,
           ),
         );
@@ -217,6 +223,16 @@ export function initCanonicalAuthoringPanel({
           "Rekaman dengan alignment mempertahankan periode Loop aslinya",
           "Aligned recording retains its original Loop period",
         );
+      if (a.alignment !== null)
+        row.append(
+          el(
+            "p",
+            say(
+              "Periode rekaman ini terkunci agar timing asli tetap utuh; pengulangan seluruh lagu tetap tersedia di transport.",
+              "This recording period is locked to preserve its original timing; whole-song repeat remains available in the transport.",
+            ),
+          ),
+        );
       loop.onchange = () =>
         command((p) => setSongPlacement(p, a.id, "loop", loop.checked));
       const phase = el("select", "", { "data-song-phase": "" });
@@ -270,7 +286,10 @@ export function initCanonicalAuthoringPanel({
     );
     const chain = el("ol", "", { "data-song-chain": "" });
     p.chain.forEach((r, index) => {
-      const row = el("li", "", { "data-song-entry": index }),
+      const row = el("li", "", {
+          "data-song-entry": index,
+          "data-song-chain-id": r.id,
+        }),
         section = p.sections.find((s) => s.id === r.sectionId);
       const repeats = field("number", r.repeats, {
         min: 1,
@@ -279,6 +298,12 @@ export function initCanonicalAuthoringPanel({
         "data-song-repeats": "",
         "aria-label": say("Pengulangan", "Repeats"),
       });
+      repeats.dataset.authoringBlocked = String(!finite);
+      if (!finite)
+        repeats.title = say(
+          "Mulai Rantai Pola lagu terlebih dahulu",
+          "Start song Pattern Chain first",
+        );
       repeats.onchange = () =>
         command((p) =>
           editSongChain(p, index, "repeats", Number(repeats.value)),

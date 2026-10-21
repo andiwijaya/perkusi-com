@@ -76,7 +76,7 @@ export function initBeatbox() {
       text(document.querySelector("#bb-" + id), copy[id]);
     render();
   }
-  let projects;
+  let projects, canonicalOrigin;
   function render() {
     if (disposed) return;
     projects?.update();
@@ -323,6 +323,7 @@ export function initBeatbox() {
   function dispose() {
     disposed = true;
     transfer?.dispose();
+    canonicalOrigin?.dispose();
     projects?.dispose();
     disposeFocusVisibility();
     cancelAnimationFrame(frame);
@@ -382,6 +383,17 @@ export function initBeatbox() {
       return s.busy || s.loading || s.sharing;
     },
   });
+  const originId = new URL(location.href).searchParams.get("canonicalOrigin");
+  if (originId)
+    void import("./canonical-origin.js").then(
+      ({ attachCanonicalBeatboxOrigin }) => {
+        if (!disposed)
+          canonicalOrigin = attachCanonicalBeatboxOrigin({
+            root,
+            id: originId,
+          });
+      },
+    );
   frame = requestAnimationFrame(animate);
   if (["localhost", "127.0.0.1"].includes(location.hostname))
     window.perkusiBeatbox = {

@@ -1,6 +1,55 @@
 import { retainCanonicalBundle } from "../project/canonical-package.js";
 import { hashBytes } from "../project/canonical-data.js";
 import { fail } from "../project/instrument-contract.js";
+const handles = new WeakMap(),
+  exclusiveLoans = new WeakMap(),
+  borrowedLoans = new WeakMap();
+
+// Only this module creates these fresh, independently allocated native buffers.
+// A project, descriptor, matching hash or third-party recording handle cannot
+// grant exclusive ownership of an existing AudioBuffer.
+export function isCanonicalRecordingHandle(handle, memory) {
+  return handles.has(handle) && handles.get(handle).memory === memory;
+}
+export function claimCanonicalRecordingLoan(loan, handle, context, memory) {
+  const state = exclusiveLoans.get(loan);
+  if (
+    !state ||
+    state.claimed ||
+    state.handle !== handle ||
+    state.context !== context ||
+    state.memory !== memory
+  )
+    fail("canonicalAssetIdentityMismatch");
+  state.claimed = true;
+  return state.hash;
+}
+export function borrowCanonicalRecordingLoan(
+  source,
+  loan,
+  handle,
+  context,
+  memory,
+) {
+  const state = exclusiveLoans.get(source);
+  if (
+    !state?.claimed ||
+    state.borrowed ||
+    state.handle !== handle ||
+    state.context !== context ||
+    state.memory !== memory ||
+    source.buffer !== loan.buffer
+  )
+    fail("canonicalAssetIdentityMismatch");
+  state.borrowed = true;
+  borrowedLoans.set(loan, { source, memory, hash: state.hash });
+}
+export function canonicalRecordingLoanHash(loan, memory) {
+  const state = borrowedLoans.get(loan);
+  return state && state.memory === memory && exclusiveLoans.has(state.source)
+    ? state.hash
+    : null;
+}
 const check = (s) => {
   if (s?.aborted) fail("cancelled");
 };
@@ -36,8 +85,8 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
     });
   }
   const recordings = Object.freeze(
-    [...byHash.values()].map(({ asset, refs, entry }) =>
-      Object.freeze({
+    [...byHash.values()].map(({ asset, refs, entry }) => {
+      const handle = Object.freeze({
         asset,
         rights: Object.freeze({
           licenseId: "user-data-unverified",
@@ -47,7 +96,7 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
           rawRedistribution: null,
           creditsRefs: Object.freeze(refs),
         }),
-        acquire({ context, signal } = {}) {
+        acquire({ context, signal, beginReservation } = {}) {
           if (closed) fail("canonicalProviderClosed");
           check(signal);
           if (context.sampleRate !== asset.sampleRate) fail("takeRateMismatch");
@@ -59,10 +108,12 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
               check(signal);
               const bytes = asset.bytes * 3 + 8192;
               if (bytes > 67108864) fail("combinedMemoryLimit");
-              held = memory.reserve(
-                bytes,
-                "canonical/recording-read-native-views",
-              );
+              held = beginReservation
+                ? beginReservation(bytes)
+                : memory.reserve(
+                    bytes,
+                    "canonical/recording-read-native-views",
+                  );
               if (closed) fail("cancelled");
               check(signal);
               const raw = await entry.blob.arrayBuffer();
@@ -82,19 +133,28 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
               );
               const view = new DataView(raw);
               for (let c = 0; c < asset.channels; c++) {
-                const plane = buffer.getChannelData(c);
-                for (let i = 0; i < asset.frames; i++)
-                  plane[i] = view.getFloat32(
-                    (i * asset.channels + c) * 4,
-                    true,
+                const plane = buffer.getChannelData(c),
+                  bits = new DataView(
+                    plane.buffer,
+                    plane.byteOffset,
+                    plane.byteLength,
                   );
+                for (let i = 0; i < asset.frames; i++) {
+                  plane[i] = view.getFloat32((c * asset.frames + i) * 4, true);
+                  if (
+                    !Number.isFinite(plane[i]) ||
+                    bits.getUint32(i * 4, true) !==
+                      view.getUint32((c * asset.frames + i) * 4, true)
+                  )
+                    fail("recordingHashMismatch");
+                }
               }
               held.resize(asset.bytes * 2 + 8192);
               const row = { held };
               loans.add(row);
               let done = false;
               published = true;
-              return Object.freeze({
+              const loan = Object.freeze({
                 get buffer() {
                   if (done) fail("canonicalLoanReleased");
                   return buffer;
@@ -103,11 +163,20 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
                 release() {
                   if (done) return;
                   done = true;
+                  exclusiveLoans.delete(loan);
                   buffer = null;
                   loans.delete(row);
                   held.release();
                 },
               });
+              exclusiveLoans.set(loan, {
+                handle,
+                context,
+                memory,
+                hash: asset.sha256,
+                claimed: false,
+              });
+              return loan;
             } finally {
               if (!published) held?.release();
             }
@@ -119,8 +188,10 @@ export function createCanonicalRecordingHandles(bundle, { memory } = {}) {
           );
           return job;
         },
-      }),
-    ),
+      });
+      handles.set(handle, { memory });
+      return handle;
+    }),
   );
   return Object.freeze({
     recordings,

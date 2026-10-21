@@ -57,3 +57,36 @@ test("explicit entry carries the chosen ID/EN locale and canonical opt-in", () =
     "/en/studio/?candidate=canonical&lang=en",
   );
 });
+
+test("final Studio routes six aliases and older editor queries to one editor only on trusted hosts", () => {
+  for (const origin of [
+    "http://127.0.0.1:6104",
+    "https://perkusi.com",
+    "https://www.perkusi.com",
+  ])
+    for (const route of [
+      "/studio",
+      "/studio/",
+      "/studio/index.html",
+      "/en/studio",
+      "/en/studio/",
+      "/en/studio/index.html",
+    ])
+      for (const query of [
+        "",
+        "?workspace=legacy",
+        "?workspace=gamelan",
+        "?candidate=canonical",
+      ])
+        assert.equal(
+          canonicalLocalRoute(true, origin + route + query, false, true),
+          true,
+        );
+  for (const url of [
+    "https://perkusi.com.evil.test/studio/",
+    "http://perkusi.com/studio/",
+    "https://foo.pages.dev/studio/",
+    "http://127.0.0.1:6104/gamelan/",
+  ])
+    assert.equal(canonicalLocalRoute(true, url, false, true), false);
+});

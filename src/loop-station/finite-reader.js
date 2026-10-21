@@ -8,6 +8,7 @@ import {
 import { digest } from "./recording-data.js";
 import { fail } from "../project/instrument-contract.js";
 import { sameFiniteIdentity } from "./finite-reader-core.js";
+import { installWorkletFrameClock } from "../audio/worklet-frame-clock.js";
 const contexts = new WeakMap(),
   voices = new WeakMap(),
   loaded = new WeakMap();
@@ -120,8 +121,10 @@ export async function prepareFiniteReaders(
     begin() {
       const tailFrames = fxTailFrames(plan.project, 48000);
       const lease = memory.reserve(
-        [...sources.values()].reduce((n, s) => n + 2 * s.bytes + 8192, 0) +
-          (tailFrames ? finiteTailBytes(plan.project) : 0),
+        [...sources.values()].reduce(
+          (n, s) => n + 2 * s.bytes + 8192 + 4096,
+          0,
+        ) + (tailFrames ? finiteTailBytes(plan.project) : 0),
         "finite-reader/epoch-clone-workers-nodes",
       );
       let unused = sources.size + (tailFrames ? 1 : 0),
@@ -254,6 +257,7 @@ export async function prepareFiniteReaders(
               g.periodFrames,
           });
           let node,
+            frameClock,
             timer,
             ready = false,
             body = null,
@@ -288,6 +292,7 @@ export async function prepareFiniteReaders(
           const release = () => {
             if (releasedVoice) return;
             releasedVoice = true;
+            frameClock?.dispose();
             clearTimeout(timer);
             node?.disconnect();
             node?.port.close();
@@ -366,6 +371,15 @@ export async function prepareFiniteReaders(
                 buffers: source.buffers,
               },
             });
+            frameClock = installWorkletFrameClock(
+              node,
+              context,
+              Math.min(
+                identity.startFrame,
+                Math.ceil(((context.currentTime + 0.02) * 48000) / 128) * 128,
+              ),
+              identity.endFrame,
+            );
             node.port.onmessage = (event) => {
               if (releasedVoice) return;
               const d = event.data;

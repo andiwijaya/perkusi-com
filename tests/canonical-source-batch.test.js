@@ -12,6 +12,84 @@ import {
   claimCanonicalPrivateReservation,
 } from "../src/audio/canonical-source-batch.js";
 import { qaBuffer } from "./helpers/canonical-score-fixtures.js";
+import { InstrumentSampleCache } from "../src/audio/instrument-cache.js";
+import { canonicalFixtureRegistry } from "./helpers/canonical-fixtures.js";
+
+test("retired native policy keeps context identity and cannot transfer before actual cache/private cleanup", () => {
+  const memory = new AudioMemory(),
+    foreign = memory.reserve(313, "foreign"),
+    context = {
+      sampleRate: 48000,
+      decodeAudioData: () => {
+        throw Error("this retirement guard test does not decode audio");
+      },
+    },
+    dispatcher = createCanonicalSourceDispatcher(memory, context),
+    state = {
+      disposed: false,
+      jobs: 0,
+      loans: 0,
+      pendingCleanup: 0,
+      cache: { activeJobs: 0, activeScopes: 0 },
+    },
+    descriptor = {
+      encodedBytes: 32,
+      frames: 128,
+      channels: 1,
+      sampleRate: 48000,
+      gainTrim: 1,
+    },
+    policy = dispatcher.nativePolicy;
+  dispatcher.bind({ snapshot: () => state });
+  const prior = new InstrumentSampleCache(context, canonicalFixtureRegistry, {
+      memoryPolicy: policy,
+    }),
+    held = policy.begin(descriptor);
+  assert.throws(
+    () => dispatcher.retireNativePolicy(),
+    (e) => e.code === "canonicalSourceStillOwned",
+  );
+  dispatcher.close();
+  state.disposed = true;
+  assert.throws(
+    () => dispatcher.retireNativePolicy(),
+    (e) => e.code === "canonicalSourceStillOwned",
+  );
+  held.release();
+  prior.dispose();
+  for (const field of ["jobs", "loans", "pendingCleanup"]) {
+    state[field] = 1;
+    assert.throws(
+      () => dispatcher.retireNativePolicy(),
+      (e) => e.code === "canonicalSourceStillOwned",
+    );
+    state[field] = 0;
+  }
+  for (const field of ["activeJobs", "activeScopes"]) {
+    state.cache[field] = 1;
+    assert.throws(
+      () => dispatcher.retireNativePolicy(),
+      (e) => e.code === "canonicalSourceStillOwned",
+    );
+    state.cache[field] = 0;
+  }
+  assert.equal(dispatcher.retireNativePolicy(), policy);
+  const next = new InstrumentSampleCache(context, canonicalFixtureRegistry, {
+      memoryPolicy: policy,
+    }),
+    nextHeld = policy.begin(descriptor);
+  assert.equal(memory.snapshot().bytes, 313 + 32 + 512);
+  nextHeld.resize(512);
+  assert.equal(memory.snapshot().bytes, 313 + 512);
+  nextHeld.release();
+  next.dispose();
+  assert.throws(
+    () => dispatcher.legacyBegin({ descriptor }, 512),
+    (e) => e.code === "canonicalProviderClosed",
+  );
+  assert.equal(memory.snapshot().bytes, 313);
+  foreign.release();
+});
 
 test("failed reentrant batch construction cannot roll back a cache ticket already owned by a nested consumer", () => {
   const pool = new AudioMemory(),

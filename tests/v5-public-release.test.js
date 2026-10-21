@@ -15,6 +15,24 @@ import {
 } from "../src/gamelan/public-context.js";
 import { instrumentRouteContext } from "../src/gamelan/route-context.js";
 
+test("final home retains Rhythm Studio and neutral instrument copy in ID and EN", () => {
+  const cfg = config({ mode: "gamelan-v5-final" });
+  assert.equal(cfg.define["import.meta.env.CANONICAL_FINAL_STUDIO"], "true");
+  assert.equal(cfg.define["import.meta.env.CANONICAL_PUBLIC_PREVIEW"], "false");
+  for (const locale of ["id", "en"]) {
+    const html = publicCandidateHTML(renderDocument("home", locale), {
+      page: "home",
+      locale,
+      v5UX: true,
+      finalStudio: true,
+    });
+    assert(html.includes('data-i18n="home.card2.title"'));
+    assert(!html.includes("data-v5-loop-card"));
+    assert(!html.includes('data-i18n="common.gamelanPreview"'));
+    assert(html.includes('data-i18n="common.gamelan"'));
+  }
+});
+
 test("V5 public selection includes both Loop Station entries/assets while private and V4 modes keep their boundaries", () => {
   const publicV5 = config({ mode: "gamelan-v5-public-candidate" }),
     local = config({ mode: "gamelan-v5-ux" }),
@@ -135,11 +153,11 @@ test("runtime locale metadata follows the selected language without creating an 
   }
 });
 
-test("existing Pages build command selects public V5 while preserving default microphone denial and Preview labels", () => {
+test("default build selects optional Preview while rendering and global mic denial remain bounded", () => {
   const pkg = JSON.parse(readFileSync("package.json", "utf8"));
   assert.equal(
     pkg.scripts.build,
-    "node scripts/local-build.mjs --mode gamelan-v5-public-candidate",
+    "node scripts/local-build.mjs --mode gamelan-v5-canonical-release",
   );
   assert.match(
     readFileSync("public/_headers", "utf8"),
@@ -154,7 +172,7 @@ test("existing Pages build command selects public V5 while preserving default mi
   assert.match(html, /data-loop-link/);
 });
 
-test("approved mic permission is same-origin only on six exact bilingual Loop Station document aliases", () => {
+test("approved mic permission is same-origin only on exact bilingual Loop Station and Studio document aliases", () => {
   const text = readFileSync("public/_headers", "utf8"),
     rules = pagesHeaderRules(text),
     paths = [
@@ -164,6 +182,12 @@ test("approved mic permission is same-origin only on six exact bilingual Loop St
       "/en/loop-station",
       "/en/loop-station/",
       "/en/loop-station/index.html",
+      "/studio",
+      "/studio/",
+      "/studio/index.html",
+      "/en/studio",
+      "/en/studio/",
+      "/en/studio/index.html",
     ];
   assert.deepEqual(
     rules.slice(1).map((r) => r.path),
@@ -192,8 +216,6 @@ test("other documents, missing descendants and lookalike paths retain the origin
   for (const path of [
     "/",
     "/en/",
-    "/studio/",
-    "/en/studio/?workspace=gamelan",
     "/beatbox/",
     "/gamelan/",
     "/gamelan/credits/",
@@ -204,6 +226,10 @@ test("other documents, missing descendants and lookalike paths retain the origin
     "/loop-station-evil/",
     "/LOOP-STATION/",
     "/en/loop-station/extra",
+    "/studio/unknown",
+    "/studio-evil/",
+    "/STUDIO/",
+    "/en/studio/extra",
   ]) {
     const h = effectivePagesHeaders(text, "https://perkusi.com" + path);
     assert.equal(

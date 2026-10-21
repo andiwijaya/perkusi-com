@@ -61,6 +61,7 @@ export async function buildPayloadMinimum(
       "gamelan-v5-ux",
       "gamelan-v5-public-candidate",
       "gamelan-v5-canonical-release",
+      "gamelan-v5-final",
     ].includes(mode)
       ? "flac"
       : "pcm");
@@ -89,6 +90,7 @@ export async function buildPayloadMinimum(
       "gamelan-v5-ux",
       "gamelan-v5-public-candidate",
       "gamelan-v5-canonical-release",
+      "gamelan-v5-final",
     ].includes(mode)
   ) {
     const notes = await load("internal/loop-instruments/manifest.json");
@@ -156,6 +158,7 @@ export async function runLocalBuild({
   runner = viteRunner,
   timeoutMs = 120000,
   retainPrevious = false,
+  cleanupAfterBuild = true,
 } = {}) {
   root = resolve(root);
   if (
@@ -165,6 +168,7 @@ export async function runLocalBuild({
       "gamelan-v5-ux",
       "gamelan-v5-public-candidate",
       "gamelan-v5-canonical-release",
+      "gamelan-v5-final",
       "audio-prototype",
     ].includes(mode)
   )
@@ -397,7 +401,14 @@ export async function runLocalBuild({
     result.after = await measureTree(root, target);
     await atomicJSON(receiptPath, result);
     try {
-      const c = await cleanupBuilds({ root, apply: true });
+      const c = cleanupAfterBuild
+        ? await cleanupBuilds({ root, apply: true })
+        : {
+            status: "DEFERRED_BY_REQUEST",
+            removedFiles: 0,
+            removedBytes: 0,
+            receiptPath: null,
+          };
       result.cleanup = {
         status: c.status,
         removedFiles: c.removedFiles,
@@ -422,6 +433,10 @@ if (
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--retain-previous") {
       options.retainPrevious = true;
+      continue;
+    }
+    if (args[i] === "--no-cleanup") {
+      options.cleanupAfterBuild = false;
       continue;
     }
     if (!["--mode", "--outDir"].includes(args[i]) || !args[i + 1])

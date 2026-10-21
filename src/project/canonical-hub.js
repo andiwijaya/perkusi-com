@@ -88,7 +88,12 @@ export async function combineCanonicalMaterial(
       }
     if (fixed) {
       const exact = (240 * fixed.sampleRate) / out.timing.bpm;
-      if (!Number.isInteger(exact) || exact !== fixed.framesPerBar)
+      // Matching, already-frozen clocks need no conversion. A musical source
+      // still requires an exact frame bar before it can join a fixed clock.
+      if (
+        [out, source].some((p) => p.timing.clock.kind === "musical") &&
+        (!Number.isInteger(exact) || exact !== fixed.framesPerBar)
+      )
         fail("hubClockConflict");
       out.timing.clock = structuredClone(fixed);
     }

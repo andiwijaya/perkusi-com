@@ -195,7 +195,11 @@ export function prepareTransfer(
     original.schemaVersion === 1 ? originalRegistry : compositionRegistry,
   );
   const candidate =
-    target === "studio" ? fromBeatbox(valid) : toBeatbox(valid, true);
+    target === "studio"
+      ? fromBeatbox(valid)
+      : valid.schemaVersion === 1
+        ? structuredClone(valid)
+        : toBeatbox(valid, true);
   const drafts = [...retainedDrafts(previous)];
   const destinationKey =
     draftKeys(target).find((key) => storage.getItem(key)) ||
@@ -410,7 +414,14 @@ export function incomingTransfer(
   }
   let deliveryPromise;
   const deliver = (apply) => (deliveryPromise ||= performDelivery(apply));
-  return { project: structuredClone(project), acknowledge, deliver };
+  return {
+    id: record.id,
+    pending: record.pending,
+    project: structuredClone(project),
+    check: latest,
+    acknowledge,
+    deliver,
+  };
 }
 export function initModeTransfer({
   root,

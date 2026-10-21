@@ -1,3 +1,7 @@
+import {
+  fakeWorkletParams,
+  withUnitNativeClock,
+} from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { FiniteRecordingProducer } from "../src/loop-station/finite-reader-core.js";
@@ -187,7 +191,7 @@ globalThis.registerProcessor = (name, C) => {
   assert.ok(
     ["perkusi-finite-reader-v5", "perkusi-finite-tail-v5"].includes(name),
   );
-  if (name === "perkusi-finite-reader-v5") Processor = C;
+  if (name === "perkusi-finite-reader-v5") Processor = withUnitNativeClock(C);
 };
 await import("../src/loop-station/finite-reader-worklet.js");
 const param = () => ({
@@ -203,6 +207,7 @@ const param = () => ({
 class Node {
   constructor(context) {
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.gain = param();
     this.pan = param();
   }
@@ -389,6 +394,48 @@ async function fixture(t) {
 function renderAll(n) {
   for (let frame = 0; n.active; frame += 128) n.render(frame, 128);
 }
+
+for (const base of [0, 49 * 1048576, 51 * 1048576])
+  test(`legal 32s finite reader at epoch${base} pre-schedules all clock events without a host interval`, async (t) => {
+    let intervals = 0;
+    t.mock.method(globalThis, "setInterval", () => {
+      intervals++;
+      return { unref() {} };
+    });
+    const f = await fixture(t),
+      epoch = f.prepared.begin();
+    f.starts.push(epoch);
+    f.context.currentTime = base / 48000;
+    let released = 0;
+    const faults = [];
+    const v = epoch.start(
+      f.clip,
+      {
+        ...f.clip.voices[0],
+        startFrame: 0,
+        endFrame: 1536000,
+        dampFrame: null,
+        loopFrames: 120000,
+        stopFrame: 1536000,
+      },
+      (base + 4800) / 48000,
+      0,
+      f.context.createGain(),
+      () => released++,
+      (e) => faults.push(e.code),
+    );
+    const n = f.context.nodes.at(-1);
+    assert.ok(n);
+    assert.equal(intervals, 0);
+    assert.deepEqual(faults, []);
+    const last = n.parameters.get("framePhase").events.at(-1);
+    assert.ok(last[2] * 48000 > base + 4800 + 1536000);
+    assert.equal(v.snapshot().kind, "pending");
+    assert.equal(released, 0);
+    f.context.confirmClosed();
+    assert.equal(released, 1);
+    assert.notEqual(v.snapshot().kind, "verified");
+  });
 
 test("three immutable readers after adoption require every closed frontier; a fourth stays outside capability", async (t) => {
   const f = await fixture(t),

@@ -55,6 +55,7 @@ test("original demo owns four distinct patterns/dynamics, eleven exact natural-t
     en = await createFlagshipDemo(catalog.registry, "en");
   assert.deepEqual(a.legacy, b.legacy);
   assert.deepEqual(a.canonical, b.canonical);
+  assert.equal(a.canonical.transport.kind, "chain");
   assert.equal(en.legacy.composition.title, "Evening Conversation");
   const p = a.legacy;
   assert.deepEqual(p.composition.chain, ["a", "b", "a2", "c"]);

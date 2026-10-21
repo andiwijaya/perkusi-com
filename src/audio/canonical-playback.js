@@ -18,9 +18,15 @@ export function canonicalPrintData(token) {
 // this is not permission to flatten a refused programme or change its gain.
 export async function bakeCanonicalPlayback(
   score,
-  { memory, createBuffer, check, yieldTask } = {},
+  { memory, createBuffer, check, yieldTask, sharedMaster = false } = {},
 ) {
-  const { program, project } = score,
+  const { program } = score,
+    project = sharedMaster
+      ? {
+          ...score.project,
+          master: { ...score.project.master, limiter: BYPASS_LIMITER },
+        }
+      : score.project,
     frames = program.frames,
     rate = program.rate;
   check();

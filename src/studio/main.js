@@ -57,6 +57,7 @@ export function initStudio({ canonicalCandidate = null } = {}) {
   if (
     (import.meta.env.DEV ||
       import.meta.env.CANONICAL_LOCAL_REVIEW ||
+      import.meta.env.CANONICAL_FINAL_STUDIO ||
       import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
     !canonicalCandidate &&
     canonicalLocalRoute(
@@ -75,17 +76,21 @@ export function initStudio({ canonicalCandidate = null } = {}) {
             ? "Local Studio could not open. Your saved projects remain available."
             : "Studio lokal belum dapat dibuka. Proyek tersimpan tetap tersedia.";
         for (const [href, label] of [
-          [
-            canonicalLegacyHref(document.documentElement.lang),
-            document.documentElement.lang === "en"
-              ? "Previous Studio"
-              : "Studio sebelumnya",
-          ],
+          ...(import.meta.env.CANONICAL_FINAL_STUDIO
+            ? []
+            : [
+                [
+                  canonicalLegacyHref(document.documentElement.lang),
+                  document.documentElement.lang === "en"
+                    ? "Previous Studio"
+                    : "Studio sebelumnya",
+                ],
+              ]),
           [
             canonicalRecoveryHref(document.documentElement.lang),
             document.documentElement.lang === "en"
-              ? "Recover saved Preview projects"
-              : "Pulihkan proyek Preview tersimpan",
+              ? "Recover saved projects"
+              : "Pulihkan proyek tersimpan",
           ],
         ]) {
           const a = document.createElement("a");
@@ -128,7 +133,8 @@ export function initStudio({ canonicalCandidate = null } = {}) {
       !canonicalLocalBuild(
         true,
         location.href,
-        import.meta.env.CANONICAL_PUBLIC_PREVIEW,
+        import.meta.env.CANONICAL_PUBLIC_PREVIEW ||
+          import.meta.env.CANONICAL_FINAL_STUDIO,
       )
     )
       throw Error("canonicalLocalOnly");

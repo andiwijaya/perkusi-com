@@ -1,3 +1,4 @@
+import { nativeParameters } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -14,7 +15,18 @@ globalThis.AudioWorkletProcessor = class {
 };
 globalThis.sampleRate = 48000;
 globalThis.registerProcessor = (_, value) => {
-  Processor = value;
+  Processor = class extends value {
+    process(
+      inputs,
+      outputs,
+      parameters = nativeParameters(
+        globalThis.currentFrame,
+        outputs[0][0].length,
+      ),
+    ) {
+      return super.process(inputs, outputs, parameters);
+    }
+  };
 };
 await import("../src/loop-station/capture-worklet.js");
 const value = (f, c = 0) =>

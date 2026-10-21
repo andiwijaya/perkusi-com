@@ -1,5 +1,11 @@
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  "common.gamelan": ["Gamelan", "Gamelan"],
+  "common.instrumentStatus": ["Instrumen", "Instrument"],
+  "home.gamelanCopy": [
+    "Mainkan bank Pelog dan Slendro terpisah, lalu susun permainanmu di Rhythm Studio.",
+    "Play separate Pelog and Slendro banks, then arrange your performance in Rhythm Studio.",
+  ],
   "common.loopPreview": ["Loop Station Preview", "Loop Station Preview"],
   "home.loopPreviewCopy": [
     "Susun delapan track, rekam take lokal dan gunakan FX. Simpan proyek dengan audio; pengujian perangkat dan listening tetap terbuka.",

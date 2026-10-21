@@ -117,12 +117,16 @@ export class CanonicalHandoffStore {
       }
     });
   }
-  async stage(blob, { kind, title = "", signal } = {}) {
+  async stage(
+    blob,
+    { kind, title = "", signal, id = crypto.randomUUID() } = {},
+  ) {
     if (
       !(blob instanceof Blob) ||
       blob.size < 1 ||
       blob.size > MAX_CANONICAL_PACKAGE ||
-      !["gamelan", "loop", "legacy"].includes(kind)
+      !["gamelan", "loop", "legacy"].includes(kind) ||
+      !validId(id)
     )
       fail("invalidHandoff");
     const held = this.memory.reserve(
@@ -135,7 +139,7 @@ export class CanonicalHandoffStore {
       check(signal);
       const row = {
         version: 1,
-        id: crypto.randomUUID(),
+        id,
         kind,
         title: String(title).slice(0, 80),
         bytes: blob.size,
@@ -145,15 +149,33 @@ export class CanonicalHandoffStore {
         prepared: null,
         accepted: null,
       };
-      await this.transaction(
+      const result = await this.transaction(
         "readwrite",
-        (s, done) => {
-          s.add(row, row.id);
-          done(metadata(row));
+        (s, done, no) => {
+          s.get(id).onsuccess = ({ target: { result: prior } }) => {
+            if (prior) {
+              if (
+                prior.sha256 !== row.sha256 ||
+                prior.bytes !== row.bytes ||
+                prior.kind !== row.kind
+              ) {
+                no(
+                  Object.assign(Error("handoffConflict"), {
+                    code: "handoffConflict",
+                  }),
+                );
+                return;
+              }
+              done(metadata(prior));
+            } else {
+              s.add(row, row.id);
+              done(metadata(row));
+            }
+          };
         },
         signal,
       );
-      return metadata(row);
+      return result;
     } finally {
       held.release();
     }

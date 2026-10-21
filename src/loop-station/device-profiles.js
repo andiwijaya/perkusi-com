@@ -71,7 +71,7 @@ export class DeviceProfileStore {
     try {
       return fn(this.storage());
     } catch (e) {
-      if (e.code?.startsWith("profile")) throw e;
+      if (typeof e?.code === "string" && e.code.startsWith("profile")) throw e;
       failure("profileStorageUnavailable");
     }
   }

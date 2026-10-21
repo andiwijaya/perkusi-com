@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -141,6 +142,7 @@ test("live CaptureSession exposes only acknowledged PCM, then the identical reta
   const memory = new AudioMemory(),
     pool = new TakePool(memory),
     node = Object.assign(new EventTarget(), {
+      parameters: fakeWorkletParams(),
       context,
       connect() {},
       disconnect() {},

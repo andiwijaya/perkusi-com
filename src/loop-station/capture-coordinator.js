@@ -35,11 +35,13 @@ export class RootCaptureCoordinator {
     registry,
     moduleURL,
     openSession = (options) => CaptureSession.open(options),
+    replay = true,
   } = {}) {
     const { engine, transport, memory, pool, output, project } = root ?? {};
     const context = engine?.context;
     if (
       !enabled ||
+      typeof replay !== "boolean" ||
       !context ||
       engine.transport !== transport ||
       !(transport instanceof Transport) ||
@@ -55,6 +57,7 @@ export class RootCaptureCoordinator {
     )
       fail("invalidCaptureOwner");
     this.root = root;
+    this.replay = replay;
     this.context = context;
     this.transport = transport;
     this.memory = memory;
@@ -85,6 +88,7 @@ export class RootCaptureCoordinator {
     this.retained = new Map();
     this.listeners = new Set();
     this.onContextState = () => {
+      for (const r of this.records) this.trace(r, "context-state");
       if (context.state !== "running")
         void this.rootIntent("context-state").catch(() => {});
     };
@@ -143,6 +147,40 @@ export class RootCaptureCoordinator {
       terminalCause: r.terminalCause ?? null,
       acknowledgedFrames: frames,
       acknowledgedEndFrame: r.plan.startFrame + frames,
+      ...(base?.captureFault
+        ? {
+            captureDiagnostics: Object.freeze({
+              generation: r.generation,
+              sourceGeneration: r.sourceGeneration,
+              plannedTransportOriginFrame: Math.round(
+                r.origin * this.context.sampleRate,
+              ),
+              timeline: Object.freeze(
+                (r.trace ?? []).map((x) => Object.freeze({ ...x })),
+              ),
+              droppedTraceEvents: r.traceOverflow ?? 0,
+            }),
+          }
+        : {}),
+    });
+  }
+  trace(r, event) {
+    if (!r.trace) return;
+    if (r.trace.length >= 16) {
+      r.traceOverflow++;
+      return;
+    }
+    r.trace.push({
+      event,
+      contextFrame: Math.round(
+        this.context.currentTime * this.context.sampleRate,
+      ),
+      contextState: this.context.state,
+      transportOriginFrame: Math.round(
+        this.transport.origin * this.context.sampleRate,
+      ),
+      transportRunning: this.transport.running,
+      inputConnected: !!r.connected,
     });
   }
   current(r) {
@@ -178,7 +216,7 @@ export class RootCaptureCoordinator {
       !safe(foreign.voices) ||
       !Number.isFinite(gain) ||
       gain < 0 ||
-      foreign.peak + r.source.peak * r.gain * gain > 0.95 ||
+      foreign.peak + (this.replay ? r.source.peak * r.gain * gain : 0) > 0.95 ||
       foreign.voices + r.source.voices > 16
     )
       fail("captureHeadroom");
@@ -380,9 +418,15 @@ export class RootCaptureCoordinator {
       )
         fail("captureStartMissed");
       r.routeLease = this.memory.reserve(8192, "root-capture-selected-route");
+      // At most16 small control records fit the existing route/control allowance.
+      // No audio samples, device IDs, wall-clock polling or per-quantum logging.
+      r.trace = [];
+      r.traceOverflow = 0;
+      this.trace(r, "source-prepared");
       r.route = this.context.createGain();
       r.route.gain.value = r.gain;
       r.route.connect(this.output); // selected gain applied exactly once, never master feedback
+      this.trace(r, "route-connected");
       r.session = await this.openSession({
         clock: this.clock,
         memory: this.memory,
@@ -393,15 +437,18 @@ export class RootCaptureCoordinator {
         channels: r.channels,
         signal: r.controller.signal,
         replayPeakLimit: r.source.replayPeakLimit,
+        replay: this.replay,
       });
       // Even a construction racing cancellation is stopped/drained, never connected to input.
       this.observe(r);
+      this.trace(r, "session-open");
       this.requireCurrent(r);
       // Caller peak/voices can change while the module/session opens. Its
       // memory is already reserved; readmit headroom only, without double charge.
       this.requireHeadroom(r);
       lease.input.connect(r.session.input);
       r.connected = true;
+      this.trace(r, "input-connected");
       r.prepared.resolve(r.handle);
       this.notify();
     } catch (error) {
@@ -445,6 +492,7 @@ export class RootCaptureCoordinator {
   cancel(r, reason, cause = reason) {
     if (r.cleaned) return;
     const first = !r.cancelled;
+    if (first) this.trace(r, "cancel");
     if (first)
       r.terminalCause = Object.freeze({
         intent: reason,
@@ -467,6 +515,7 @@ export class RootCaptureCoordinator {
       try {
         r.sourceLease.input.disconnect(r.session.input);
         r.connected = false;
+        this.trace(r, "input-disconnected");
       } catch (error) {
         r.disconnectError = error;
       }
@@ -479,6 +528,7 @@ export class RootCaptureCoordinator {
     if (r.cleaned || r.cleaning) return;
     if (r.session && r.session.state !== "closed") return;
     r.cleaning = true;
+    this.trace(r, "session-closed");
     try {
       if (r.readyTask) await r.readyTask;
       if (r.connected) {
@@ -489,6 +539,7 @@ export class RootCaptureCoordinator {
       if (r.sourceLease && !r.sourceReleased) {
         await r.sourceLease.release();
         r.sourceReleased = true;
+        this.trace(r, "source-released");
       }
       r.route?.disconnect();
       r.routeLease?.release();

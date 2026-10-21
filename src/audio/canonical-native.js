@@ -27,7 +27,7 @@ const graphBytes = (score, programmeGain, count) =>
   (programmeGain === null ? 0 : PROGRAMME_BYTES) +
   count * 8192 +
   score.program.events.reduce(
-    (n, e) => n + (e.spec.print ? e.spec.frames * 16 : 0),
+    (n, e) => n + (e.spec.print ? e.spec.frames * 8 + 4096 : 0),
     0,
   );
 const check = (signal) => {
@@ -137,6 +137,13 @@ class NativeSession {
     this.memory = memory;
     this.lease = lease;
     this.printVoice = printVoice;
+    this.createMaster = printVoice?.createMaster;
+  }
+  fail(error) {
+    for (const job of this.#jobs) {
+      job.error ??= error;
+      this.#stop(job);
+    }
   }
   get snapshot() {
     return Object.freeze({
@@ -146,16 +153,32 @@ class NativeSession {
       state: this.context.state,
     });
   }
+  setOutput(output) {
+    if (
+      this.#closed ||
+      this.#jobs.size ||
+      this.#rows.size ||
+      output?.context !== this.context
+    )
+      fail("invalidCanonicalSessionOutput");
+    this.output = output;
+  }
   start(
     score,
-    { fromFrame = 0, whenFrame = null, programmeGain = null, signal } = {},
+    {
+      fromFrame = 0,
+      whenFrame = null,
+      programmeGain = null,
+      sharedMaster = false,
+      signal,
+    } = {},
   ) {
     if (this.#closed) fail("canonicalSessionClosed");
     check(signal);
     const originalScore = score;
     const releaseScore = retainCanonicalScore(originalScore, this.memory);
     try {
-      score = canonicalPlaybackView(originalScore, fromFrame);
+      score = canonicalPlaybackView(originalScore, fromFrame, { sharedMaster });
     } catch (e) {
       releaseScore();
       throw e;
@@ -174,13 +197,14 @@ class NativeSession {
       budget = null,
       allocations = null;
     try {
-      const now = Math.round(this.context.currentTime * rate);
+      let now = Math.round(this.context.currentTime * rate);
       if (score.program.events.length > 16)
         fail("canonicalLiveNeedsCheckpoints");
       if (score.program.events.some((e) => e.spec.print) && !this.printVoice)
         fail("canonicalPrintUnavailable");
-      const origin = whenFrame ?? Math.ceil((now + 0.08 * rate) / 128) * 128;
+      let origin = whenFrame;
       if (
+        origin !== null &&
         !integer(origin, now + Math.ceil(0.02 * rate), Number.MAX_SAFE_INTEGER)
       )
         fail("invalidCanonicalSession");
@@ -190,10 +214,43 @@ class NativeSession {
           ...e,
           spec: {
             ...e.spec,
-            startFrame: origin,
-            endFrame: origin + score.program.frames - fromFrame,
+            // Reserve the complete simultaneous voice/peak frontier before
+            // graph construction. Its bound is independent of absolute time.
+            startFrame: 0,
+            endFrame: score.program.frames - fromFrame,
           },
         }));
+      budget = reserveCanonicalVoiceOwners(this.memory, {
+        count: relative.length,
+        peak: canonicalVoiceAdmission(relative, score.project, rate).maxPeak,
+        label: "native-live-job",
+      });
+      allocations = canonicalAllocationScope(
+        this.memory,
+        8192 + graphBytes(score, programmeGain, relative.length),
+        "canonical/complete-live-graph-and-nodes",
+      );
+      jobLease = allocations.memory.reserve(8192, "canonical/live-job-control");
+      native = connectOutput(
+        this.context,
+        score,
+        allocations.memory,
+        this.output,
+        programmeGain,
+      );
+      // The running audio clock advances during graph construction (notably
+      // native EQ setup). Choose the default anchor only after those effects
+      // exist; an explicit caller anchor must still be safely in the future.
+      now = Math.round(this.context.currentTime * rate);
+      origin ??= Math.ceil((now + 0.08 * rate) / 128) * 128;
+      if (
+        !integer(origin, now + Math.ceil(0.02 * rate), Number.MAX_SAFE_INTEGER)
+      )
+        fail("invalidCanonicalSession");
+      for (const e of relative) {
+        e.spec.startFrame = origin;
+        e.spec.endFrame = origin + score.program.frames - fromFrame;
+      }
       const foreign = [];
       for (const j of this.#jobs)
         if (!j.stopped) for (const r of j.intervals) foreign.push(r);
@@ -222,25 +279,10 @@ class NativeSession {
         rate,
         foreign,
       );
-      budget = reserveCanonicalVoiceOwners(this.memory, {
-        count: relative.length,
-        peak: canonicalVoiceAdmission(relative, score.project, rate).maxPeak,
-        label: "native-live-job",
+      let resolve, reject, reportFault;
+      const faulted = new Promise((r) => {
+        reportFault = r;
       });
-      allocations = canonicalAllocationScope(
-        this.memory,
-        8192 + graphBytes(score, programmeGain, relative.length),
-        "canonical/complete-live-graph-and-nodes",
-      );
-      jobLease = allocations.memory.reserve(8192, "canonical/live-job-control");
-      native = connectOutput(
-        this.context,
-        score,
-        allocations.memory,
-        this.output,
-        programmeGain,
-      );
-      let resolve, reject;
       const done = new Promise((a, b) => {
         resolve = a;
         reject = b;
@@ -259,6 +301,7 @@ class NativeSession {
         done,
         resolve,
         reject,
+        reportFault,
         stopped: false,
         error: null,
         finished: false,
@@ -294,6 +337,7 @@ class NativeSession {
         programmeBackend: score.backend ?? "native-readers",
         fromFrame,
         done,
+        faulted,
         stop: () => this.#stop(job),
         get voices() {
           return job.rows.size;
@@ -302,13 +346,18 @@ class NativeSession {
           const frame = Math.min(
             originalScore.program.frames,
             Math.max(
-              0,
+              fromFrame,
               Math.round(job.native.graph.master.context.currentTime * rate) -
                 origin +
                 fromFrame,
             ),
           );
-          return canonicalScoreFrame(originalScore, frame);
+          return Object.freeze({
+            ...canonicalScoreFrame(originalScore, frame),
+            started:
+              Math.round(job.native.graph.master.context.currentTime * rate) >=
+              origin,
+          });
         },
       });
     } catch (e) {
@@ -326,7 +375,8 @@ class NativeSession {
   #stop(job, error = null) {
     if (job.finished || job.stopped) return;
     job.stopped = true;
-    job.error = error;
+    job.error ??= error;
+    if (job.error) job.reportFault(job.error);
     job.releaseAfterFrame =
       Math.round((this.context.currentTime + 0.02) * this.context.sampleRate) +
       job.score.program.tailFrames;
@@ -412,6 +462,10 @@ class NativeSession {
         try {
           const ended = () => {
             row.ended = true;
+            if (row.voice?.fault) {
+              job.error ??= row.voice.fault;
+              this.#stop(job);
+            }
             this.#finish(job);
           };
           row.voice = s.print
@@ -422,6 +476,7 @@ class NativeSession {
                 from,
                 job.allocations.memory,
                 ended,
+                (error) => this.#stop(job, error),
               )
             : canonicalNativeVoice(
                 this.context,
@@ -685,9 +740,10 @@ async function renderPrintedOffline(
   }
 }
 
-export async function exportCanonicalScoreWav(
+async function canonicalScoreOutput(
   score,
   { memory, context, signal, onProgress } = {},
+  measureOnly = false,
 ) {
   const release = retainCanonicalScore(score, memory),
     meta = {
@@ -702,7 +758,14 @@ export async function exportCanonicalScoreWav(
       { project: score.project },
       score.program,
       meta,
-      { memory, context, signal, onProgress, releaseSources: release },
+      {
+        memory,
+        context,
+        signal,
+        onProgress,
+        releaseSources: release,
+        measureOnly,
+      },
     );
     return Object.freeze({
       output,
@@ -712,4 +775,12 @@ export async function exportCanonicalScoreWav(
   } finally {
     release();
   }
+}
+
+export function exportCanonicalScoreWav(score, options) {
+  return canonicalScoreOutput(score, options, false);
+}
+
+export function measureCanonicalScore(score, options) {
+  return canonicalScoreOutput(score, options, true);
 }

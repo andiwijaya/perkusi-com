@@ -96,6 +96,17 @@ export async function exists(p) {
     throw e;
   }
 }
+// Presence alone protects a packet, including an unreadable or malformed seal.
+// Walk through the workspace root; errors and reparse ancestors fail closed.
+export async function sealedBuildAncestor(root, target) {
+  root = resolve(root);
+  for (let path = inside(root, target, true); ; path = dirname(path)) {
+    await noLinks(root, path);
+    const seal = join(path, "SEAL.json");
+    if (await exists(seal)) return seal;
+    if (!relative(root, path)) return null;
+  }
+}
 export async function atomicJSON(path, value) {
   await mkdir(dirname(path), { recursive: true });
   const temp = path + "." + randomUUID() + ".tmp";
@@ -185,6 +196,16 @@ export async function releaseObsoleteReview({ root = workspaceRoot, target }) {
       entry = r.builds.find((b) => b.root === path);
     if (!entry || entry.status !== "obsolete" || entry.kind !== "managed-build")
       throw Error("notObsoleteManagedBuild");
+    if (
+      entry.consumersSettled !== true ||
+      [r.latestSuccess, r.latestFailed]
+        .filter(Boolean)
+        .some((p) => overlap(path, p)) ||
+      r.activeRoots.some((a) => overlap(path, a.root)) ||
+      r.retainRoots.some((p) => p !== path && overlap(path, p))
+    )
+      throw Error("protectedBuildReview");
+    if (await sealedBuildAncestor(root, path)) throw Error("sealedBuildReview");
     r.retainRoots = r.retainRoots.filter((p) => p !== path);
     await saveRegistry(root, r);
   });
@@ -262,6 +283,8 @@ export async function planCleanup(root, r) {
     try {
       target = inside(join(root, "qa-artifacts"), entry.root);
       await noLinks(root, target);
+      if (await sealedBuildAncestor(root, target))
+        throw Error("sealedBuildArtifact");
     } catch (e) {
       excluded.push({ root: entry.root, reason: e.message });
       continue;
@@ -279,6 +302,8 @@ export async function planCleanup(root, r) {
       const copyRoot = inside(target, join(target, rule.copyRelativeRoot));
       try {
         await noLinks(root, copyRoot);
+        if (await sealedBuildAncestor(root, copyRoot))
+          throw Error("sealedBuildArtifact");
       } catch (e) {
         excluded.push({ path: copyRoot, reason: e.message });
         continue;
@@ -361,6 +386,7 @@ export async function cleanupBuilds({
   root = workspaceRoot,
   apply = false,
   beforeRemove,
+  beforeDelete,
 } = {}) {
   root = resolve(root);
   return registryLock(root, async () => {
@@ -389,6 +415,18 @@ export async function cleanupBuilds({
         removed: [],
       };
     const receiptPath = join(controlDir(root), "receipts", id + ".json");
+    const assertAuthority = async (e) => {
+      await noLinks(root, e.copy);
+      await noLinks(root, e.canonical);
+      const bytes = await readFile(registryPath);
+      if (hash(bytes) !== registryHash) throw Error("buildRegistryChanged");
+      const live = JSON.parse(bytes),
+        entry = live.builds.find((b) => resolve(b.root) === e.root);
+      if (!entry || retainReason(root, entry, live))
+        throw Error("targetBecameActive");
+      if (await sealedBuildAncestor(root, dirname(e.copy)))
+        throw Error("sealedBuildArtifact");
+    };
     try {
       if (plan.entries.length) {
         const data = {
@@ -422,12 +460,7 @@ export async function cleanupBuilds({
         )
           throw Error("buildRegistryChanged");
         for (const e of plan.entries) {
-          const live = await readRegistry(root),
-            entry = live.builds.find((b) => resolve(b.root) === e.root);
-          if (!entry || retainReason(root, entry, live))
-            throw Error("targetBecameActive");
-          await noLinks(root, e.copy);
-          await noLinks(root, e.canonical);
+          await assertAuthority(e);
           if (
             !same(e.copyMetadata, await metadata(e.copy)) ||
             !same(e.canonicalMetadata, await metadata(e.canonical)) ||
@@ -436,15 +469,19 @@ export async function cleanupBuilds({
           )
             throw Error("cleanupRecheckFailed");
         }
-        for (const e of plan.entries) {
+        for (const [index, e] of plan.entries.entries()) {
           // Registry remains locked; use only the individually verified literal file.
-          if (hash(await readFile(registryPath)) !== registryHash)
-            throw Error("buildRegistryChanged");
+          // Test seam precedes every production guard, never bypasses one.
+          await beforeDelete?.(Object.freeze({ index, copy: e.copy }));
+          await noLinks(root, e.copy);
+          await noLinks(root, e.canonical);
           if (
             !same(e.copyMetadata, await metadata(e.copy)) ||
             !same(e.canonicalMetadata, await metadata(e.canonical))
           )
             throw Error("metadataChanged");
+          // Recheck live seals/leases/pins after preflight and immediately before unlink.
+          await assertAuthority(e);
           await unlink(e.copy);
           receipt.removedFiles++;
           receipt.removedBytes += e.bytes;
@@ -461,10 +498,32 @@ export async function cleanupBuilds({
       receipt.status = "REFUSED_OR_PARTIAL";
       receipt.error = e.message;
     } finally {
-      for (const m of receipt.measurements)
-        m.after = await measureTree(root, m.root);
-      const after = await statfs(root);
-      receipt.freeAfterBytes = after.bavail * after.bsize;
+      const finalizationError = (operation, error, path) => {
+        receipt.status = "REFUSED_OR_PARTIAL";
+        receipt.error ??= error.message;
+        (receipt.finalizationErrors ??= []).push({
+          operation,
+          path,
+          error: error.message,
+          code: error.code ?? null,
+        });
+      };
+      for (const m of receipt.measurements) {
+        try {
+          m.after = await measureTree(root, m.root);
+        } catch (error) {
+          m.after = null;
+          finalizationError("measureTree", error, m.root);
+        }
+      }
+      try {
+        const after = await statfs(root);
+        receipt.freeAfterBytes = after.bavail * after.bsize;
+      } catch (error) {
+        receipt.freeAfterBytes = null;
+        finalizationError("statfs", error, root);
+      }
+      // Diagnostics must not bypass the terminal progress/refusal receipt.
       await atomicJSON(receiptPath, receipt);
     }
     return { ...receipt, receiptPath };

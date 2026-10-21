@@ -217,6 +217,41 @@ async function fixture(
   });
   return f;
 }
+test("qualified continuous period uses its certified single-reader peak, while a real overlapping reader still refuses at unchanged .95", async (t) => {
+  const f = await fixture(t, { gain: 1 }),
+    s = f.controller;
+  assert.equal(s.liveAdmission().maxPeak, 0.05);
+  assert(
+    loopAdmission(s.plan).maxPeak > 0.05,
+    "generic per-cycle path retains conservative overlap envelope",
+  );
+  f.owner.producers.set("track-8", {
+    trackId: "track-8",
+    prePeak: 0.45,
+    voices: 5,
+    futureBytes: 0,
+  });
+  f.owner.claims.add({
+    trackId: "track-8",
+    prePeak: 0.45,
+    voices: 1,
+    futureBytes: 0,
+  });
+  assert.equal(f.owner.check(s.plan, s.project).peak, 0.95);
+  s.play();
+  assert.equal(f.context.sources.length, 1);
+  const bytes = f.memory.snapshot().bytes,
+    nodes = f.context.sources.length,
+    row = [...s.rows][0];
+  assert.throws(
+    () => s.startVoice(row.track, { ...row.spec }, 0.2, 0, row.clip),
+    code("voiceHeadroom"),
+  );
+  assert.equal(f.context.sources.length, nodes);
+  assert.equal(f.memory.snapshot().bytes, bytes);
+  f.owner.producers.clear();
+  f.owner.claims.clear();
+});
 const modelClaims = (f) => {
   f.owner.producers.set("track-8", {
     trackId: "track-8",
@@ -251,13 +286,14 @@ test("only resolver-qualified complete recording periods get one live slot; flag
   assert.equal(recordedLoopGeometry(c, s.plan.clock).periodFrames, 120000);
   assert.equal(loopAdmission(s.plan).maxOwned, 2);
   assert.equal(s.liveAdmission().maxOwned, 1);
-  assert.equal(s.liveAdmission().maxPeak, loopAdmission(s.plan).maxPeak);
+  assert.equal(s.liveAdmission().maxPeak, .05*f.p.tracks[0].gain);
   const clone = { ...c, loopFrames: 120000, persistent: true };
   const spoof = {
     ...s.plan,
     tracks: s.plan.tracks.map((r, i) => (i ? r : { ...r, clips: [clone] })),
   };
   assert.equal(recordedLoopGeometry(clone, s.plan.clock), null);
+  assert.equal(loopAdmission(spoof,spoof.project,{recordedLoops:true}).maxPeak,loopAdmission(s.plan).maxPeak);
   assert.equal(
     loopAdmission(spoof, spoof.project, { recordedLoops: true }).maxOwned,
     2,

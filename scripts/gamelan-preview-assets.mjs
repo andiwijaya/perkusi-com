@@ -111,7 +111,7 @@ export function gamelanPreviewAssets(
       output = gamelanOutputPath(
         root,
         config.build.outDir,
-        ["gamelan-public-candidate", "gamelan-v5-public-candidate"].includes(
+        ["gamelan-public-candidate", "gamelan-v5-public-candidate", "gamelan-v5-canonical-release", "gamelan-v5-final"].includes(
           config.mode,
         ),
       );

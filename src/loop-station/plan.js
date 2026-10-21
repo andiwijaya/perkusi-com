@@ -143,9 +143,14 @@ export function loopAdmission(
         }
       const single = recordedLoops && recordedLoopGeometry(clip, plan.clock);
       owned += Math.max(single ? 1 : bounds.maxOwned, actual);
-      // Retain the existing conservative peak bound; this change only reduces
-      // the reservation for readers that actually persist across cycles.
-      peak += Math.max(bounds.maxPeak, actualPeak);
+      // A qualified immutable period is played by one continuous native reader,
+      // not overlapping per-cycle sources. Its exact channel peak is certified
+      // by that geometry. Keep every actual pending/releasing row in the sum;
+      // unqualified/generic cyclic material retains the prior repeat bound.
+      peak += Math.max(
+        single ? weightOf(single.voice) : bounds.maxPeak,
+        actualPeak,
+      );
     }
   }
   // Stale/unidentified owners must be disposed, never silently omitted from

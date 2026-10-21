@@ -13,6 +13,7 @@ import {
   createLiveInstrumentInput,
   activateInstrumentMonitor,
   closeInstrumentMonitor,
+  instrumentMonitorPeak,
 } from "./instrument-input.js";
 import { instrumentVoice } from "../audio/instrument-voice.js";
 import { eqBound, fxBytes } from "./fx-model.js";
@@ -71,11 +72,32 @@ function envelope(a, b) {
 export class WorkspaceAudioOwner {
   #bridge = null;
   #cohort = null;
-  constructor({ memory, getProject }) {
+  constructor({
+    memory,
+    getProject,
+    instrumentFetcher,
+    captureReplay = true,
+    externalBacking = null,
+    instrumentMemoryPolicy = null,
+  }) {
     if (!(memory instanceof AudioMemory) || typeof getProject !== "function")
       fail("invalidCaptureOwner");
+    if (
+      typeof captureReplay !== "boolean" ||
+      (externalBacking &&
+        (externalBacking.memory !== memory ||
+          !Number.isFinite(externalBacking.peak) ||
+          externalBacking.peak < 0 ||
+          externalBacking.peak > 0.95 ||
+          externalBacking.voices !== 1))
+    )
+      fail("invalidCaptureOwner");
+    this.captureReplay = captureReplay;
+    this.externalBacking = externalBacking;
+    this.instrumentMemoryPolicy = instrumentMemoryPolicy;
     this.memory = memory;
     this.getProject = getProject;
+    this.instrumentFetcher = instrumentFetcher;
     this.pool = new TakePool(memory);
     this.claims = new Set();
     this.producers = new Map();
@@ -167,7 +189,25 @@ export class WorkspaceAudioOwner {
       b = this.controller?.liveAdmission
         ? this.controller.liveAdmission(plan, p, options)
         : loopAdmission(plan, p);
-    return { ...b, maxPeak: b.maxPeak * this.engineGain(), project: p };
+    if (
+      this.externalBacking &&
+      this.externalBacking.context !== this.engine.context
+    )
+      fail("invalidCaptureOwner");
+    if (
+      this.externalBacking &&
+      (this.engine.master.gain.value !== 1 ||
+        this.engine.volume !== 1 ||
+        this.engine.outputStage?.programmeGain !== 1)
+    )
+      fail("invalidCaptureGainChain");
+    return {
+      ...b,
+      maxOwned: b.maxOwned + (this.externalBacking?.voices ?? 0),
+      maxPeak:
+        b.maxPeak * this.engineGain() + (this.externalBacking?.peak ?? 0),
+      project: p,
+    };
   }
   checkMemory(
     ordinaryVoices,
@@ -497,10 +537,9 @@ export class WorkspaceAudioOwner {
     // Playing may schedule more nodes; stopped/paused sessions cannot, but
     // every ending or already scheduled row keeps its slot until release.
     // A later Play still checks the render tickets through admitOrdinary.
-    const ordinary =
-      ["stopped", "paused"].includes(this.controller?.status)
-        ? this.controller.rows.size
-        : b.maxOwned;
+    const ordinary = ["stopped", "paused"].includes(this.controller?.status)
+      ? this.controller.rows.size + (this.externalBacking?.voices ?? 0)
+      : b.maxOwned;
     const current =
       ordinary +
       [
@@ -574,6 +613,8 @@ export class WorkspaceAudioOwner {
       framesPerBar: c.plan.clock.policy.framesPerBar,
       ...options,
       outputGain: this.engine.outputStage?.programmeGain ?? 1,
+      fetcher: this.instrumentFetcher,
+      memoryPolicy: this.instrumentMemoryPolicy,
     });
     return this.installProducer(trackId, source, graph, generation);
   }
@@ -753,6 +794,20 @@ export class WorkspaceAudioOwner {
       voices: source.producerVoices ?? 3,
       futureBytes: 0,
     };
+    // A record-only capture never plays its captured window. Each input strike
+    // is admitted synchronously against its certified pending/live frontier;
+    // legacy auto-replay retains its original worst-case producer reservation.
+    if (!isMic && !this.captureReplay && this.externalBacking)
+      Object.defineProperty(row, "prePeak", {
+        enumerable: true,
+        get: () =>
+          instrumentMonitorPeak(
+            source,
+            this.engine.context,
+            this.memory,
+            this.engine.transport,
+          ),
+      });
     try {
       if (
         this.terminal ||
@@ -1015,6 +1070,7 @@ export class WorkspaceAudioOwner {
     this.capture = new RootCaptureCoordinator({
       root,
       enabled: true,
+      replay: this.captureReplay,
       registry: c.registry,
       moduleURL,
       openSession: async (options) => {
@@ -1114,7 +1170,7 @@ export class WorkspaceAudioOwner {
     });
     const claim = {
       trackId: this.captureTrack,
-      prePeak: source.peak * gain,
+      prePeak: this.captureReplay ? source.peak * gain : 0,
       voices: source.voices,
       channels,
       futureBytes: captureReservedBytes(

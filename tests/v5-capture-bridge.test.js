@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -19,7 +20,11 @@ const url = new URL("./v5-finite-tail.test.js", import.meta.url),
   declarations =
     text
       .slice(0, text.indexOf("const id ="))
-      .replaceAll('"../src/', '"' + new URL("../src/", import.meta.url).href) +
+      .replaceAll('"../src/', '"' + new URL("../src/", import.meta.url).href)
+      .replaceAll(
+        '"./helpers/',
+        '"' + new URL("./helpers/", import.meta.url).href,
+      ) +
     text
       .slice(
         text.indexOf("globalThis.AudioWorkletProcessor ="),
@@ -166,6 +171,7 @@ async function bridge(t) {
         nodeFactory: (ctx, options) => {
           const n = ctx.createGain();
           Object.assign(n, {
+            parameters: fakeWorkletParams(),
             options,
             handlers: new Map(),
             port: { postMessage() {}, close() {} },

@@ -220,7 +220,7 @@ test("Q1cb finish native programme reader owns its print until actual close", as
     outputFactory: node,
     printFactory(_destination, spec, _when, _from, budget) {
       readers++;
-      const held = budget.reserve(8192 + spec.frames * 16, "test/print-clones");
+      const held = budget.reserve(8192 + spec.frames * 8, "test/print-transfer");
       return {
         end: p.program.frames / 44100,
         stop() {},

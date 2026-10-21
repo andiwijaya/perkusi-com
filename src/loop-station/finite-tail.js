@@ -1,5 +1,6 @@
 import { sameTailIdentity } from "./finite-tail-core.js";
 import { fail } from "../project/instrument-contract.js";
+import { installWorkletFrameClock } from "../audio/worklet-frame-clock.js";
 const safe = (n) => Number.isSafeInteger(n) && n >= 0;
 export const finiteMixSignature = (project) =>
   JSON.stringify({
@@ -14,7 +15,7 @@ export const finiteMixSignature = (project) =>
     })),
   });
 export const finiteTailBytes = (project) =>
-  32768 + 16 * finiteMixSignature(project).length;
+  32768 + 4096 + 16 * finiteMixSignature(project).length;
 
 // The caller epoch reserves this worker before construction, and owns it even
 // if construction/processor state is unknown. No timeout can prove closure.
@@ -28,6 +29,7 @@ export function startFiniteTail({
   nodeFactory,
 }) {
   let node,
+    frameClock,
     timer,
     ready = false,
     body = null,
@@ -70,6 +72,7 @@ export function startFiniteTail({
       }
     }
     released = true;
+    frameClock?.dispose();
     clearTimeout(timer);
     if (context.state === "closed") node?.disconnect();
     node?.port.close();
@@ -148,6 +151,15 @@ export function startFiniteTail({
       outputChannelCount: [2],
       processorOptions: { identity },
     });
+    frameClock = installWorkletFrameClock(
+      node,
+      context,
+      Math.min(
+        identity.startFrame,
+        Math.ceil(((context.currentTime + 0.02) * 48000) / 128) * 128,
+      ),
+      identity.endFrame,
+    );
     node.port.onmessage = (event) => {
       if (released) return;
       const d = event.data;

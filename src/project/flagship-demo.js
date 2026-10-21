@@ -2,6 +2,7 @@ import { newComposition } from "./composition-model.js";
 import { emptyPattern } from "./studio-model.js";
 import { migrateToInstrumentProject, PPQ } from "./instrument-project.js";
 import { migrateLegacyMetadata } from "./canonical-metadata.js";
+import { startSongChain } from "./canonical-authoring.js";
 
 // Original authored score. This opt-in local candidate is not a default route,
 // autoplay action, user recording or replacement for a rejected QA fixture.
@@ -155,5 +156,8 @@ export async function createFlagshipDemo(registry, locale = "id") {
     migrated = await migrateLegacyMetadata(JSON.stringify(legacy), {
       registry,
     });
-  return { legacy, canonical: migrated.project, originals: migrated.originals };
+  const canonical = structuredClone(migrated.project);
+  // Authored demo starts ready to edit; original imported bytes remain untouched.
+  startSongChain(canonical, 4);
+  return { legacy, canonical, originals: migrated.originals };
 }

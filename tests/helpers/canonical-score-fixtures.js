@@ -51,7 +51,13 @@ export async function canonicalScoreFixture(
   const descriptors = new Map(),
     stats = { loads: 0, buffers: 0, releases: 0 },
     sampleDataKeys = new Map();
-  const makeDescriptor = async (key, frames, channels, gainTrim = 0.47) => {
+  const makeDescriptor = async (
+    key,
+    frames,
+    channels,
+    gainTrim = 0.47,
+    planar = false,
+  ) => {
     const lease = memory.reserve(
       frames * channels * 4,
       "QA/fixture-hash-authoring",
@@ -61,7 +67,11 @@ export async function canonicalScoreFixture(
         v = new DataView(bytes.buffer);
       for (let i = 0; i < frames; i++)
         for (let c = 0; c < channels; c++)
-          v.setFloat32((i * channels + c) * 4, qaSample(key, i, c), true);
+          v.setFloat32(
+            (planar ? c * frames + i : i * channels + c) * 4,
+            qaSample(key, i, c),
+            true,
+          );
       return {
         frames,
         channels,
@@ -80,7 +90,7 @@ export async function canonicalScoreFixture(
     ref.sampleRate = rate;
     ref.bytes = ref.frames * ref.channels * 4;
     const key = "QA/" + ref.id,
-      d = await makeDescriptor(key, ref.frames, ref.channels, 1);
+      d = await makeDescriptor(key, ref.frames, ref.channels, 1, true);
     ref.sha256 = d.contentHash;
     const lookup = canonicalSoundKey({ kind: "recording", asset: ref });
     descriptors.set(lookup, d);

@@ -3,6 +3,7 @@ import { initNavigation } from "./app/navigation.js";
 import { initLocalization } from "./app/localization.js";
 
 const routedInstrumentStudio =
+  !import.meta.env.CANONICAL_FINAL_STUDIO &&
   import.meta.env.GAMELAN_BUILD &&
   new URL(location.href).searchParams.get("workspace") === "gamelan" &&
   document.body.dataset.page === "studio";

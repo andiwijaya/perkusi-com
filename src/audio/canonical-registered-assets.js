@@ -12,6 +12,7 @@ import pluckedCredits from "../../internal/loop-instruments/manifest.json" with 
 import { InstrumentRegistry } from "./instrument-registry.js";
 import { canonicalFrozenCopy } from "../project/canonical-data.js";
 import { fail } from "../project/instrument-contract.js";
+import { drumBanks } from "../loop-station/drum-sources.js";
 
 // Trusted repository catalogs only. URL mapping is injected by the local/Vite
 // consumer; project JSON cannot install URLs, descriptors or license receipts.
@@ -24,12 +25,55 @@ export function canonicalRegisteredAssets(
     fail("invalidCanonicalProvider");
   const profile = rate === 44100 ? r44 : r48,
     plucked = rate === 44100 ? plucked44 : plucked48,
-    registry = new InstrumentRegistry([...profile.banks, ...plucked.banks]),
+    registry = new InstrumentRegistry([
+      ...profile.banks,
+      ...plucked.banks,
+      ...(rate === 48000 ? drumBanks : []),
+    ]),
     nativeRights = [],
     nativeURLs = new Map(),
     catalog = [],
     urls = new Map();
   const source = new Map(credits.rows.map((row) => [row.sampleId, row]));
+  if (rate === 48000)
+    for (const bank of drumBanks)
+      for (const sample of bank.samples) {
+        const asset = kits.kits
+          .flatMap((k) => k.assets)
+          .find((a) => a.sha256 === sample.sha256);
+        if (
+          !asset ||
+          asset.commercialUse !== true ||
+          asset.rawRedistribution !== true ||
+          asset.licenseId !== "CC0-1.0" ||
+          asset.bytes !== sample.encodedBytes
+        )
+          fail("canonicalAssetLicense");
+        nativeRights.push({
+          request: {
+            kind: "instrument",
+            bankId: bank.id,
+            version: bank.version,
+            sampleId: sample.id,
+          },
+          rights: {
+            licenseId: sample.licenseId,
+            sourceWorkId: sample.sourceWorkId,
+            commercialUse: true,
+            rawRedistribution: true,
+            author: asset.author,
+            sourceRecipeSha256: asset.sourceRecipeSha256,
+          },
+        });
+        const url = resolveUrl({
+          kind: "instrument",
+          path: "internal/studio-kits/" + asset.assetPath,
+          assetPath: sample.assetPath,
+          sha256: sample.sha256,
+        });
+        if (typeof url !== "string" || !url) fail("canonicalAssetUnavailable");
+        nativeURLs.set(sample.assetPath, url);
+      }
   for (const bank of profile.banks)
     for (const sample of bank.samples) {
       if (bank.id === "legacy-hat") {

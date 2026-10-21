@@ -14,7 +14,7 @@ export async function exportScoreChunks(
   plan,
   program,
   meta,
-  { memory, context, signal, onProgress, releaseSources },
+  { memory, context, signal, onProgress, releaseSources, measureOnly = false },
 ) {
   const rate = program.rate,
     master = plan.project.master.volume;
@@ -64,6 +64,10 @@ export async function exportScoreChunks(
       limitedSamples,
       silent: metrics.peak === 0,
     });
+    // Playback needs these exact first-pass metrics, not an encoded WAV.
+    // Keep the same full continuous DSP/meter and fixed calibration; avoid
+    // provisioning a second full-song output merely to discard it before Play.
+    if (measureOnly) return null;
     return await encodeStreamWav(
       { frames: program.frames, sampleRate: rate },
       meta,

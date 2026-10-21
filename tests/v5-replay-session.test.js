@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CaptureSession } from "../src/loop-station/capture-session.js";
@@ -15,6 +16,7 @@ class Node extends EventTarget {
   constructor(context) {
     super();
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.port = {
       sent: [],
       postMessage(m) {

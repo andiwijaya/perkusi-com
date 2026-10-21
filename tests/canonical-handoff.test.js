@@ -7,6 +7,57 @@ import {
 } from "../src/project/canonical-handoff.js";
 import { canonicalLocalSession } from "../src/studio/canonical-route.js";
 import { instrumentHandoffText } from "../src/gamelan/v5-navigation.js";
+test("stable handoff staging preserves prior preparation/acceptance and rejects identity reuse for other bytes", async () => {
+  const memory = new AudioMemory(),
+    store = new CanonicalHandoffStore({ memory, indexedDB: null }),
+    rows = new Map(),
+    id = "11111111-1111-1111-1111-111111111111";
+  store.transaction = async (mode, action) =>
+    new Promise((ok, no) =>
+      action(
+        {
+          get(key) {
+            const r = {};
+            queueMicrotask(() =>
+              r.onsuccess({ target: { result: rows.get(key) } }),
+            );
+            return r;
+          },
+          add(row, key) {
+            assert(!rows.has(key));
+            rows.set(key, row);
+          },
+        },
+        ok,
+        no,
+      ),
+    );
+  const first = await store.stage(new Blob(["original bytes"]), {
+    id,
+    kind: "legacy",
+    title: "Original",
+  });
+  rows.get(id).accepted = {
+    revision: 7,
+    projectSHA256: "a".repeat(64),
+    acceptedAt: 1,
+  };
+  const second = await store.stage(new Blob(["original bytes"]), {
+    id,
+    kind: "legacy",
+    title: "must not replace title or ACK",
+  });
+  assert.equal(second.sha256, first.sha256);
+  assert.equal(second.title, "Original");
+  assert.equal(second.accepted.revision, 7);
+  assert.equal(rows.size, 1);
+  await assert.rejects(
+    store.stage(new Blob(["different bytes"]), { id, kind: "legacy" }),
+    (e) => e.code === "handoffConflict",
+  );
+  assert.equal(rows.get(id).sha256, first.sha256);
+  assert.equal(memory.snapshot().bytes, 0);
+});
 test("Gamelan handoff pauses a replay and serializes only after the source preparation acknowledgment", async () => {
   const calls = [];
   let finish;

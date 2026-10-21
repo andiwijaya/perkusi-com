@@ -12,9 +12,40 @@ import { beatboxMessages } from "../beatbox/messages.js";
 import { canonicalDocumentCredits } from "../project/canonical-credits.js";
 import { studioMessages, studioRoleNames } from "./messages.js";
 import { compositionRegistry } from "../project/studio-registry.js";
+import { canonicalPadDocument } from "./canonical-pad-document.js";
+import { createFreshCanonicalProject } from "./canonical-fresh-project.js";
+import { initCanonicalProjectLibrary } from "./canonical-project-library.js";
+import { initCanonicalCapturePanel } from "./canonical-capture-panel.js";
+import { initCanonicalRecordingTools } from "./canonical-recording-tools.js";
+import { fail } from "../project/instrument-contract.js";
+import { retainCanonicalInputBlob } from "../project/canonical-blob-owner.js";
+import {
+  createCanonicalGamelanMaterial,
+  createCanonicalRackMaterial,
+} from "./canonical-source-material.js";
+import { recordSource } from "../loop-station/record-sources.js";
+import { starterContent } from "../loop-station/starters.js";
+import { exportCanonicalPackage } from "../project/canonical-package.js";
+import { projectMessages } from "../project/messages.js";
+import { CanonicalWavDelivery } from "./canonical-wav-delivery.js";
+import { createCanonicalEventReporter } from "./canonical-analytics.js";
+import {
+  initCanonicalPositionMarkers,
+  canonicalSourceLabel,
+} from "./canonical-position-markers.js";
+import {
+  CORPUS_INSTRUMENTS,
+  instrumentNames,
+} from "../gamelan/instrument-focus.js";
 const text = {
   id: {
-    note: "Studio terpadu Preview: edit pola, susun rantai, lalu Putar untuk menyiapkan perubahan.",
+    note: "Rhythm Studio: edit pola, mainkan pad, susun rantai, lalu Putar.",
+    padsHint:
+      "Pad 1-8 memainkan suara lewat engine Studio yang sama, tanpa mengubah pola. Saat dijeda, lanjutkan atau kembali ke awal sebelum memainkan pad.",
+    chainAlways:
+      "Rantai irama mengikuti urutan di bawah. Gunakan Ulang terus di transport untuk mengulang seluruh lagu.",
+    mobile:
+      "Grid dapat digeser di HP. Ketuk pad untuk memainkan suara di Studio ini.",
     source: "Sumber irama · pola lagu aktif",
     beatbox: "Beatbox per pola",
     on: "Aktif",
@@ -65,7 +96,13 @@ const text = {
       "Rekam permainan atau mic di Loop Station, atau buat skor di Gamelan, lalu gunakan Lanjutkan ke Studio utama. Sumber dan take disalin melalui transfer yang aman.",
   },
   en: {
-    note: "Unified Studio Preview: edit patterns, build a chain, then Play to prepare the changes.",
+    note: "Rhythm Studio: edit patterns, play pads, build a chain, then Play.",
+    padsHint:
+      "Pads 1-8 play through the same Studio engine without changing the pattern. While paused, resume or return to the start before playing pads.",
+    chainAlways:
+      "The rhythm chain follows the order below. Use Repeat continuously in the transport to repeat the whole song.",
+    mobile:
+      "Scroll the grid on your phone. Tap pads to audition sounds in this Studio.",
     source: "Rhythm source · active song pattern",
     beatbox: "Beatbox per pattern",
     on: "Enabled",
@@ -146,6 +183,10 @@ export async function initCanonicalEditableStudio({
   const cancelled = locale === "en" ? "Cancelled" : "Dibatalkan",
     cancelling = locale === "en" ? "Cancelling…" : "Membatalkan…";
   let panel,
+    positionMarkers,
+    projectLibrary,
+    captureTools,
+    recordingTools,
     authoring,
     tuningControl,
     editor,
@@ -154,10 +195,18 @@ export async function initCanonicalEditableStudio({
       bundle.project.sourceDefs.find((d) => d.kind === "composition")?.id ??
       null,
     busy = 0,
+    errorRevision = 0,
     disposed = false,
     cloneIndex = 0,
+    quantizePads = true,
     selectedPitch = "d4",
     checkpointRevision = 0;
+  const analytics = createCanonicalEventReporter(),
+    fileCopy = projectMessages[locale] ?? projectMessages.id,
+    wavDelivery = new CanonicalWavDelivery({
+      memory,
+      readRevision: () => editor?.snapshot().revision,
+    });
   let importMode = "replace";
   // The canonical branch returns before the legacy engine initializer. Localize
   // its shared HTML shell here too, including explicit ?lang= on the ID route.
@@ -203,6 +252,21 @@ export async function initCanonicalEditableStudio({
     el.textContent = value;
     return el;
   };
+  // Pads use the canonical owner below; never initialize the legacy engine.
+  const padSection = root.querySelector(".st-pads").closest("section");
+  padSection.dataset.canPads = "";
+  padSection.querySelector('[data-st-copy="padsHint"]').textContent =
+    c.padsHint;
+  $("quantize").checked = quantizePads;
+  $("chain-mode").closest("label").hidden = true;
+  root
+    .querySelector(".st-chain .st-panel-top")
+    .after(ui("p", { class: "st-hint" }, c.chainAlways));
+  root.querySelector('[data-st-copy="desktop"]').textContent = c.mobile;
+  root.querySelector('[data-st-copy="shortcuts"]').textContent =
+    locale === "en"
+      ? "1-8: live pads. Space outside controls: Play/Pause. Ctrl/Cmd+Z: Undo; Ctrl/Cmd+Shift+Z: Redo. Text inputs retain native editing shortcuts."
+      : "1-8: pad langsung. Spasi di luar kontrol: Putar/Jeda. Ctrl/Cmd+Z: Undo; Ctrl/Cmd+Shift+Z: Redo. Input teks memakai pintasan normal.";
   const chooseSource = () => {
     const rows = workingSources().filter((d) => d.kind === "composition");
     if (!rows.some((d) => d.id === sourceId)) sourceId = rows[0]?.id ?? null;
@@ -230,7 +294,7 @@ export async function initCanonicalEditableStudio({
     const view = newComposition();
     return {
       ...view,
-        title: p.title,
+      title: p.title,
       timing: { ...view.timing, bpm: p.timing.bpm, meter: p.timing.meter },
       master: p.master,
     };
@@ -245,10 +309,21 @@ export async function initCanonicalEditableStudio({
     return task;
   };
   const showError = (e) => {
+    errorRevision++;
     const reasons =
       locale === "en"
         ? {
+            canonicalStorageFull:
+              "Browser storage is full; this project has not been saved. Your draft and previous saves are intact. Download the complete project as a backup, free device space, then retry saving. Remove from list does not free audio storage.",
+            voiceHeadroom:
+              "This pad would exceed combined output headroom. The song continues unchanged; wait for its decay or stop before auditioning the pad.",
+            voiceLimit:
+              "The active voices are at the safe limit. Wait for their natural decay before trying another pad.",
+            combinedMemoryLimit:
+              "Audio memory is at its safe limit. The project is intact; stop playback before trying again.",
             hubTempoConflict: "Match the source BPM before adding material.",
+            clipTempo:
+              "Beatbox loops use 96 BPM. Set the project tempo to 96 before enabling a loop; its original timing is preserved.",
             hubLimiterUnsupported:
               "The source limiter is active. Open the source, explicitly bypass its limiter, export it, then add that copy.",
             hubClockConflict:
@@ -283,7 +358,17 @@ export async function initCanonicalEditableStudio({
               "That source/action already exists at this beat. Choose another position or edit the selected event.",
           }
         : {
+            canonicalStorageFull:
+              "Penyimpanan browser penuh; proyek ini belum tersimpan. Sesi dan simpanan sebelumnya tetap utuh. Unduh proyek lengkap sebagai cadangan, kosongkan ruang perangkat, lalu coba simpan lagi. Hapus dari daftar tidak membebaskan ruang audio.",
+            voiceHeadroom:
+              "Pad ini akan melampaui batas gabungan output. Lagu tetap berjalan; tunggu decay atau hentikan sebelum memainkan pad.",
+            voiceLimit:
+              "Jumlah suara aktif mencapai batas aman. Tunggu decay alami sebelum memainkan pad berikutnya.",
+            combinedMemoryLimit:
+              "Memori audio mencapai batas aman. Proyek tetap utuh; hentikan pemutaran sebelum mencoba lagi.",
             hubTempoConflict: "Samakan BPM sumber sebelum menambahkan materi.",
+            clipTempo:
+              "Loop Beatbox memakai 96 BPM. Atur tempo proyek ke 96 sebelum mengaktifkan Loop; timing aslinya dipertahankan.",
             hubLimiterUnsupported:
               "Limiter sumber aktif. Buka sumber, pilih lewati limiter, ekspor, lalu tambahkan salinan itu.",
             hubClockConflict:
@@ -328,6 +413,8 @@ export async function initCanonicalEditableStudio({
   };
   const transaction = (fn) =>
     withTask(async () => {
+      if (captureTools?.blocked() && !captureTools.applying)
+        fail("captureTakeNeedsReview");
       busy++;
       locks();
       try {
@@ -337,10 +424,26 @@ export async function initCanonicalEditableStudio({
         render();
       }
     });
-  const mutate = (fn) => transaction(fn).catch(showError);
+  const mutate = (fn) => {
+    const priorError = root.dataset.canonicalError,
+      priorMessage = $("project-status").textContent,
+      priorErrorRevision = errorRevision;
+    return transaction(fn)
+      .then(() => {
+        if (priorError && errorRevision === priorErrorRevision) {
+          delete root.dataset.canonicalError;
+          if ($("project-status").textContent === priorMessage) status(c.idle);
+        }
+      })
+      .catch(showError);
+  };
   const deliverBlob = async (blob, name) => {
     if (disposed) throw Error("cancelled");
-    const held = memory.reserve(blob.size + 4096, "canonical/file-delivery");
+    const held = retainCanonicalInputBlob(
+      blob,
+      memory,
+      "canonical/file-delivery",
+    );
     try {
       if (deliver) return await deliver(blob, name);
       await new Promise((resolve, reject) => {
@@ -371,7 +474,12 @@ export async function initCanonicalEditableStudio({
     registry,
     memory,
     controller: {
-      edited: () => panel?.controller.edited(),
+      edited: () => {
+        if (captureTools?.blocked() && !captureTools.applying)
+          fail("captureTakeNeedsReview");
+        wavDelivery.clear();
+        return panel?.controller.edited();
+      },
       stop: () => panel?.controller.stop(),
     },
     onChange: () => render(),
@@ -380,22 +488,183 @@ export async function initCanonicalEditableStudio({
     root,
     locale,
     readDocument: () => editor.snapshot().project,
+    readRevision: () => editor.snapshot().revision,
     readView,
+    readPlaybackView: (id) =>
+      canonicalEditorView(editor.snapshot().project, id),
+    onPosition: (p, state) => {
+      recordingTools?.position(p, state);
+      positionMarkers?.position(p, state);
+      analytics.position(p, state, panel.controller.snapshot());
+    },
+    command: (p) =>
+      p.transport.kind === "legacy-continuous"
+        ? {
+            kind: "window",
+            bars: Number(root.querySelector("[data-song-window]")?.value ?? 4),
+            cycles: 1,
+          }
+        : undefined,
     createOwner: (options) =>
       createOwner({ ...options, bundle: editor.snapshot().bundle }),
-    onWav: (wav, request) =>
-      deliverBlob(
-        wav.output.blob,
-        safe(request?.title ?? editor.snapshot().project.title, "wav"),
-      ),
+    onExportStart: () => wavDelivery.clear(),
+    onExportResult: (error) => analytics.exported(error),
+    onWav: async (wav, request) => {
+      const name = safe(
+        request?.title ?? editor.snapshot().project.title,
+        "wav",
+      );
+      await deliverBlob(wav.output.blob, name);
+      try {
+        wavDelivery.remember(wav.output.blob, name, request.revision);
+      } catch {
+        /* The successful download remains usable when a ready-file reservation cannot fit. */
+      }
+    },
     wavReadyText: c.ready,
     onTransport: () => locks(),
+  });
+  positionMarkers = initCanonicalPositionMarkers({
+    root,
+    locale,
+    readDocument: () => editor.snapshot().project,
+    nativeLabel: (source, event) => {
+      if (!event) return "";
+      const version = source.programme.banks.find(
+          (b) => b.id === event.bankId,
+        ).version,
+        sample = registry.sample(event.bankId, version, event.sampleId);
+      return (
+        (instrumentNames[sample.instrumentId] ?? sample.instrumentId) +
+        " " +
+        sample.pitchId
+      );
+    },
   });
   const extras = ui("section", { class: "st-panel canonical-material" }),
     sourceLabel = ui("label", {}, c.source),
     source = ui("select", { "data-can-source": "", "data-can-edit": "" });
   sourceLabel.append(source);
   extras.append(sourceLabel);
+  const newSource = ui("fieldset", { "data-can-new-source": "" }),
+    instrumentLabel = ui(
+      "label",
+      {},
+      locale === "en" ? "Gamelan instrument" : "Instrumen Gamelan",
+    ),
+    instrumentChoice = ui("select", {
+      "data-can-new-instrument": "",
+      "data-can-edit": "",
+      "data-can-global": "",
+    }),
+    larasLabel = ui("label", {}, "Laras"),
+    larasChoice = ui("select", {
+      "data-can-new-laras": "",
+      "data-can-edit": "",
+      "data-can-global": "",
+    });
+  for (const name of CORPUS_INSTRUMENTS)
+    instrumentChoice.add(new Option(instrumentNames[name], name));
+  instrumentChoice.value = "saron-barung";
+  for (const laras of ["pelog", "slendro"])
+    larasChoice.add(new Option(laras === "pelog" ? "Pelog" : "Slendro", laras));
+  instrumentLabel.append(instrumentChoice);
+  larasLabel.append(larasChoice);
+  newSource.append(
+    ui(
+      "legend",
+      {},
+      locale === "en" ? "Add an instrument" : "Tambah instrumen",
+    ),
+    instrumentLabel,
+    larasLabel,
+    ui(
+      "button",
+      {
+        type: "button",
+        "data-can-create-gamelan": "",
+        "data-can-edit": "",
+        "data-can-global": "",
+      },
+      locale === "en" ? "Add Gamelan" : "Tambah Gamelan",
+    ),
+    ui(
+      "p",
+      { class: "st-hint" },
+      locale === "en"
+        ? "Starts with one strike. Choose its pitch and add or edit notes below; Undo removes the addition."
+        : "Dimulai dengan satu pukulan. Pilih nada lalu tambah atau edit not di bawah; Urung membatalkan penambahan.",
+    ),
+  );
+  extras.append(newSource);
+  const rack = ui("fieldset", { "data-can-rack": "" }),
+    rackInstrument = ui("select", {
+      "data-can-rack-instrument": "",
+      "data-can-edit": "",
+      "data-can-global": "",
+    }),
+    rackNote = ui("select", {
+      "data-can-rack-note": "",
+      "data-can-edit": "",
+      "data-can-global": "",
+    }),
+    rackInstrumentLabel = ui(
+      "label",
+      {},
+      locale === "en" ? "Instrument" : "Instrumen",
+    ),
+    rackNoteLabel = ui(
+      "label",
+      {},
+      locale === "en" ? "Original recording" : "Rekaman asli",
+    );
+  for (const [id, label] of [
+    ["drum-ruang", "Drum Ruang"],
+    ["drum-arus", "Drum Arus"],
+    ["electric-bass", "Bass"],
+    ["classical-guitar", locale === "en" ? "Guitar" : "Gitar"],
+  ])
+    rackInstrument.add(new Option(label, id));
+  const rackNotes = () => {
+    const s = recordSource(rackInstrument.value);
+    rackNote.replaceChildren(
+      ...s.sampleIds.map((id) => {
+        const d = registry.sample(s.bankId, s.bankVersion, id);
+        return new Option(d.pitchId + " / " + d.id, id);
+      }),
+    );
+  };
+  rackInstrument.addEventListener("change", rackNotes, { signal: life.signal });
+  rackNotes();
+  rackInstrumentLabel.append(rackInstrument);
+  rackNoteLabel.append(rackNote);
+  rack.append(
+    ui(
+      "legend",
+      {},
+      locale === "en" ? "Prepared clip rack" : "Rak klip siap pakai",
+    ),
+    rackInstrumentLabel,
+    rackNoteLabel,
+    ui(
+      "button",
+      {
+        type: "button",
+        "data-can-rack-add": "",
+        "data-can-edit": "",
+        "data-can-global": "",
+      },
+      locale === "en" ? "Add instrument clip" : "Tambah klip instrumen",
+    ),
+    ui(
+      "p",
+      {},
+      locale === "en"
+        ? "Starts with one original strike. Edit its notes below; Undo removes the clip."
+        : "Dimulai dengan satu pukulan asli. Edit not di bawah; Urung membatalkan klip.",
+    ),
+  );
+  extras.append(rack);
   const beatbox = ui("div", { "data-can-beatbox": "" }),
     bilah = ui("div", { "data-can-bilah": "" }),
     native = ui("div", { "data-can-native": "" });
@@ -415,12 +684,22 @@ export async function initCanonicalEditableStudio({
       { "data-can-unsaved": "", role: "status" },
       c.unsaved,
     ),
-    captureHint = ui("p", { class: "st-hint" }, c.capture);
+    captureHint = ui(
+      "p",
+      { class: "st-hint" },
+      import.meta.env.CANONICAL_FINAL_STUDIO
+        ? locale === "en"
+          ? "Create Gamelan notes or record instruments and mic in this Studio. Apply a take to add it to the same song."
+          : "Buat not Gamelan atau rekam instrumen dan mic di Studio ini. Terapkan take untuk menambahkannya ke lagu yang sama."
+        : c.capture,
+    );
   extras.prepend(captureHint);
-  for (const [path, label, data] of [
-    ["loop-station", "Loop Station", "data-loop-link"],
-    ["gamelan", "Gamelan", "data-gamelan-link"],
-  ]) {
+  for (const [path, label, data] of import.meta.env.CANONICAL_FINAL_STUDIO
+    ? []
+    : [
+        ["loop-station", "Loop Station", "data-loop-link"],
+        ["gamelan", "Gamelan", "data-gamelan-link"],
+      ]) {
     captureHint.append(
       " ",
       ui(
@@ -514,6 +793,16 @@ export async function initCanonicalEditableStudio({
         locale === "en" ? "Evening Conversation" : "Percakapan Senja",
         "flagship",
       ),
+      ...[
+        ["Nusantara Fusion", "fusion"],
+        ["Bumi dan Tangan", "bumi"],
+        ["Malam Bilah", "malam"],
+        [shell.ruang, "ruang"],
+        [shell.arus, "arus"],
+      ].map(([label, id]) => new Option(label, id)),
+      ...starterContent.map(
+        (s) => new Option(s.name[locale] ?? s.name.id, "starter:" + s.id),
+      ),
     );
   }
   $("load").textContent = c.load;
@@ -528,11 +817,18 @@ export async function initCanonicalEditableStudio({
     storage,
     registry,
     memory,
+    library: true,
     onChange: (s) => {
-      if (s.status === "saved" || s.status === "loaded")
-        checkpointRevision = editor.snapshot().revision;
+      analytics.workflow(s);
+      if (
+        (s.status === "saved" || s.status === "loaded") &&
+        s.checkpointRevision !== null
+      )
+        checkpointRevision = s.checkpointRevision;
+      if (s.status === "removed" && s.removedActive) checkpointRevision = -1;
       if (s.status === "error") showError({ code: s.error });
-      else
+      else {
+        delete root.dataset.canonicalError;
         status(
           c[s.status] ??
             (s.status === "cancelled"
@@ -541,8 +837,27 @@ export async function initCanonicalEditableStudio({
                 ? cancelling
                 : c.idle),
         );
+      }
       locks();
     },
+  });
+  const isDirty = () =>
+    captureTools?.hasWork() ||
+    editor.snapshot().revision !== checkpointRevision ||
+    workflow.snapshot().needsCheckpoint;
+  projectLibrary = initCanonicalProjectLibrary({
+    root,
+    workflow,
+    transaction,
+    isDirty,
+    locale,
+    signal: life.signal,
+    makeFresh: () =>
+      createFreshCanonicalProject({
+        registry,
+        memory,
+        title: locale === "en" ? "New project" : "Proyek baru",
+      }),
   });
   function locks() {
     if (!panel || !editor) return;
@@ -553,8 +868,12 @@ export async function initCanonicalEditableStudio({
       return;
     }
     const s = panel.controller.snapshot(),
-      locked = disposed || busy > 0 || s.status === "cleanup-pending";
-    const dirty = editor.snapshot().revision !== checkpointRevision;
+      locked =
+        disposed ||
+        busy > 0 ||
+        s.status === "cleanup-pending" ||
+        !!captureTools?.blocked();
+    const dirty = isDirty();
     root.dataset.canonicalDirty = String(dirty);
     unsaved.hidden = !dirty;
     for (const el of root.querySelectorAll("[data-can-edit]"))
@@ -576,6 +895,7 @@ export async function initCanonicalEditableStudio({
       "import",
       "file",
       "bpm",
+      "clear",
     ])
       $(id).disabled = locked;
     $("undo").disabled = locked || !editor.snapshot().canUndo;
@@ -588,14 +908,37 @@ export async function initCanonicalEditableStudio({
       el.disabled = locked || !sourceId;
     $("play").disabled = locked || s.closed || s.status === "preparing";
     $("pause").disabled = locked || s.status !== "playing";
-    $("stop").disabled = disposed || s.pendingOwners === 0;
+    $("stop").disabled =
+      disposed || captureTools?.blocked() || s.pendingOwners === 0;
+    $("dismiss").disabled = false;
+    $("quantize").disabled = locked || !sourceId;
+    $("quantize").checked = quantizePads;
+    for (const el of root.querySelectorAll("[data-st-pad]"))
+      el.disabled =
+        locked ||
+        !sourceId ||
+        s.finishing ||
+        s.status === "paused" ||
+        s.status === "preparing";
+    panel.setTransportLocked(locked);
     original.disabled = locked;
     addMaterial.disabled = locked;
     windowSelect.disabled = locked;
     archiveSelect.disabled = locked;
     archiveDownload.disabled = locked || !archiveSelect.options.length;
     inputBackup.disabled = locked || !workflow?.snapshot().inputBackup;
-    $("render").disabled = locked || panel.exporting || !s.capability;
+    $("render").disabled =
+      locked || panel.exporting || s.closed || s.status === "preparing";
+    const share = wavDelivery.snapshot();
+    $("result").hidden = !share.ready;
+    $("filename").textContent = share.name;
+    $("wav-download").disabled = locked || !share.ready || share.sharing;
+    $("share").hidden = !share.ready;
+    $("share").disabled =
+      locked || panel.exporting || !share.ready || share.sharing;
+    $("share").textContent = share.native
+      ? fileCopy.share
+      : fileCopy.shareDownload;
     $("cancel").hidden = !(workflow?.snapshot().pending || panel.exporting);
     $("cancel").disabled = disposed || $("cancel").hidden;
     if (sourceId) {
@@ -624,6 +967,13 @@ export async function initCanonicalEditableStudio({
     }
     authoring?.locks(locked);
     tuningControl?.sync({ locked, error: s.error });
+    projectLibrary?.locks(locked);
+    recordingTools?.locks(locked);
+    if (captureTools?.blocked())
+      for (const el of root.querySelectorAll(
+        "[data-can-transport-control],#st-render",
+      ))
+        el.disabled = true;
   }
   function render() {
     if (!panel || disposed) return;
@@ -731,6 +1081,32 @@ export async function initCanonicalEditableStudio({
         label.append(input);
         row.append(label);
       }
+      const eq = ui("fieldset", { "data-can-eq": "" });
+      eq.append(ui("legend", {}, locale === "en" ? "Track EQ" : "EQ track"));
+      for (const [field, label] of [
+        ["bypass", locale === "en" ? "Bypass EQ" : "Lewati EQ"],
+        ["lowDb", locale === "en" ? "Low (dB)" : "Rendah (dB)"],
+        ["midDb", locale === "en" ? "Mid (dB)" : "Tengah (dB)"],
+        ["highDb", locale === "en" ? "High (dB)" : "Tinggi (dB)"],
+      ]) {
+        const l = ui("label", {}, label),
+          n = ui("input", {
+            type: field === "bypass" ? "checkbox" : "number",
+            "data-can-eq-field": field,
+            "data-can-edit": "",
+            "data-can-global": "",
+          });
+        if (field === "bypass") n.checked = bus.fx.eq.bypass;
+        else {
+          n.min = -6;
+          n.max = 6;
+          n.step = 0.1;
+          n.value = bus.fx.eq[field];
+        }
+        l.append(n);
+        eq.append(l);
+      }
+      row.append(eq);
       buses.append(row);
     }
     if (sourceId) {
@@ -837,6 +1213,9 @@ export async function initCanonicalEditableStudio({
     )) {
       const box = ui("fieldset", { "data-can-native-source": d.id }),
         select = ui("select", { "data-can-event": "", "data-can-edit": "" });
+      box.append(
+        ui("legend", {}, canonicalSourceLabel(current.project, d, locale)),
+      );
       for (const e of d.programme.events) {
         const version = d.programme.banks.find(
             (b) => b.id === e.bankId,
@@ -852,7 +1231,7 @@ export async function initCanonicalEditableStudio({
                 ? "Damp"
                 : "Redam") +
               " " +
-              sample.instrumentId +
+              (instrumentNames[sample.instrumentId] ?? sample.instrumentId) +
               " " +
               sample.pitchId +
               " @ " +
@@ -890,7 +1269,7 @@ export async function initCanonicalEditableStudio({
             new Option(
               bank.id +
                 " / " +
-                sample.instrumentId +
+                (instrumentNames[sample.instrumentId] ?? sample.instrumentId) +
                 " / " +
                 sample.pitchId +
                 " / " +
@@ -920,6 +1299,21 @@ export async function initCanonicalEditableStudio({
       positionLabel.append(beat);
       velocityLabel.append(velocity);
       box.append(
+        ui("p", {
+          "data-can-native-position": "",
+          hidden: "",
+          class: "st-hint",
+        }),
+        ui("progress", {
+          "data-can-native-cursor": "",
+          max: 1,
+          value: 0,
+          hidden: "",
+          "aria-label":
+            locale === "en"
+              ? "Native part playback position"
+              : "Posisi pemutaran bagian instrumen",
+        }),
         select,
         soundLabel,
         actionLabel,
@@ -968,6 +1362,8 @@ export async function initCanonicalEditableStudio({
       native.append(box);
     }
     authoring?.render();
+    recordingTools?.render();
+    captureTools?.render();
     locks();
     notify();
   }
@@ -988,12 +1384,150 @@ export async function initCanonicalEditableStudio({
       },
       { signal: life.signal },
     );
+  const auditionPad = (role) =>
+    transaction(async () => {
+      const document = editor.snapshot().project;
+      const pad = await canonicalPadDocument(
+        document,
+        sourceId,
+        role,
+        registry,
+      );
+      if (!panel.controller.snapshot().capability)
+        await panel.controller.play(document, { prepareOnly: true });
+      await panel.controller.audition(pad, {
+        quantize: quantizePads,
+        swing: readView().timing.swing,
+      });
+    });
+  listen($("dismiss"), "click", () => {
+    $("desktop").hidden = true;
+  });
+  listen($("share"), "click", async () => {
+    const task = wavDelivery.share();
+    busy++;
+    locks();
+    try {
+      const outcome = await withTask(() => task);
+      status(fileCopy[outcome] ?? fileCopy.downloaded);
+    } finally {
+      busy--;
+      locks();
+    }
+  });
+  listen($("wav-download"), "click", () => {
+    wavDelivery.download();
+    status(fileCopy.downloaded);
+  });
+  root.addEventListener(
+    "click",
+    (e) => {
+      if (
+        e.target.closest("[data-cap-prepare]") &&
+        !e.target.closest("button").disabled
+      )
+        wavDelivery.clear();
+    },
+    { capture: true, signal: life.signal },
+  );
+  listen($("clear"), "click", () =>
+    mutate(() =>
+      editor.edit((p) => {
+        const g = p.sourceDefs.find((d) => d.id === sourceId).programme;
+        const a = g.patterns.find((a) => a.id === g.activePattern);
+        for (const role of Object.keys(a.steps)) a.steps[role].fill(0);
+        a.notes.fill(null);
+        for (const voice of a.beatbox) voice.enabled = false;
+      }),
+    ),
+  );
+  // The unified entry owns these grids; the legacy page's keyboard handler
+  // is not initialized here. Keep focus movement separate from song edits.
+  listen(root, "keydown", (e) => {
+    const cell = e.target.closest("[data-st-step],[data-can-note]");
+    if (
+      e.defaultPrevented ||
+      e.ctrlKey ||
+      e.metaKey ||
+      e.altKey ||
+      !cell ||
+      cell.disabled ||
+      ![
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "Home",
+        "End",
+      ].includes(e.key)
+    )
+      return;
+    const drums = cell.hasAttribute("data-st-step"),
+      [role, index] = drums
+        ? cell.dataset.stStep.split(":")
+        : [null, cell.dataset.canNote];
+    let row = drums ? compositionRegistry.roleOrder.indexOf(role) : 0,
+      step = Number(index);
+    if (e.key === "ArrowLeft") step = Math.max(0, step - 1);
+    if (e.key === "ArrowRight") step = Math.min(15, step + 1);
+    if (e.key === "ArrowUp") row = Math.max(0, row - 1);
+    if (e.key === "ArrowDown")
+      row = Math.min(
+        drums ? compositionRegistry.roleOrder.length - 1 : 0,
+        row + 1,
+      );
+    if (e.key === "Home") step = 0;
+    if (e.key === "End") step = 15;
+    const selector = drums ? "[data-st-step]" : "[data-can-note]",
+      next = root.querySelector(
+        drums
+          ? `[data-st-step="${compositionRegistry.roleOrder[row]}:${step}"]`
+          : `[data-can-note="${step}"]`,
+      );
+    if (!next || next.disabled) return;
+    e.preventDefault();
+    for (const button of root.querySelectorAll(selector)) button.tabIndex = -1;
+    next.tabIndex = 0;
+    next.focus();
+  });
+  listen(document, "keydown", (e) => {
+    if (
+      e.defaultPrevented ||
+      e.repeat ||
+      e.target.closest("input,textarea,select,button,a,[contenteditable]")
+    )
+      return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      const button = $(e.shiftKey ? "redo" : "undo");
+      if (!button.disabled) button.click();
+      return;
+    }
+    if (e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      $(
+        panel.controller.snapshot().status === "playing" ? "pause" : "play",
+      ).click();
+      return;
+    }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && /^[1-8]$/.test(e.key)) {
+      const button = root.querySelectorAll("[data-st-pad]")[Number(e.key) - 1];
+      if (!button.disabled) {
+        e.preventDefault();
+        button.click();
+      }
+    }
+  });
   listen(source, "change", () => {
     sourceId = source.value;
     return panel.controller.edited().then(render);
   });
   listen(root, "change", (e) => {
     const t = e.target;
+    if (t.id === "st-quantize") {
+      quantizePads = t.checked;
+      return;
+    }
     if (t.id === "st-bpm") {
       const bpm = Number(t.value);
       return mutate(() => editor.setTempo(bpm));
@@ -1021,6 +1555,16 @@ export async function initCanonicalEditableStudio({
       return mutate(() =>
         editor.edit((p) => {
           p.tracks.find((t) => t.id === id).mix[field] = value;
+        }),
+      );
+    }
+    if (t.dataset.canEqField !== undefined) {
+      const id = t.closest("[data-can-bus]").dataset.canBus,
+        field = t.dataset.canEqField,
+        value = t.type === "checkbox" ? t.checked : Number(t.value);
+      return mutate(() =>
+        editor.edit((p) => {
+          p.tracks.find((t) => t.id === id).fx.eq[field] = value;
         }),
       );
     }
@@ -1066,6 +1610,50 @@ export async function initCanonicalEditableStudio({
   listen(root, "click", (e) => {
     const t = e.target.closest("button");
     if (!t) return;
+    if (t.dataset.canCreateGamelan !== undefined && !t.disabled) {
+      const instrument = instrumentChoice.value,
+        laras = larasChoice.value;
+      return mutate(async () => {
+        let material, output;
+        try {
+          material = await createCanonicalGamelanMaterial({
+            project: editor.snapshot().project,
+            registry,
+            memory,
+            instrument,
+            laras,
+          });
+          output = await exportCanonicalPackage(material, { memory });
+          await workflow.importFile(output.blob, { mode: "add" });
+        } finally {
+          output?.release();
+          material?.dispose();
+        }
+      });
+    }
+    if (t.dataset.canRackAdd !== undefined && !t.disabled) {
+      const instrument = rackInstrument.value,
+        sampleId = rackNote.value;
+      return mutate(async () => {
+        let material, output;
+        try {
+          material = await createCanonicalRackMaterial({
+            project: editor.snapshot().project,
+            registry,
+            memory,
+            instrument,
+            sampleId,
+          });
+          output = await exportCanonicalPackage(material, { memory });
+          await workflow.importFile(output.blob, { mode: "add" });
+        } finally {
+          output?.release();
+          material?.dispose();
+        }
+      });
+    }
+    if (t.dataset.stPad !== undefined && !t.disabled)
+      return auditionPad(t.dataset.stPad);
     if (
       t.dataset.canAddNative !== undefined ||
       t.dataset.canDeleteNative !== undefined
@@ -1207,21 +1795,20 @@ export async function initCanonicalEditableStudio({
     "click",
     () =>
       loadDemo &&
-      mutate(async () => {
-        const candidate = await loadDemo();
+      projectLibrary.guarded(async () => {
+        const candidate = await loadDemo($("demo-kind").value);
         try {
-          await editor.replace(candidate);
+          await workflow.replaceProject(candidate);
         } finally {
           candidate.dispose();
         }
+        await projectLibrary.refresh({ reset: true });
       }),
   );
-  listen($("save"), "click", () => mutate(() => workflow.save()));
   listen($("cancel"), "click", () => {
     workflow.cancel();
     panel.cancelExport();
   });
-  listen($("load"), "click", () => mutate(() => workflow.load()));
   listen($("project-download"), "click", () =>
     mutate(async () => {
       const out = await workflow.exportProject();
@@ -1267,7 +1854,11 @@ export async function initCanonicalEditableStudio({
     if (file) {
       const mode = importMode,
         bars = Number(windowSelect.value);
-      return mutate(() => workflow.importFile(file, { mode, bars }));
+      return mode === "replace"
+        ? projectLibrary.guarded(() =>
+            workflow.importFile(file, { mode, bars }),
+          )
+        : mutate(() => workflow.importFile(file, { mode, bars }));
     }
   });
   root.dataset.canonicalEditable = "true";
@@ -1275,6 +1866,7 @@ export async function initCanonicalEditableStudio({
   if (
     import.meta.env.DEV ||
     import.meta.env.CANONICAL_LOCAL_REVIEW ||
+    import.meta.env.CANONICAL_FINAL_STUDIO ||
     import.meta.env.CANONICAL_PUBLIC_PREVIEW
   ) {
     const { initCanonicalAuthoringPanel } =
@@ -1298,15 +1890,54 @@ export async function initCanonicalEditableStudio({
       signal: life.signal,
     });
   }
+  if (!import.meta.env.CANONICAL_PUBLIC_PREVIEW)
+    captureTools = initCanonicalCapturePanel({
+      root,
+      editor,
+      workflow,
+      registry,
+      memory,
+      locale,
+      signal: life.signal,
+      stopPlayback: () => panel.controller.stop(),
+      applyTransaction: transaction,
+      deliver: deliverBlob,
+      onChange: () => locks(),
+    });
+  recordingTools = initCanonicalRecordingTools({
+    root,
+    editor,
+    registry,
+    memory,
+    locale,
+    mutate,
+    signal: life.signal,
+    preview: (make) =>
+      mutate(() => {
+        const p = make();
+        return panel.controller.play(p, {
+          command:
+            p.transport.kind === "legacy-continuous"
+              ? { kind: "window", bars: 4, cycles: 1 }
+              : undefined,
+        });
+      }),
+  });
   render();
   if (recover)
     try {
-      await workflow.load();
+      await workflow.load({ allowMissing: true });
     } catch (e) {
       if (e.code === "missingProject") status(c.idle);
       else showError(e);
     }
   render();
+  try {
+    await projectLibrary.refresh();
+  } catch (e) {
+    showError(e);
+  }
+  analytics.open();
   return Object.freeze({
     editor,
     controller: panel.controller,
@@ -1314,6 +1945,7 @@ export async function initCanonicalEditableStudio({
     storage,
     transaction,
     deliver: deliverBlob,
+    readSource: chooseSource,
     subscribe(fn) {
       observers.add(fn);
       return () => observers.delete(fn);
@@ -1322,24 +1954,32 @@ export async function initCanonicalEditableStudio({
       editor: editor.snapshot(),
       workflow: workflow.snapshot(),
       memory: memory.snapshot(),
-      pendingTasks: pending.size,
+      pendingTasks: pending.size + (captureTools?.blocked() ? 1 : 0),
     }),
-    isDirty: () => editor.snapshot().revision !== checkpointRevision,
+    isDirty,
     async dispose() {
       disposed = true;
+      const fileClose = wavDelivery.dispose();
       life.abort();
+      projectLibrary.dispose();
       observers.clear();
       root
         .querySelectorAll("button,input,select")
         .forEach((el) => (el.disabled = true));
       for (const row of urls.values()) row.done();
+      await captureTools?.dispose();
+      await recordingTools.dispose();
       const audioClose = panel.dispose(),
         editorClose = editor.dispose();
       audioClose.catch(() => {});
       editorClose.catch(() => {});
       await workflow.dispose();
       await Promise.allSettled([...pending]);
-      const closed = await Promise.allSettled([audioClose, editorClose]);
+      const closed = await Promise.allSettled([
+        audioClose,
+        editorClose,
+        fileClose,
+      ]);
       const failed = closed.find((r) => r.status === "rejected");
       if (failed) throw failed.reason;
     },

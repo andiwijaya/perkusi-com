@@ -65,17 +65,20 @@ function missingPageMiddleware(server, preview = false) {
   };
 }
 export default defineConfig(({ mode }) => {
+  const finalStudio = mode === "gamelan-v5-final";
   const canonicalRelease = mode === "gamelan-v5-canonical-release";
   const v5UX = [
     "gamelan-v5-ux",
     "gamelan-v5-public-candidate",
     "gamelan-v5-canonical-release",
+    "gamelan-v5-final",
   ].includes(mode);
   const gamelan = gamelanBuildMode(mode) || v5UX;
   const publicCandidate = [
     "gamelan-public-candidate",
     "gamelan-v5-public-candidate",
     "gamelan-v5-canonical-release",
+    "gamelan-v5-final",
   ].includes(mode);
   const delivery =
     process.env.PERKUSI_GAMELAN_DELIVERY ||
@@ -83,6 +86,7 @@ export default defineConfig(({ mode }) => {
   return {
     appType: "mpa",
     define: {
+      "import.meta.env.CANONICAL_FINAL_STUDIO": JSON.stringify(finalStudio),
       "import.meta.env.CANONICAL_PUBLIC_PREVIEW":
         JSON.stringify(canonicalRelease),
       // Private compiled review only. Public builds keep canonical routes off.
@@ -148,7 +152,16 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: {
           order: "pre",
           handler(html, context) {
-            if (context.path.includes("/studio/recovery/")) return html;
+            if (context.path.includes("/studio/recovery/"))
+              return finalStudio
+                ? html
+                    .replace(/ Preview/g, "")
+                    .replace(
+                      'id="recovery-legacy"',
+                      'id="recovery-legacy" hidden',
+                    )
+                    .replace(/\?candidate=canonical&amp;lang=/g, "?lang=")
+                : html;
             if (context.path.includes("/loop-station/"))
               return v5UX
                 ? publicCandidateHTML(html, {
@@ -163,6 +176,7 @@ export default defineConfig(({ mode }) => {
             if (publicCandidate || v5UX)
               rendered = publicCandidateHTML(rendered, {
                 v5UX,
+                finalStudio,
                 page: match?.[1] || null,
                 locale:
                   match?.[2] || (context.path.startsWith("/en/") ? "en" : "id"),

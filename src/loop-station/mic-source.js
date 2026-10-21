@@ -1,7 +1,7 @@
 import { AudioMemory } from "../audio/audio-memory.js";
 import { Transport } from "../audio/transport.js";
 import { fail } from "../project/instrument-contract.js";
-const moduleURL = new URL("./mic-meter-worklet.js", import.meta.url).href;
+import { installWorkletFrameClock } from "../audio/worklet-frame-clock.js";
 
 const branded = new WeakMap();
 const loaded = new WeakMap();
@@ -51,7 +51,7 @@ export async function createMicSource({
   framesPerBar,
   nodeFactory = (c, options) =>
     new AudioWorkletNode(c, "perkusi-mic-meter-v5", options),
-  meterURL = moduleURL,
+  meterURL,
   signal,
 }) {
   if (
@@ -62,10 +62,11 @@ export async function createMicSource({
   )
     fail("micNotReady");
   const allocation = memory.reserve(
-    51200,
+    51200 + 4096,
     "mic-source/meter/routes/bounded-scalar-receipts",
   );
   let bus,
+    frameClock,
     meter,
     sink,
     timer,
@@ -112,20 +113,36 @@ export async function createMicSource({
   const meterClosed = new Promise((r) => {
     confirmClosed = r;
   });
+  const cancelMonitor = () => {
+    // Contain this optional output before cancellation/fault becomes visible.
+    // A queued native Enable may still run, but cannot reconnect this route.
+    // Keep the zero sink, raw capture bus and worker ownership intact.
+    if (monitorDestination) {
+      meter.disconnect(monitorDestination);
+      monitorDestination = null;
+    }
+    monitorEnabled = false;
+    const pending = monitorPending;
+    monitorPending = null;
+    pending?.resolve({ cancelled: true });
+  };
   const lose = (reason) => {
     if (closed || fault) return;
     fault = Object.freeze({ code: "micInputLost", reason });
     generation++;
+    cancelMonitor();
     rejectProbe?.(Object.assign(Error(reason), { code: reason }));
     for (const fn of listeners) fn(fault);
+  };
+  const clockLost = () => {
+    if (closed || fault) return;
+    lose("micClockDiscontinuity");
   };
   const close = async () => {
     if (released) return;
     if (closed && context.state !== "closed") fail("micCleanupUnconfirmed");
     closed = true;
-    monitorPending?.resolve({ cancelled: true });
-    monitorPending = null;
-    monitorEnabled = false;
+    cancelMonitor();
     generation++;
     clearTimeout(timer);
     signal?.removeEventListener("abort", aborted);
@@ -164,6 +181,7 @@ export async function createMicSource({
       }
     }
     meter?.port.close();
+    frameClock?.dispose();
     allocation.release();
     released = true;
     listeners.clear();
@@ -178,13 +196,21 @@ export async function createMicSource({
       reason: "captureCancelled",
     });
     generation++;
+    cancelMonitor();
     rejectProbe?.(
       Object.assign(Error("captureCancelled"), { code: "captureCancelled" }),
     );
   };
   try {
     if (!loaded.has(context)) {
-      const loading = context.audioWorklet.addModule(meterURL).catch((e) => {
+      const loading = (async () => {
+        const url =
+          meterURL ??
+          (import.meta.env
+            ? (await import("./mic-meter-worklet.js?worker&url")).default
+            : import.meta.resolve("./mic-meter-worklet.js"));
+        await context.audioWorklet.addModule(url);
+      })().catch((e) => {
         loaded.delete(context);
         throw e;
       });
@@ -202,6 +228,18 @@ export async function createMicSource({
       outputChannelCount: [2],
       channelCountMode: "max",
     });
+    // Construction/clock/route failures still need the actual close receipt.
+    meter.port.onmessage = ({ data }) => {
+      if (data?.type === "closed") confirmClosed();
+    };
+    frameClock = installWorkletFrameClock(
+      meter,
+      context,
+      Math.ceil(((context.currentTime + 0.05) * context.sampleRate) / 128) *
+        128,
+      null,
+      clockLost,
+    );
     sink = context.createGain();
     sink.gain.value = 0;
     bus.connect(meter);
@@ -221,6 +259,10 @@ export async function createMicSource({
         3000,
       );
       meter.port.onmessage = ({ data: d }) => {
+        if (d?.type === "clock-error") {
+          clockLost();
+          return;
+        }
         if (d?.type === "closed") {
           confirmClosed();
           return;
@@ -228,6 +270,7 @@ export async function createMicSource({
         if (d?.type === "monitor-state") {
           if (
             !closed &&
+            !fault &&
             monitorPending?.id === d.id &&
             d.enabled === monitorPending.enabled &&
             Number.isSafeInteger(d.frame) &&

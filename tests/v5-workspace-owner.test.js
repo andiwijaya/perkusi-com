@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { WorkspaceAudioOwner } from "../src/loop-station/workspace-owner.js";
@@ -109,6 +110,7 @@ class Node extends EventTarget {
   constructor(context) {
     super();
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.connections = new Set();
     this.gain = param();
     this.pan = param();
@@ -840,7 +842,7 @@ test("exact combined .95 peak,16 voices and64MiB positives still admit without d
             countInBars: 0,
             leadSeconds: 0.1,
           }),
-          future = 8192 + 8 * (plan.endFrame - plan.startFrame) + 40960;
+          future = 8192 + 8 * (plan.endFrame - plan.startFrame) + 45056;
         held = f.memory.reserve(
           f.memory.snapshot().maxBytes - f.memory.snapshot().bytes - future,
           "foreign-exact-budget",

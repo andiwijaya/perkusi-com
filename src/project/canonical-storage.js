@@ -60,15 +60,25 @@ export class CanonicalStorage {
       this.opening = null;
     }
   }
-  async save(bundle, { documentId = "current", expected = null, signal } = {}) {
+  async save(
+    bundle,
+    { documentId = "current", expected = null, currentExpected, signal } = {},
+  ) {
     const owned = retainCanonicalBundle(bundle);
-    let held;
+    let held, previousHeld;
     try {
-      if (!/^[a-z0-9-]{1,64}$/.test(documentId)) fail("invalidDocumentId");
+      if (
+        typeof documentId !== "string" ||
+        !/^[a-z0-9-]{1,64}$/.test(documentId)
+      )
+        fail("invalidDocumentId");
+      if (currentExpected !== undefined && documentId === "current")
+        fail("invalidDocumentId");
       check(signal);
       held = this.memory.reserve(
-        new TextEncoder().encode(JSON.stringify(owned.project)).length * 2 +
-          8192,
+        new TextEncoder().encode(JSON.stringify(owned.project)).length *
+          (currentExpected === undefined ? 2 : 4) +
+          (currentExpected === undefined ? 8192 : 16384),
         "canonical/storage-document-transaction",
       );
       const db = await this.open();
@@ -80,8 +90,11 @@ export class CanonicalStorage {
           documents = get("documents"),
           blobs = get("blobs"),
           credits = get("credits");
+        const targets = [{ documentId, expected }];
+        if (currentExpected !== undefined)
+          targets.push({ documentId: "current", expected: currentExpected });
         let code = "canonicalStorageWriteFailed",
-          revision;
+          unread = targets.length;
         const abort = () => {
           code = "cancelled";
           try {
@@ -91,16 +104,9 @@ export class CanonicalStorage {
           }
         };
         signal?.addEventListener("abort", abort, { once: true });
-        const prior = pointers.get(documentId);
-        prior.onsuccess = () => {
+        const write = ({ documentId: id, revision }) => {
           try {
             check(signal);
-            if ((prior.result?.revision ?? null) !== expected) {
-              code = "draftConflict";
-              tx.abort();
-              return;
-            }
-            revision = (expected ?? 0) + 1;
             for (const o of owned.project.origins.filter(
               (o) => o.kind === "file",
             ))
@@ -108,7 +114,7 @@ export class CanonicalStorage {
             for (const a of owned.project.assets) {
               const e = owned.entries.get(a.id);
               blobs.put(e.blob, a.sha256);
-              const key = documentId + ":" + a.id + ":" + a.sha256,
+              const key = id + ":" + a.id + ":" + a.sha256,
                 old = credits.get(key);
               old.onsuccess = () => {
                 try {
@@ -142,11 +148,11 @@ export class CanonicalStorage {
                 backupHash: owned.backupHash,
                 backups: owned.backupRefs,
               },
-              documentId + ":" + revision,
+              id + ":" + revision,
             );
             get("refs").put(
               {
-                documentId,
+                documentId: id,
                 revision,
                 kind: "document-history",
                 hashes: [
@@ -158,9 +164,18 @@ export class CanonicalStorage {
                   ...owned.backupRefs.map((b) => b.sha256),
                 ],
               },
-              documentId + ":" + revision,
+              id + ":" + revision,
             );
-            pointers.put({ revision }, documentId);
+            pointers.put(
+              id === "current" && targets.length === 2
+                ? {
+                    revision,
+                    libraryDocumentId: documentId,
+                    libraryRevision: targets[0].revision,
+                  }
+                : { revision },
+              id,
+            );
           } catch (e) {
             code = signal?.aborted
               ? "cancelled"
@@ -176,10 +191,134 @@ export class CanonicalStorage {
             }
           }
         };
+        const writeAll = () => {
+          for (const t of targets) write(t);
+        };
+        const preserveCurrent = () => {
+          const p = targets.find((t) => t.documentId === "current")?.prior;
+          if (!p) return writeAll();
+          const preserve = () => {
+            const id = "recovered-current-" + p.revision,
+              prior = pointers.get(id);
+            prior.onsuccess = () => {
+              if (
+                prior.result &&
+                (prior.result.recoveredCurrentRevision !== p.revision ||
+                  prior.result.revision !== p.revision)
+              ) {
+                code = "draftConflict";
+                tx.abort();
+                return;
+              }
+              if (prior.result) return writeAll();
+              try {
+                previousHeld = this.memory.reserve(
+                  4 * 1024 * 1024 + 16384,
+                  "canonical/preserve-current-metadata",
+                );
+                const old = documents.get("current:" + p.revision);
+                old.onsuccess = () => {
+                  try {
+                    const row = old.result;
+                    if (
+                      !row ||
+                      !Array.isArray(row.project?.assets) ||
+                      row.project.assets.length > 128
+                    )
+                      fail("invalidCanonicalProject");
+                    documents.put(row, id + ":" + p.revision);
+                    const refs = get("refs").get("current:" + p.revision);
+                    refs.onsuccess = () => {
+                      if (!refs.result) {
+                        code = "invalidCanonicalProject";
+                        tx.abort();
+                        return;
+                      }
+                      get("refs").put(
+                        { ...refs.result, documentId: id },
+                        id + ":" + p.revision,
+                      );
+                    };
+                    for (const a of row.project.assets) {
+                      const key = ":" + a.id + ":" + a.sha256,
+                        credit = credits.get("current" + key);
+                      credit.onsuccess = () => {
+                        const provenance = credit.result?.versions?.find(
+                          (v) => v.revision === p.revision,
+                        );
+                        if (!provenance) {
+                          code = "invalidCanonicalProject";
+                          tx.abort();
+                          return;
+                        }
+                        credits.put({ versions: [provenance] }, id + key);
+                      };
+                    }
+                    // Copy only metadata/credits; immutable source blobs and
+                    // historical references remain pinned and unchanged.
+                    pointers.put(
+                      {
+                        revision: p.revision,
+                        recoveredCurrentRevision: p.revision,
+                      },
+                      id,
+                    );
+                    writeAll();
+                  } catch (e) {
+                    code = e.code ?? "canonicalStorageWriteFailed";
+                    tx.abort();
+                  }
+                };
+              } catch (e) {
+                code = e.code ?? "canonicalStorageWriteFailed";
+                tx.abort();
+              }
+            };
+          };
+          if (
+            typeof p.libraryDocumentId === "string" &&
+            /^[a-z0-9-]{1,64}$/.test(p.libraryDocumentId) &&
+            p.libraryDocumentId !== "current"
+          ) {
+            const named = pointers.get(p.libraryDocumentId);
+            named.onsuccess = () =>
+              named.result?.revision === p.libraryRevision
+                ? writeAll()
+                : preserve();
+          } else preserve();
+        };
+        // A named project and the existing compatible "current" recovery
+        // snapshot commit in ONE transaction. No new database/schema or GC.
+        for (const target of targets) {
+          const prior = pointers.get(target.documentId);
+          prior.onsuccess = () => {
+            if ((prior.result?.revision ?? null) !== target.expected) {
+              code = "draftConflict";
+              tx.abort();
+              return;
+            }
+            target.revision = (target.expected ?? 0) + 1;
+            target.prior = prior.result;
+            if (!Number.isSafeInteger(target.revision)) {
+              code = "canonicalRevisionLimit";
+              tx.abort();
+              return;
+            }
+            if (!--unread)
+              targets.length === 2 ? preserveCurrent() : writeAll();
+          };
+        }
         const done = () => signal?.removeEventListener("abort", abort);
         tx.oncomplete = () => {
           done();
-          resolve(revision);
+          resolve(
+            targets.length === 2
+              ? {
+                  revision: targets[0].revision,
+                  currentRevision: targets[1].revision,
+                }
+              : targets[0].revision,
+          );
         };
         tx.onerror = () => {
           if (tx.error?.name === "QuotaExceededError")
@@ -198,11 +337,18 @@ export class CanonicalStorage {
         };
       });
     } finally {
+      previousHeld?.release();
       held?.release();
       owned.dispose();
     }
   }
   async load({ documentId = "current", revision = null, signal } = {}) {
+    if (
+      typeof documentId !== "string" ||
+      !/^[a-z0-9-]{1,64}$/.test(documentId) ||
+      (revision !== null && (!Number.isSafeInteger(revision) || revision < 1))
+    )
+      fail("invalidDocumentId");
     check(signal);
     const db = await this.open();
     check(signal);
@@ -212,6 +358,7 @@ export class CanonicalStorage {
         entries = new Map(),
         originals = new Map();
       let value = null,
+        library = null,
         code = "canonicalStorageUnavailable";
       const abort = () => {
         code = "cancelled";
@@ -290,13 +437,33 @@ export class CanonicalStorage {
       else {
         const pointer = get("pointers").get(documentId);
         pointer.onsuccess = () => {
-          if (pointer.result) read(pointer.result.revision);
+          if (pointer.result) {
+            const p = pointer.result;
+            if (
+              documentId === "current" &&
+              typeof p.libraryDocumentId === "string" &&
+              /^[a-z0-9-]{1,64}$/.test(p.libraryDocumentId) &&
+              p.libraryDocumentId !== "current" &&
+              Number.isSafeInteger(p.libraryRevision) &&
+              p.libraryRevision > 0
+            ) {
+              const named = get("pointers").get(p.libraryDocumentId);
+              named.onsuccess = () => {
+                if (named.result?.revision === p.libraryRevision)
+                  library = {
+                    documentId: p.libraryDocumentId,
+                    revision: p.libraryRevision,
+                  };
+              };
+            }
+            read(p.revision);
+          }
         };
       }
       const done = () => signal?.removeEventListener("abort", abort);
       tx.oncomplete = () => {
         done();
-        resolve(value ? { ...value, entries, originals } : null);
+        resolve(value ? { ...value, entries, originals, library } : null);
       };
       tx.onerror = () => {};
       tx.onabort = () => {
@@ -323,7 +490,40 @@ export class CanonicalStorage {
       bundle.dispose();
       fail("canonicalBackupHash");
     }
-    return { bundle, revision: raw.revision };
+    return {
+      bundle,
+      revision: raw.revision,
+      ...(raw.library ? { library: raw.library } : {}),
+    };
+  }
+  async readCurrentRevision({ signal } = {}) {
+    check(signal);
+    const held = this.memory.reserve(8192, "canonical/current-pointer-read");
+    try {
+      const db = await this.open();
+      check(signal);
+      const revision = await new Promise((resolve, reject) => {
+        const tx = db.transaction(["pointers"], "readonly"),
+          request = tx.objectStore("pointers").get("current");
+        tx.oncomplete = () => resolve(request.result?.revision ?? null);
+        tx.onabort = () =>
+          reject(
+            Object.assign(Error("canonicalStorageUnavailable"), {
+              code: "canonicalStorageUnavailable",
+            }),
+          );
+        tx.onerror = () => {};
+      });
+      check(signal);
+      if (
+        revision !== null &&
+        (!Number.isSafeInteger(revision) || revision < 1)
+      )
+        fail("invalidCanonicalProject");
+      return revision;
+    } finally {
+      held.release();
+    }
   }
   close() {
     this.closed = true;

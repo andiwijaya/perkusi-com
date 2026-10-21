@@ -49,8 +49,13 @@ export function initLocalization() {
       el.href = locale === "en" ? "/en/gamelan/" : "/gamelan/?lang=id";
     });
     document.querySelectorAll("[data-loop-link]").forEach((el) => {
-      el.href =
-        locale === "en" ? "/en/loop-station/" : "/loop-station/?lang=id";
+      el.href = import.meta.env.CANONICAL_FINAL_STUDIO
+        ? locale === "en"
+          ? "/en/studio/#record"
+          : "/studio/?lang=id#record"
+        : locale === "en"
+          ? "/en/loop-station/"
+          : "/loop-station/?lang=id";
     });
     document.querySelectorAll("[data-home-anchor]").forEach((el) => {
       el.href =

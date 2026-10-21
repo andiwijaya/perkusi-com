@@ -19,10 +19,20 @@ export function publicCandidateHTML(
     locale = "id",
     credits = false,
     v5UX = false,
+    finalStudio = false,
     loop = false,
   } = {},
 ) {
-  const t = createTranslator(messages, locale),
+  const translate = createTranslator(messages, locale),
+    key = (k) =>
+      finalStudio
+        ? ({
+            "common.gamelanPreview": "common.gamelan",
+            "common.previewStatus": "common.instrumentStatus",
+            "home.gamelanPreviewCopy": "home.gamelanCopy",
+          }[k] ?? k)
+        : k,
+    t = (k) => translate(key(k)),
     href = locale === "en" ? "/en/gamelan/" : "/gamelan/?lang=id";
   if (page) {
     const link = `<a data-gamelan-link href="${href}" data-i18n="common.gamelanPreview">${escape(t("common.gamelanPreview"))}</a>`;
@@ -35,7 +45,7 @@ export function publicCandidateHTML(
         '<div class="tool-grid">',
         '<div class="tool-grid">' + card,
       );
-      if (v5UX) {
+      if (v5UX && !finalStudio) {
         const loopHref =
           locale === "en" ? "/en/loop-station/" : "/loop-station/?lang=id";
         const loopCard = `<article class="tool-card" data-v5-loop-card><div class="card-meta"><span>02 / LOOP STATION</span><span class="badge" data-i18n="common.previewStatus">${escape(t("common.previewStatus"))}</span></div><div class="tool-symbol loop-symbol" aria-hidden="true">${"<i></i>".repeat(3)}</div><h3 data-i18n="common.loopPreview">${escape(t("common.loopPreview"))}</h3><p data-i18n="home.loopPreviewCopy">${escape(t("home.loopPreviewCopy"))}</p><div class="card-bottom"><a data-loop-link href="${loopHref}" data-i18n="home.loopPreviewAction">${escape(t("home.loopPreviewAction"))}</a></div></article>`;
@@ -46,6 +56,11 @@ export function publicCandidateHTML(
         html = html.replace(/<body\b/, "<body data-v5-ux");
       }
     }
+    if (finalStudio)
+      html = html.replace(
+        /data-i18n="(common.gamelanPreview|common.previewStatus|home.gamelanPreviewCopy)"/g,
+        (_, k) => `data-i18n="${key(k)}"`,
+      );
     return html;
   }
   const m = loop

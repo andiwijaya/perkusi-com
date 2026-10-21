@@ -57,6 +57,8 @@ export async function attachCanonicalHandoff({
   memory,
   id,
   locale = "id",
+  autoOpen = false,
+  onAccepted = async () => {},
 }) {
   const t = copy[locale] ?? copy.id,
     store = new CanonicalHandoffStore({ memory }),
@@ -67,7 +69,8 @@ export async function attachCanonicalHandoff({
     closed = false,
     busy = false,
     deferred = false,
-    phase = "loading";
+    phase = "loading",
+    externalAckPending = false;
   const el = (tag, text = "") => {
       const e = document.createElement(tag);
       e.textContent = text;
@@ -150,7 +153,7 @@ export async function attachCanonicalHandoff({
       phase === "accepted" ||
       (phase === "applied" && !!info?.prepared) ||
       !reader;
-    finish.hidden = phase !== "applied";
+    finish.hidden = phase !== "applied" && !externalAckPending;
     finish.disabled = busy;
     source.disabled = busy || !info;
     previous.disabled = busy || !info?.prepared?.backupId;
@@ -268,10 +271,17 @@ export async function attachCanonicalHandoff({
     phase = "accepted";
     reader?.release();
     reader = null;
+    await finishExternal();
     status.setAttribute("role", "status");
   }
   async function complete() {
-    await completeOwned();
+    if (info?.accepted) await finishExternal();
+    else await completeOwned();
+  }
+  async function finishExternal() {
+    externalAckPending = true;
+    await onAccepted(info);
+    externalAckPending = false;
   }
   async function downloadSource() {
     const held = await store.read(id);
@@ -301,6 +311,12 @@ export async function attachCanonicalHandoff({
   }
   try {
     await receive();
+    if (autoOpen)
+      await run(async () => {
+        if (info.accepted) await finishExternal();
+        else if (phase === "applied") await completeOwned();
+        else await apply("replace");
+      });
   } catch (e) {
     phase = "error";
     box.dataset.handoffError = e.code ?? e.message;

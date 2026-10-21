@@ -37,6 +37,19 @@ export function closeInstrumentMonitor(source) {
   if (!p?.live) fail("invalidCaptureSource");
   return p.close();
 }
+// Certified pending/live monitor frontier. Rows keep their complete peak until
+// actual native ended/close, including damped and future-scheduled voices.
+export function instrumentMonitorPeak(source, context, memory, transport) {
+  const p = branded.get(source);
+  if (
+    !p?.live ||
+    p.context !== context ||
+    p.memory !== memory ||
+    p.transport !== transport
+  )
+    fail("invalidCaptureSource");
+  return [...p.rows, ...p.pendingRows].reduce((n, r) => n + r.peak, 0);
+}
 const safe = (n) => Number.isSafeInteger(n) && n >= 0;
 const deferred = () => {
   let resolve;
@@ -52,10 +65,10 @@ export function captureReservedBytes(channels, frames) {
   if (
     ![1, 2].includes(channels) ||
     !safe(frames) ||
-    !safe(8 * channels * frames + 16384 + 32768 * channels)
+    !safe(8 * channels * frames + 20480 + 32768 * channels)
   )
     fail("invalidCaptureSource");
-  return 8 * channels * frames + 16384 + 32768 * channels;
+  return 8 * channels * frames + 20480 + 32768 * channels;
 }
 export function captureInputChannels(source, context, memory, transport) {
   const mic = micInputChannels(source, context, memory, transport);
@@ -92,6 +105,8 @@ export async function createInstrumentInput({
   signal,
   live = false,
   outputGain = 1,
+  fetcher,
+  memoryPolicy = null,
 }) {
   if (
     !context ||
@@ -148,7 +163,8 @@ export async function createInstrumentInput({
     untrim;
   try {
     cache = new InstrumentSampleCache(context, registry, {
-      memoryPolicy: memory.cachePolicy(context),
+      memoryPolicy: memoryPolicy ?? memory.cachePolicy(context),
+      ...(fetcher ? { fetcher } : {}),
     });
     untrim = memory.registerTrimmer(cache, () => cache.trim());
     const loaded = await Promise.allSettled(
@@ -240,6 +256,7 @@ class InstrumentInput {
   initialize(options) {
     Object.assign(this, options);
     this.rows = new Set();
+    this.pendingRows = new Set();
     this.tokens = new Map();
     this.faults = new Set();
     this.generation = 0;
@@ -525,10 +542,29 @@ class InstrumentInput {
   }
   start(id, options) {
     const o = this.options(id, options);
-    if (this.rows.size >= this.voiceLimit) fail("voiceLimit");
-    this.admitVoice(); // before voice pin, row or native allocation
+    if (this.rows.size + this.pendingRows.size >= this.voiceLimit)
+      fail("voiceLimit");
     const done = deferred(),
-      row = { id, startFrame: o.frame, done };
+      row = {
+        id,
+        startFrame: o.frame,
+        done,
+        peak:
+          this.leases[o.index].metrics.peak *
+          this.descriptors[o.index].gainTrim *
+          this.playbackScales[o.index] *
+          (this.drum ? 1 : INSTRUMENT_LEVEL) *
+          (this.melodic?.liveLevel ?? 1) *
+          o.velocity,
+      };
+    // Publish a bounded pending ticket before calling admission, so a reentrant
+    // request sees it. A refusal allocates no voice pin or native audio node.
+    this.pendingRows.add(row);
+    try {
+      this.admitVoice();
+    } finally {
+      this.pendingRows.delete(row);
+    }
     this.rows.add(row);
     let pin, trim;
     const release = () => {

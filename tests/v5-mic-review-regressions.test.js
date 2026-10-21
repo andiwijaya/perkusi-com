@@ -1,3 +1,7 @@
+import {
+  withUnitNativeClock,
+  fakeWorkletParams,
+} from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { MicInput } from "../src/loop-station/mic-input.js";
@@ -21,6 +25,7 @@ class FakeNode extends EventTarget {
   constructor(context) {
     super();
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.gain = {
       value: 1,
       setValueAtTime(v) {
@@ -230,7 +235,7 @@ test("regression: scalar meter must preserve a clipping impulse between delivere
       };
     }
   };
-  globalThis.registerProcessor = (_, p) => (Processor = p);
+  globalThis.registerProcessor = (_, p) => (Processor = withUnitNativeClock(p));
   globalThis.currentFrame = 0;
   await import("../src/loop-station/mic-meter-worklet.js");
   const p = new Processor(),

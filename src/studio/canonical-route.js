@@ -12,21 +12,37 @@ export function canonicalLocalBuild(enabled, href, publicPreview = false) {
         hosts.has(url.hostname)))
   );
 }
-export function canonicalLocalRoute(enabled, href, publicPreview = false) {
+export function canonicalLocalRoute(
+  enabled,
+  href,
+  publicPreview = false,
+  finalStudio = import.meta.env?.CANONICAL_FINAL_STUDIO === true,
+) {
   const url = new URL(href);
   return (
-    canonicalLocalBuild(enabled, href, publicPreview) &&
-    ["/studio/", "/studio", "/en/studio/", "/en/studio"].includes(
-      url.pathname,
-    ) &&
-    url.searchParams.get("candidate") === "canonical" &&
-    !url.searchParams.has("workspace")
+    canonicalLocalBuild(enabled, href, publicPreview || finalStudio) &&
+    [
+      "/studio/",
+      "/studio",
+      "/en/studio/",
+      "/en/studio",
+      "/studio/index.html",
+      "/en/studio/index.html",
+    ].includes(url.pathname) &&
+    (finalStudio ||
+      (url.searchParams.get("candidate") === "canonical" &&
+        !url.searchParams.has("workspace")))
   );
 }
-export function canonicalLocalSession(enabled, href, publicPreview = false) {
+export function canonicalLocalSession(
+  enabled,
+  href,
+  publicPreview = false,
+  finalStudio = import.meta.env?.CANONICAL_FINAL_STUDIO === true,
+) {
   return (
-    canonicalLocalBuild(enabled, href, publicPreview) &&
-    new URL(href).searchParams.get("candidate") === "canonical"
+    canonicalLocalBuild(enabled, href, publicPreview || finalStudio) &&
+    (finalStudio || new URL(href).searchParams.get("candidate") === "canonical")
   );
 }
 export function canonicalLegacyHref(locale = "id") {
@@ -46,7 +62,9 @@ export function canonicalRecoveryHref(locale = "id") {
 export function canonicalStudioHref(locale = "id") {
   return (
     (locale === "en" ? "/en" : "") +
-    "/studio/?candidate=canonical&lang=" +
+    (import.meta.env?.CANONICAL_FINAL_STUDIO
+      ? "/studio/?lang="
+      : "/studio/?candidate=canonical&lang=") +
     (locale === "en" ? "en" : "id")
   );
 }

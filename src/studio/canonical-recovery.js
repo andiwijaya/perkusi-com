@@ -1,7 +1,9 @@
 import "./canonical-recovery.css";
 import { AudioMemory } from "../audio/audio-memory.js";
+import { retainCanonicalInputBlob } from "../project/canonical-blob-owner.js";
 import { canonicalRegisteredAssets } from "../audio/canonical-registered-assets.js";
 import { CanonicalRecoveryStorage } from "../project/canonical-recovery-storage.js";
+import { exportLegacyLoopProject } from "../project/legacy-loop-recovery.js";
 import {
   exportCanonicalPackage,
   importCanonicalFile,
@@ -23,7 +25,7 @@ let bundle = null,
   closed = false;
 const copy = en
   ? {
-      title: "Recover saved Preview projects",
+      title: "Recover saved projects",
       intro:
         "This recovery page reads saved unified Studio projects and exports complete files, including original sources and recordings. It does not play audio, save edits, or rewrite older projects. Editing a recovered Preview project requires a compatible Preview version. After a version rollback, Return to Studio may open the previous editor; export the complete file to keep your work.",
       legacy: "Previous Studio",
@@ -43,7 +45,7 @@ const copy = en
       language: "Bahasa Indonesia",
     }
   : {
-      title: "Pulihkan proyek Preview tersimpan",
+      title: "Pulihkan proyek tersimpan",
       intro:
         "Halaman pemulihan ini membaca proyek Studio terpadu tersimpan dan mengekspor berkas lengkap, termasuk sumber asli dan rekaman. Halaman ini tidak memutar audio, menyimpan edit, atau menulis ulang proyek sebelumnya. Untuk mengedit proyek Preview yang dipulihkan, gunakan versi Preview yang kompatibel. Setelah kembali ke versi sebelumnya, Kembali ke Studio dapat membuka editor lama; unduh berkas lengkap agar pekerjaan tetap tersimpan.",
       legacy: "Studio sebelumnya",
@@ -62,6 +64,17 @@ const copy = en
       language: "English",
     };
 document.title = copy.title + " · Perkusi.com";
+if (import.meta.env.CANONICAL_FINAL_STUDIO) {
+  copy.intro = en
+    ? "Read saved Studio projects or export older Loop recordings as complete files, including original sources and audio. Import the downloaded file into Studio to edit a copy. Recovery does not play audio or change saved data."
+    : "Baca proyek Studio tersimpan atau ekspor rekaman Loop lama sebagai berkas lengkap, termasuk sumber asli dan audio. Impor unduhannya ke Studio untuk mengedit salinan. Pemulihan tidak memutar audio atau mengubah data tersimpan.";
+  copy.none = en
+    ? "No saved project found. Open a backup file or return to Studio. Nothing was created or changed."
+    : "Tidak ada proyek tersimpan. Buka berkas cadangan atau kembali ke Studio. Tidak ada data dibuat atau diubah.";
+  $("recovery-legacy").hidden = true;
+  for (const node of document.querySelector("footer").childNodes)
+    if (node.nodeType === Node.TEXT_NODE) node.textContent = " · Perkusi.com";
+}
 $("recovery-title").textContent = copy.title;
 $("recovery-intro").textContent = copy.intro;
 for (const [key, id] of [
@@ -122,7 +135,11 @@ async function list() {
   $("recovery-next").hidden = !after;
 }
 async function deliver(blob, name) {
-  const held = memory.reserve(blob.size + 4096, "canonical/recovery-download");
+  const held = retainCanonicalInputBlob(
+    blob,
+    memory,
+    "canonical/recovery-download",
+  );
   let url;
   try {
     url = URL.createObjectURL(blob);
@@ -151,6 +168,27 @@ $("recovery-read").addEventListener(
     }),
 );
 $("recovery-next").addEventListener("click", () => void task(list));
+const recoverLoop = document.createElement("button");
+recoverLoop.type = "button";
+recoverLoop.id = "recovery-loop";
+recoverLoop.textContent = en
+  ? "Export older Loop recordings"
+  : "Ekspor rekaman Loop lama";
+$("recovery-read").after(recoverLoop);
+recoverLoop.addEventListener(
+  "click",
+  () =>
+    void task(async () => {
+      let out;
+      try {
+        out = await exportLegacyLoopProject({ registry, memory });
+        await deliver(out.blob, "perkusi-loop-recovered.perkusi");
+        $("recovery-status").textContent = copy.ready;
+      } finally {
+        out?.release();
+      }
+    }),
+);
 $("recovery-file").addEventListener(
   "change",
   () =>

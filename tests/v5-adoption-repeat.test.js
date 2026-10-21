@@ -1,3 +1,7 @@
+import {
+  nativeParameters,
+  fakeWorkletParams,
+} from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CaptureSession } from "../src/loop-station/capture-session.js";
@@ -16,7 +20,18 @@ globalThis.AudioWorkletProcessor = class {
 };
 globalThis.sampleRate = 48000;
 globalThis.registerProcessor = (name, constructor) => {
-  Processor = constructor;
+  Processor = class extends constructor {
+    process(
+      inputs,
+      outputs,
+      parameters = nativeParameters(
+        globalThis.currentFrame,
+        outputs[0][0].length,
+      ),
+    ) {
+      return super.process(inputs, outputs, parameters);
+    }
+  };
 };
 await import("../src/loop-station/capture-worklet.js");
 
@@ -41,6 +56,7 @@ function fixture(shared = {}) {
     constructor(c, options) {
       super();
       this.context = c;
+      this.parameters = fakeWorkletParams();
       this.connected = false;
       this.port = {
         onmessage: null,

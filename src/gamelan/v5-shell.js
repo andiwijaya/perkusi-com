@@ -179,6 +179,7 @@ export function initV5Shell({
   if (
     (import.meta.env.DEV ||
       import.meta.env.CANONICAL_LOCAL_REVIEW ||
+      import.meta.env.CANONICAL_FINAL_STUDIO ||
       import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
     canonicalLocalSession(
       true,
@@ -190,6 +191,11 @@ export function initV5Shell({
     mainStudio.type = "button";
     mainStudio.id = "v5-main-studio";
     context.after(mainStudio);
+    if (import.meta.env.CANONICAL_FINAL_STUDIO) {
+      loopLink.hidden = true;
+      const previousEditor = host.querySelector("#if-studio");
+      if (previousEditor) previousEditor.hidden = true;
+    }
     mainStudio.addEventListener(
       "click",
       () =>

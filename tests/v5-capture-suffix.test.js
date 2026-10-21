@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CaptureSession } from "../src/loop-station/capture-session.js";
@@ -16,6 +17,7 @@ function fixture(channels = 2) {
     pool = new TakePool(memory),
     transport = new Transport();
   const node = Object.assign(new EventTarget(), {
+    parameters: fakeWorkletParams(),
     connect() {},
     disconnect() {},
     port: {

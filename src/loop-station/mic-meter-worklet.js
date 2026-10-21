@@ -1,7 +1,14 @@
-/* global AudioWorkletProcessor, registerProcessor, currentFrame */
+/* global AudioWorkletProcessor, registerProcessor */
+import {
+  frameClockDescriptors,
+  nativeWorkletFrame,
+} from "../audio/worklet-frame-clock.js";
 // Raw input is never altered. The separate stereo monitor is silent by default;
 // a bounded gain and whole-quantum gate apply only to its optional output.
 export class MicMeterProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return frameClockDescriptors();
+  }
   constructor() {
     super();
     this.blocks = 0;
@@ -30,9 +37,24 @@ export class MicMeterProcessor extends AudioWorkletProcessor {
       }
     };
   }
-  process(inputs, outputs) {
+  process(inputs, outputs, parameters) {
     for (const bus of outputs) for (const c of bus) c.fill(0);
     if (this.stopped) return false;
+    const size = outputs[0]?.[0]?.length ?? 0,
+      frame = nativeWorkletFrame(parameters, size);
+    if (frame === null && this.nextFrame === undefined) return true;
+    if (
+      !Number.isSafeInteger(frame) ||
+      frame < 0 ||
+      (this.nextFrame !== undefined && frame !== this.nextFrame)
+    ) {
+      this.monitorEnabled = false;
+      this.stopped = true;
+      this.port.postMessage({ type: "clock-error" });
+      this.port.postMessage({ type: "closed" });
+      return false;
+    }
+    this.nextFrame = frame + size;
     const input = inputs[0] ?? [];
     const frames = input[0]?.length ?? outputs[0]?.[0]?.length ?? 0;
     let peak = 0,
@@ -59,13 +81,13 @@ export class MicMeterProcessor extends AudioWorkletProcessor {
       (this.channels === undefined || this.channels === input.length);
     for (let i = 0; i < frames; i++) {
       const command = this.monitorCommand;
-      if (command && currentFrame + i >= command.frame) {
+      if (command && frame + i >= command.frame) {
         this.monitorEnabled = command.enabled;
         this.port.postMessage({
           type: "monitor-state",
           id: command.id,
           enabled: command.enabled,
-          frame: currentFrame + i,
+          frame: frame + i,
         });
         this.monitorCommand = null;
       }
@@ -105,7 +127,7 @@ export class MicMeterProcessor extends AudioWorkletProcessor {
       this.pending = true;
       this.port.postMessage({
         type: "meter",
-        frame: currentFrame,
+        frame,
         channels: input.length,
         peak: this.peak,
         rms: Math.sqrt(this.meanSquare),

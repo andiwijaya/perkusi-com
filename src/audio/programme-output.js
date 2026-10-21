@@ -1,4 +1,5 @@
 import { PROGRAMME_MAX_GAIN } from "./programme-level.js";
+export const PROGRAMME_OUTPUT_BYTES = 65537 * 8 + 8192;
 const branded = new WeakSet();
 // A static safety knee; measured programmes stay below.82, so their fixed
 // calibration remains linear. Unpredicted edits/strikes are bounded below.9.

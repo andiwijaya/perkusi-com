@@ -1,7 +1,14 @@
-/* global AudioWorkletProcessor,currentFrame,sampleRate,registerProcessor */
+/* global AudioWorkletProcessor,sampleRate,registerProcessor */
+import {
+  frameClockDescriptors,
+  nativeWorkletFrame,
+} from "../audio/worklet-frame-clock.js";
 import { FiniteRecordingProducer } from "./finite-reader-core.js";
 import { FiniteGraphOutput } from "./finite-tail-core.js";
 class FiniteReaderProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return frameClockDescriptors();
+  }
   constructor(options) {
     super();
     if (options.processorOptions.identity.rate !== sampleRate)
@@ -18,8 +25,10 @@ class FiniteReaderProcessor extends AudioWorkletProcessor {
       identity: this.identity,
     });
   }
-  process(_inputs, outputs) {
+  process(_inputs, outputs, parameters) {
     for (const bus of outputs) for (const a of bus) a.fill(0);
+    const frame = nativeWorkletFrame(parameters, outputs[0][0].length);
+    if (frame === null) return true;
     if (this.closing) {
       const body = this.producer.close();
       this.producer = null;
@@ -28,12 +37,12 @@ class FiniteReaderProcessor extends AudioWorkletProcessor {
         sequence: 2,
         identity: this.identity,
         workerClosed: true,
-        closedFrame: currentFrame,
+        closedFrame: frame,
         body,
       });
       return false;
     }
-    const result = this.producer.process(currentFrame, outputs[0]);
+    const result = this.producer.process(frame, outputs[0]);
     if (result) {
       this.closing = true;
       this.port.postMessage({
@@ -49,6 +58,9 @@ class FiniteReaderProcessor extends AudioWorkletProcessor {
 registerProcessor("perkusi-finite-reader-v5", FiniteReaderProcessor);
 
 class FiniteTailProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return frameClockDescriptors();
+  }
   constructor(options) {
     super();
     if (options.processorOptions.identity.rate !== sampleRate)
@@ -65,11 +77,13 @@ class FiniteTailProcessor extends AudioWorkletProcessor {
       identity: this.identity,
     });
   }
-  process(inputs, outputs) {
+  process(inputs, outputs, parameters) {
     for (const bus of outputs) for (const a of bus) a.fill(0);
     // A false return does not by itself terminate a processor with an active
     // native input. Retired writer state stays dropped until host disconnection.
     if (!this.writer) return false;
+    const frame = nativeWorkletFrame(parameters, outputs[0][0].length);
+    if (frame === null) return true;
     if (this.closing) {
       const body = this.writer.close();
       this.writer = null;
@@ -78,12 +92,12 @@ class FiniteTailProcessor extends AudioWorkletProcessor {
         sequence: 2,
         identity: this.identity,
         workerClosed: true,
-        closedFrame: currentFrame,
+        closedFrame: frame,
         body,
       });
       return false;
     }
-    const result = this.writer.process(currentFrame, inputs[0], outputs[0]);
+    const result = this.writer.process(frame, inputs[0], outputs[0]);
     if (result) {
       this.closing = true;
       this.port.postMessage({

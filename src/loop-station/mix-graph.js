@@ -3,7 +3,13 @@ import { fail } from "../project/instrument-contract.js";
 
 // Shared native graph for live monitor/replay and offline final mix. The two
 // first-order crossover poles have no feedback path outside their stable IIR.
-export function buildMixGraph(context, project, memory, output) {
+export function buildMixGraph(
+  context,
+  project,
+  memory,
+  output,
+  { connectOutput = true } = {},
+) {
   const graphs = new Map(),
     leases = [],
     nodes = [];
@@ -58,7 +64,7 @@ export function buildMixGraph(context, project, memory, output) {
       master.connect(limiter);
       final = limiter;
     }
-    final.connect(output);
+    if (connectOutput) final.connect(output);
     const anySolo = project.tracks.some((t) => t.solo);
     for (const track of project.tracks) {
       const lease = reserve(8192, "loop-track-gain-pan"),

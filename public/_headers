@@ -29,3 +29,27 @@
 /en/loop-station/index.html
   ! Permissions-Policy
   Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/studio
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/studio/
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/studio/index.html
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/en/studio
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/en/studio/
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()
+
+/en/studio/index.html
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=()

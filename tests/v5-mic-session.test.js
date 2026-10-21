@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CaptureSession } from "../src/loop-station/capture-session.js";
@@ -31,6 +32,7 @@ test("unsafeReplay full-window receipt keeps every original overrange sample, re
     nodeFactory: (_c, options) => {
       assert.equal(options.processorOptions.replayPeakLimit, 0.5);
       node = Object.assign(new EventTarget(), {
+        parameters: fakeWorkletParams(),
         context,
         port: { postMessage() {}, close() {} },
         connect() {},

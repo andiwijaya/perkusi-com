@@ -19,7 +19,8 @@ export function createCanonicalSourceDispatcher(memory, context) {
   const pending = new Set(),
     cacheOwners = new Set();
   let provider = null,
-    closed = false;
+    closed = false,
+    retired = false;
   function sourceLease(kind, d, bytes) {
     if (closed) fail("canonicalProviderClosed");
     const row = [...pending].find(
@@ -52,6 +53,7 @@ export function createCanonicalSourceDispatcher(memory, context) {
   }
   const nativePolicy = Object.freeze({
     begin(d) {
+      if (retired) return memory.cachePolicy(context).begin(d);
       return sourceLease(
         "native",
         d,
@@ -62,13 +64,42 @@ export function createCanonicalSourceDispatcher(memory, context) {
   });
   return Object.freeze({
     nativePolicy,
+    retireNativePolicy() {
+      const state = provider?.snapshot?.();
+      if (
+        !closed ||
+        pending.size ||
+        cacheOwners.size ||
+        !state?.disposed ||
+        state.jobs ||
+        state.loans ||
+        state.pendingCleanup ||
+        state.cache?.activeJobs ||
+        state.cache?.activeScopes
+      )
+        fail("canonicalSourceStillOwned");
+      retired = true;
+      return nativePolicy;
+    },
     legacyBegin(entry, bytes) {
       return sourceLease("legacy", entry.descriptor, bytes);
     },
-    bind(value) {
+    recordingBegin(entry, bytes) {
+      return sourceLease("recording", entry.descriptor, bytes);
+    },
+    bind(
+      value,
+      privateBytes = (request, d) => d.frames * d.channels * 16 + 8192,
+      verifiedRecording = () => false,
+    ) {
       if (provider) fail("invalidCanonicalProvider");
       provider = value;
-      factories.set(provider, { memory, reserve });
+      factories.set(provider, {
+        memory,
+        reserve,
+        privateBytes,
+        verifiedRecording,
+      });
     },
     close() {
       closed = true;
@@ -99,7 +130,7 @@ export function createCanonicalSourceDispatcher(memory, context) {
         keys.add(key);
         const d = provider.describe(request),
           pcm = d.frames * d.channels * 4,
-          privateBytes = 4 * pcm + 8192,
+          privateBytes = factories.get(provider).privateBytes(request, d),
           kind =
             request.kind === "instrument"
               ? "native"
@@ -111,7 +142,7 @@ export function createCanonicalSourceDispatcher(memory, context) {
               ? d.encodedBytes + Math.max(d.encodedBytes, pcm)
               : kind === "legacy"
                 ? 2 * d.encodedBytes + 2 * pcm + 8192
-                : 2 * pcm + 4096;
+                : 3 * pcm + 8192;
         if (privateBytes > 67108864 || cacheBytes > 67108864)
           fail("combinedMemoryLimit");
         const row = {
@@ -197,6 +228,15 @@ export function createCanonicalSourceDispatcher(memory, context) {
 export function hasCanonicalSourceBatch(provider, memory) {
   const f = factories.get(provider);
   return !!f && f.memory === memory;
+}
+export function canonicalSourceHasVerifiedRecording(provider, request, memory) {
+  const f = factories.get(provider);
+  return (
+    !!f &&
+    f.memory === memory &&
+    request.kind === "recording" &&
+    f.verifiedRecording(request)
+  );
 }
 export function reserveCanonicalSourceBatch(provider, requests, memory) {
   const f = factories.get(provider);

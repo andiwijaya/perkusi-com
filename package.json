@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/local-build.mjs --mode gamelan-v5-public-candidate",
+    "build": "node scripts/local-build.mjs --mode gamelan-v5-canonical-release",
     "build:v5": "node scripts/local-build.mjs --mode gamelan-v5-ux --outDir qa-artifacts/v5-current-build",
     "cleanup:builds": "node scripts/build-housekeeping.mjs",
     "build:gamelan-candidate": "node scripts/build-gamelan-candidate.mjs",

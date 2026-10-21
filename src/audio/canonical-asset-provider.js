@@ -9,6 +9,11 @@ import {
 } from "../project/canonical-data.js";
 import { prepareBumiBuffer } from "../beatbox/bumi-presence.js";
 import { fail, integer } from "../project/instrument-contract.js";
+import {
+  isCanonicalRecordingHandle,
+  claimCanonicalRecordingLoan,
+  borrowCanonicalRecordingLoan,
+} from "./canonical-recordings.js";
 
 const kinds = ["instrument", "percussion", "phrase", "bilah", "recording"];
 const check = (signal) => {
@@ -52,13 +57,13 @@ function descriptor(value, rate) {
     fail("invalidCanonicalSample");
   return d;
 }
-async function pcmHash(buffer) {
+async function pcmHash(buffer, planar = false) {
   const raw = new Uint8Array(buffer.length * buffer.numberOfChannels * 4),
     view = new DataView(raw.buffer);
   for (let i = 0; i < buffer.length; i++)
     for (let c = 0; c < buffer.numberOfChannels; c++)
       view.setFloat32(
-        (i * buffer.numberOfChannels + c) * 4,
+        (planar ? c * buffer.length + i : i * buffer.numberOfChannels + c) * 4,
         buffer.getChannelData(c)[i],
         true,
       );
@@ -77,6 +82,7 @@ export function createCanonicalAssetProvider({
   legacyAcquire = null,
   cacheOptions = {},
   nativeMemoryPolicy = null,
+  recordingHandles = [],
 } = {}) {
   if (
     ![44100, 48000].includes(context?.sampleRate) ||
@@ -91,6 +97,11 @@ export function createCanonicalAssetProvider({
   )
     fail("invalidCanonicalProvider");
   const rate = context.sampleRate,
+    exclusiveRecordings = new Map(
+      recordingHandles
+        .filter((handle) => isCanonicalRecordingHandle(handle, memory))
+        .map((handle) => [handle.asset.sha256, handle]),
+    ),
     entries = new Map(),
     native = new Map(),
     jobs = new Set(),
@@ -240,7 +251,13 @@ export function createCanonicalAssetProvider({
         check(controller.signal);
         // Native clone+view and sequential interleaved/hash scratch. The source
         // cache retains its OWN existing lease; no guessed subtraction/handoff.
-        const privateBytes = d.frames * d.channels * 16 + 8192;
+        const exclusiveHandle =
+            entry.request.kind === "recording"
+              ? exclusiveRecordings.get(entry.request.asset.sha256)
+              : null,
+          privateBytes = exclusiveHandle
+            ? 8192
+            : d.frames * d.channels * 16 + 8192;
         if (privateBytes > 67108864) fail("combinedMemoryLimit");
         held = sourceReservation
           ? claimCanonicalPrivateReservation(
@@ -287,16 +304,29 @@ export function createCanonicalAssetProvider({
           typeof input.copyFromChannel !== "function"
         )
           fail("invalidCanonicalSample");
-        const copy = context.createBuffer(d.channels, d.frames, rate);
+        // A verified recording acquire creates a NEW native buffer for this
+        // consumer and owns its native+view bytes through the returned loan.
+        // Borrow that exclusive buffer, retaining its actual source lease.
+        // Other handles and every shipped source keep their separate clones.
+        const copy = exclusiveHandle
+          ? input
+          : context.createBuffer(d.channels, d.frames, rate);
         for (let c = 0; c < d.channels; c++) {
           const target = copy.getChannelData(c);
-          input.copyFromChannel(target, c, 0);
+          if (!exclusiveHandle) input.copyFromChannel(target, c, 0);
           for (const value of target)
             if (!Number.isFinite(value)) fail("invalidCanonicalSample");
         }
         const recordingDiagnostics =
           entry.request.kind === "recording" ? inspectUserTake(copy) : null;
-        const decodedHash = await pcmHash(copy);
+        const decodedHash = exclusiveHandle
+          ? claimCanonicalRecordingLoan(
+              source,
+              exclusiveHandle,
+              context,
+              memory,
+            )
+          : await pcmHash(copy, entry.request.kind === "recording");
         check(controller.signal);
         if (d.hashKind === "decoded-pcm" && decodedHash !== d.contentHash)
           fail("canonicalAssetIdentityMismatch");
@@ -312,7 +342,7 @@ export function createCanonicalAssetProvider({
               (entry.request.kind !== "recording" && Math.abs(value) > 0.95)
             )
               fail("invalidCanonicalSample");
-        held.resize(d.frames * d.channels * 8 + 8192);
+        held.resize(exclusiveHandle ? 8192 : d.frames * d.channels * 8 + 8192);
         const own = { source, held };
         loans.add(own);
         const receipt = Object.freeze({
@@ -340,6 +370,14 @@ export function createCanonicalAssetProvider({
             }
           },
         });
+        if (exclusiveHandle)
+          borrowCanonicalRecordingLoan(
+            source,
+            loan,
+            exclusiveHandle,
+            context,
+            memory,
+          );
         published = true;
         return loan;
       } finally {

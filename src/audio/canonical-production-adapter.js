@@ -3,6 +3,7 @@ import { createCanonicalAssetProvider } from "./canonical-asset-provider.js";
 import { createCanonicalLegacyAssets } from "./canonical-legacy-assets.js";
 import { fail } from "../project/instrument-contract.js";
 import { createCanonicalSourceDispatcher } from "./canonical-source-batch.js";
+import { isCanonicalRecordingHandle } from "./canonical-recordings.js";
 const active = new WeakSet(),
   pause = () => new Promise((r) => setTimeout(r, 5));
 
@@ -63,20 +64,38 @@ export function createCanonicalProductionAdapter({
     catalog: [...assets.catalog, ...recordingCatalog],
     legacyAcquire: (entry, options) =>
       entry.request.kind === "recording"
-        ? recordingMap.get(entry.request.asset.sha256).acquire(options)
+        ? recordingMap.get(entry.request.asset.sha256).acquire({
+            ...options,
+            beginReservation: (bytes) =>
+              dispatcher.recordingBegin(entry, bytes),
+          })
         : legacy.acquire(entry, options),
+    recordingHandles: recordings,
     cacheOptions: {
       fetcher: (path, options) => fetcher(assets.nativeURL(path), options),
     },
     nativeMemoryPolicy: dispatcher.nativePolicy,
   });
-  dispatcher.bind(provider);
+  const ownsRecording = (request) =>
+    request.kind === "recording" &&
+    isCanonicalRecordingHandle(recordingMap.get(request.asset.sha256), memory);
+  dispatcher.bind(
+    provider,
+    (request, d) =>
+      ownsRecording(request) ? 8192 : d.frames * d.channels * 16 + 8192,
+    ownsRecording,
+  );
   active.add(context);
-  let closing = null;
+  let closing = null,
+    disposed = false;
   return Object.freeze({
     provider,
     registry: assets.registry,
     assets,
+    retireNativeCachePolicy() {
+      if (!disposed) fail("canonicalSourceStillOwned");
+      return dispatcher.retireNativePolicy();
+    },
     acquireLegacyEntry(stem, { bank, signal } = {}) {
       // Original loop packs intentionally expose assetId/variant, whereas the
       // one-shot packs include sha256. Resolve either through trusted catalogs;
@@ -115,6 +134,7 @@ export function createCanonicalProductionAdapter({
           await legacy.dispose();
           while (provider.snapshot().cache?.activeJobs > 0) await pause();
           active.delete(context);
+          disposed = true;
         })();
       closing.catch(() => {
         closing = null;

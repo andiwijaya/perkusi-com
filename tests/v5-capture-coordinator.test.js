@@ -1,3 +1,4 @@
+import { fakeWorkletParams } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { RootCaptureCoordinator } from "../src/loop-station/capture-coordinator.js";
@@ -15,6 +16,7 @@ class Node extends EventTarget {
   constructor(context) {
     super();
     this.context = context;
+    this.parameters = fakeWorkletParams();
     this.connections = new Set();
     this.gain = { value: 1 };
     this.sent = [];
@@ -65,7 +67,7 @@ class Context extends EventTarget {
     };
   }
 }
-function fixture() {
+function fixture({ replay = true } = {}) {
   const f = {
     context: new Context(),
     nodes: [],
@@ -140,6 +142,7 @@ function fixture() {
   };
   f.owner = new RootCaptureCoordinator({
     enabled: true,
+    replay,
     root: f.root,
     moduleURL: "https://qa.test/capture.js",
     openSession: (o) =>
@@ -171,6 +174,36 @@ function fixture() {
   };
   return f;
 }
+
+test("record-only coordination admits a silent capture node without hiding foreign peak or voice limits", async () => {
+  const f = fixture({ replay: false });
+  f.root.headroom = () => ({ peak: 0.9, voices: 14 });
+  f.source.peak = 0.4;
+  const h = f.arm();
+  await h.prepared;
+  assert.equal(f.nodes[0].options.processorOptions.replay, false);
+  const stopped = h.stop();
+  f.closeNode(f.nodes[0]);
+  await stopped;
+  await f.owner.dispose();
+  assert.equal(f.memory.snapshot().bytes, 1234);
+  f.foreign.release();
+  for (const unsafe of [
+    { peak: 0.96, voices: 1 },
+    { peak: 0.1, voices: 16 },
+  ]) {
+    const g = fixture({ replay: false });
+    g.root.headroom = () => unsafe;
+    assert.throws(
+      () => g.arm(),
+      (e) => e.code === "captureHeadroom",
+    );
+    assert.equal(g.nodes.length, 0);
+    await g.owner.dispose();
+    assert.equal(g.memory.snapshot().bytes, 1234);
+    g.foreign.release();
+  }
+});
 function chunk(node, offset, count, sequence, value = 0.125) {
   node.send({
     type: "pcm",
@@ -371,6 +404,61 @@ test("native receipt inputLost remains partial/memory-only and never auto-enters
   assert.equal(take.frames, 128);
   assert.equal(h.persistence, "memory-only");
   assert.equal(f.owner.project.assetRefs.length, 0);
+  await cleanup(f);
+});
+test("first capture fault carries a bounded context/transport/graph timeline without applying its partial take", async () => {
+  const f = fixture(),
+    h = f.arm();
+  await h.prepared;
+  for (let n = 0; n < 24; n++)
+    f.context.dispatchEvent(new Event("statechange"));
+  chunk(f.nodes[0], 0, 128, 0, 0.125);
+  const p = f.nodes[0].options.processorOptions,
+    fault = {
+      code: "captureFrameDiscontinuity",
+      expectedFrame: p.startFrame + 128,
+      observedFrame: p.startFrame + 256,
+      previousFrame: p.startFrame,
+      previousBlockSize: 128,
+      blockSize: 128,
+      capturedFrames: 128,
+      callbackCount: 3,
+      inputChannels: 1,
+    };
+  f.nodes[0].send({
+    type: "complete",
+    ...p,
+    capacity: p.endFrame - p.startFrame,
+    frames: 128,
+    reason: "frameGap",
+    blockSizes: [128],
+    captureFault: fault,
+  });
+  f.nodes[0].send({ type: "closed" });
+  const take = await h.ready;
+  await h.closed;
+  assert.equal(take.partial, true);
+  assert.equal(take.frames, 128);
+  assert.equal(h.outcome.captureFault.expectedFrame, p.startFrame + 128);
+  const d = h.outcome.captureDiagnostics;
+  assert.equal(d.timeline.length, 16);
+  assert(d.droppedTraceEvents > 0);
+  assert(
+    d.timeline.some(
+      (e) =>
+        e.event === "input-connected" && e.inputConnected && e.transportRunning,
+    ),
+  );
+  assert.equal(d.generation, 0);
+  assert.equal(d.sourceGeneration, 0);
+  assert(Object.isFrozen(d.timeline));
+  assert.equal(f.owner.project.assetRefs.length, 0);
+  const copy = f.pool.copyPCM(take.id);
+  try {
+    assert(new Float32Array(copy.buffer).every((x) => x === 0.125));
+  } finally {
+    copy.release();
+  }
   await cleanup(f);
 });
 test("completed original survives replay fault; outcome/fault distinct and late messages terminal", async () => {
@@ -634,7 +722,7 @@ for (const [name, foreign] of [
       assert.equal(f.nodes.length, 0);
       const beforeModule = f.memory.snapshot().bytes;
       const reserved =
-        beforeModule + 8 * (h.plan.endFrame - h.plan.startFrame) + 40960;
+        beforeModule + 8 * (h.plan.endFrame - h.plan.startFrame) + 45056;
       assert.ok(beforeModule > 1234 + 2048);
       f.root.headroom = () => foreign;
       f.context.moduleGate.resolve();
@@ -686,7 +774,7 @@ test("late headroom admission permits exact limits without reserving session mem
     heldBytes =
       f.memory.snapshot().maxBytes -
       f.memory.snapshot().bytes -
-      (8 * (h.plan.endFrame - h.plan.startFrame) + 40960);
+      (8 * (h.plan.endFrame - h.plan.startFrame) + 45056);
     held = f.memory.reserve(heldBytes, "foreign-fills-remaining-budget");
     f.root.headroom = () => ({ peak: 0.9125, voices: 15 });
     f.context.moduleGate.resolve();

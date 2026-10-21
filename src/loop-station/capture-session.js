@@ -3,6 +3,7 @@ import { LoopClock } from "./loop-clock.js";
 import { TakePool } from "./take-pool.js";
 import { waveformSlice } from "./waveform.js";
 import { integer, fail } from "../project/instrument-contract.js";
+import { installWorkletFrameClock } from "../audio/worklet-frame-clock.js";
 
 const loaded = new WeakMap();
 const constructionToken = Symbol("owned-capture-session");
@@ -44,6 +45,8 @@ export class CaptureSession {
   #playbackOutcome = null;
   #resolvePlaybackFault;
   #interruptionReason = null;
+  #captureFault = null;
+  #frameClock;
   constructor(token) {
     if (token !== constructionToken) fail("useCaptureSessionOpen");
   }
@@ -59,6 +62,7 @@ export class CaptureSession {
     countInBars = 1,
     signal,
     replayPeakLimit,
+    replay = true,
     nodeFactory = (c, o) =>
       new AudioWorkletNode(c, "perkusi-loop-capture-v5", o),
   }) {
@@ -68,6 +72,7 @@ export class CaptureSession {
       !(pool instanceof TakePool) ||
       !pool.usesMemory(memory) ||
       ![1, 2].includes(channels) ||
+      typeof replay !== "boolean" ||
       !moduleURL ||
       destination?.context !== clock.context ||
       clock.context.state !== "running"
@@ -120,7 +125,7 @@ export class CaptureSession {
         sampleRate: context.sampleRate,
       });
       session.#workerLease = memory.reserve(
-        capacity * channels * 4 + 2 * 4096 * channels * 4 + 8192,
+        capacity * channels * 4 + 2 * 4096 * channels * 4 + 8192 + 4096,
         "loop-worklet-window/transfer/nodes",
       );
       session.#arrays = Array.from(
@@ -138,6 +143,7 @@ export class CaptureSession {
           sampleRate: context.sampleRate,
           channels,
           replayPeakLimit,
+          replay,
         },
       });
       session.#node.port.onmessage = (e) => session.#message(e.data);
@@ -149,7 +155,6 @@ export class CaptureSession {
         },
         { once: true },
       );
-      session.#node.connect(destination);
       session.#stateListener = () => {
         if (context.state === "closed") {
           session.#finish(
@@ -169,12 +174,39 @@ export class CaptureSession {
       session.#signal = signal;
       session.#abortListener = () => session.stop("userStop");
       signal?.addEventListener("abort", session.#abortListener, { once: true });
+      if (signal?.aborted) fail("captureCancelled");
+      if (context.state !== "running") fail("captureStartMissed");
+      session.#frameClock = installWorkletFrameClock(
+        session.#node,
+        context,
+        plan.startFrame,
+        replay ? null : plan.endFrame,
+        (error) => session.#hostClockFailed(error, replay),
+      );
+      if (signal?.aborted || session.#stopping) fail("captureCancelled");
+      session.#node.connect(destination);
       return session;
     } catch (e) {
-      session.#node?.disconnect();
-      session.#node?.port.close();
-      pool.cancel(session.#reservation);
-      session.#workerLease?.release();
+      if (session.#node) {
+        // A constructed processor may already own its private full PCM window,
+        // even when clock setup/connection failed before publication. Request
+        // its normal zero-prefix drain and retain the real lease until closed,
+        // processor termination or confirmed context close. No timeout proves it.
+        try {
+          session.stop("userStop");
+        } catch {
+          /* Context-close recovery still owns the worker. */
+        }
+        if (context.state === "closed") {
+          session.#finish("closed", "confirmed-context-close-prefix");
+          session.#releaseWorker();
+        }
+        await session.closed;
+      } else {
+        pool.cancel(session.#reservation);
+        session.#workerLease?.release();
+        session.#arrays = null;
+      }
       throw e;
     }
   }
@@ -186,6 +218,20 @@ export class CaptureSession {
   }
   get playbackOutcome() {
     return this.#playbackOutcome;
+  }
+  #hostClockFailed(error, replay) {
+    if (this.#closed || this.#stopping || this.#playbackOutcome) return;
+    this.#playbackOutcome = Object.freeze({
+      code: replay ? "replayClockFailure" : "captureClockFailure",
+      reason: String(
+        error?.code ?? error?.message ?? "workletClockFailure",
+      ).slice(0, 256),
+    });
+    // Notify before a possibly reentrant close receipt. Keep receiving and
+    // acknowledging PCM until the ordered terminal receipt/context closure.
+    // Do not replace a completed worker's capture reason with a replay fault.
+    this.#resolvePlaybackFault(this.#playbackOutcome);
+    this.stop("inputLost");
   }
   waveform(fromFrame = 0) {
     if (this.take) return this.#pool.waveform(this.take.id, fromFrame);
@@ -307,6 +353,41 @@ export class CaptureSession {
         this.stop();
       } else {
         this.blockSizes = Object.freeze([...data.blockSizes]);
+        const f = data.captureFault;
+        if (
+          data.reason === "frameGap" &&
+          f?.code === "captureFrameDiscontinuity" &&
+          integer(f.expectedFrame, 0, Number.MAX_SAFE_INTEGER) &&
+          integer(f.observedFrame, 0, Number.MAX_SAFE_INTEGER) &&
+          (f.previousFrame === null ||
+            integer(f.previousFrame, 0, Number.MAX_SAFE_INTEGER)) &&
+          integer(f.previousBlockSize, 0, 16384) &&
+          integer(f.blockSize, 1, 16384) &&
+          integer(f.callbackCount, 1, Number.MAX_SAFE_INTEGER) &&
+          integer(f.inputChannels, 0, 32) &&
+          f.capturedFrames === data.frames &&
+          f.expectedFrame === this.plan.startFrame + data.frames &&
+          (Math.max(f.observedFrame, this.plan.startFrame) !==
+            f.expectedFrame ||
+            Math.min(f.observedFrame + f.blockSize, this.plan.endFrame) <=
+              Math.max(f.observedFrame, this.plan.startFrame))
+        ) {
+          this.#captureFault = Object.freeze({
+            code: f.code,
+            expectedFrame: f.expectedFrame,
+            observedFrame: f.observedFrame,
+            previousFrame: f.previousFrame,
+            previousBlockSize: f.previousBlockSize,
+            blockSize: f.blockSize,
+            capturedFrames: f.capturedFrames,
+            callbackCount: f.callbackCount,
+            inputChannels: f.inputChannels,
+            receivedContextFrame: Math.round(
+              this.#context.currentTime * this.#context.sampleRate,
+            ),
+            receivedContextState: this.#context.state,
+          });
+        }
         this.#finish(
           this.#interruptionReason ?? data.reason,
           "worker-complete",
@@ -339,6 +420,7 @@ export class CaptureSession {
       deliveryProof,
       workerFlushConfirmed: deliveryProof === "worker-complete",
       workerReason,
+      ...(this.#captureFault ? { captureFault: this.#captureFault } : {}),
     });
     let take = null;
     try {
@@ -389,6 +471,7 @@ export class CaptureSession {
   #releaseWorker() {
     if (this.#closed) return;
     this.#closed = true;
+    this.#frameClock?.dispose();
     this.#context.removeEventListener("statechange", this.#stateListener);
     this.#signal?.removeEventListener("abort", this.#abortListener);
     this.#node?.disconnect();

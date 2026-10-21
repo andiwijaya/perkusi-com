@@ -329,9 +329,14 @@ export async function compileCanonicalTimeline(
           const occurrenceId = `${cycle}:${entry.id}:${repeatIndex}`;
           occurrences.push({
             id: occurrenceId,
+            entryId: entry.id,
+            cycle,
+            repeatIndex,
             sectionId: s.id,
             startTick,
             lengthTicks: span,
+            startFrame: clock.frame(startTick),
+            endFrame: clock.frame(startTick + span),
           });
           for (const p of s.placements) {
             if (p.startTick >= span) continue;

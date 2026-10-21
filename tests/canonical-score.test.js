@@ -4,8 +4,12 @@ import {
   prepareCanonicalScore,
   retainCanonicalScore,
   canonicalVoiceAdmission,
+  canonicalScoreFrame,
 } from "../src/audio/canonical-score.js";
-import { exportCanonicalScoreWav } from "../src/audio/canonical-native.js";
+import {
+  exportCanonicalScoreWav,
+  measureCanonicalScore,
+} from "../src/audio/canonical-native.js";
 import { canonicalRamp } from "../src/audio/canonical-dynamic-render.js";
 import { AudioMemory } from "../src/audio/audio-memory.js";
 import {
@@ -36,6 +40,95 @@ const prepare = (f, memory, options = {}) =>
     ...options,
   });
 const isCode = (name) => (e) => e.code === name;
+for (const rate of [44100, 48000])
+  test(`playback measurement matches the complete WAV calibration without owning a WAV @${rate}`, async () => {
+    const f = await fixture(rate, "single"),
+      memory = new AudioMemory(),
+      score = await prepare(f, memory),
+      baseline = memory.snapshot().bytes;
+    try {
+      const measured = await measureCanonicalScore(score, {
+        memory,
+        context: { createBuffer: qaBuffer },
+      });
+      assert.equal(measured.output, null);
+      assert.equal(memory.snapshot().bytes, baseline);
+      assert(
+        !memory
+          .snapshot()
+          .owners.some((o) => o.label.startsWith("final-stream")),
+      );
+      const output = await exportCanonicalScoreWav(score, {
+        memory,
+        context: { createBuffer: qaBuffer },
+      });
+      try {
+        assert.deepEqual(measured.calibration, output.calibration);
+        assert.deepEqual(measured.metadata, output.metadata);
+        assert(output.output.blob.size > score.program.frames * 8);
+      } finally {
+        output.output.release();
+      }
+      assert.equal(memory.snapshot().bytes, baseline);
+    } finally {
+      score.dispose();
+    }
+    assert.equal(memory.snapshot().bytes, 0);
+  });
+for (const rate of [44100, 48000])
+  test(`native and root-occurrence views use exact admitted frame bounds @${rate} without changing the document`, async () => {
+    const f = await fixture(rate, "mixed"),
+      memory = new AudioMemory(),
+      before = JSON.stringify(f.canonical),
+      score = await prepare(f, memory);
+    try {
+      for (const o of score.timeline.occurrences) {
+        const atStart = canonicalScoreFrame(score, o.startFrame),
+          atLast = canonicalScoreFrame(score, o.endFrame - 1);
+        assert(
+          atStart.occurrences.some(
+            (x) =>
+              x.id === o.id &&
+              x.entryId === o.entryId &&
+              x.repeatIndex === o.repeatIndex,
+          ),
+        );
+        assert(atLast.occurrences.some((x) => x.id === o.id));
+        assert(
+          !canonicalScoreFrame(score, o.endFrame).occurrences.some(
+            (x) => x.id === o.id,
+          ),
+        );
+      }
+      const event = score.program.events.find((e) => e.nativeIdentity);
+      assert(event, "fixture contains an admitted native event");
+      const p = canonicalScoreFrame(score, event.spec.startFrame),
+        voice = p.voices.find((v) => v.id === event.id);
+      assert.deepEqual(
+        {
+          sourceId: voice.sourceId,
+          eventId: voice.eventId,
+          originalPlacementId: voice.originalPlacementId,
+          occurrenceId: voice.occurrenceId,
+        },
+        event.nativeIdentity,
+      );
+      const placement = p.nativePlacements.find(
+        (x) => x.sourceId === voice.sourceId,
+      );
+      assert(placement && placement.progress >= 0 && placement.progress < 1);
+      assert(Object.isFrozen(p.occurrences));
+      assert(Object.isFrozen(voice));
+      assert.equal(
+        canonicalScoreFrame(score, score.program.frames).occurrences.length,
+        0,
+      );
+      assert.equal(JSON.stringify(f.canonical), before);
+    } finally {
+      score.dispose();
+    }
+    assert.equal(memory.snapshot().bytes, 0);
+  });
 for (const rate of [44100, 48000])
   for (const profile of ["mixed", "repeat"])
     test(`Q1cb ${profile} @${rate}: immutable prepared identity, full tail and owned disposal`, async () => {

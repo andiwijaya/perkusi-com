@@ -18,6 +18,7 @@ export function attachCanonicalLegacyPanel({
   locale = "id",
 }) {
   const en = locale === "en",
+    finalStudio = import.meta.env?.CANONICAL_FINAL_STUDIO === true,
     life = new AbortController(),
     store = new CanonicalHandoffStore({ memory }),
     staged = new Map();
@@ -41,33 +42,45 @@ export function attachCanonicalLegacyPanel({
     );
   box.className = "st-panel";
   box.dataset.legacyDiscovery = "";
-  box.open = true;
+  box.open = !finalStudio;
   refresh.type = "button";
   refresh.dataset.legacyRefresh = "";
   status.setAttribute("role", "status");
   const links = el("p");
   for (const [href, label, id] of [
-    [
-      canonicalLegacyHref(locale),
-      en
-        ? "Previous Studio / live-pad workflow"
-        : "Studio sebelumnya / permainan pad",
-      "st-legacy-entry",
-    ],
+    ...(finalStudio
+      ? []
+      : [
+          [
+            canonicalLegacyHref(locale),
+            en
+              ? "Previous Studio / live-pad workflow"
+              : "Studio sebelumnya / permainan pad",
+            "st-legacy-entry",
+          ],
+        ]),
     [
       canonicalRecoveryHref(locale),
-      en
-        ? "Recover or export saved Preview projects"
-        : "Pulihkan atau ekspor proyek Preview tersimpan",
+      finalStudio
+        ? en
+          ? "Recover saved projects and older Loop recordings"
+          : "Pulihkan proyek tersimpan dan rekaman Loop lama"
+        : en
+          ? "Recover or export saved Preview projects"
+          : "Pulihkan atau ekspor proyek Preview tersimpan",
       "st-recovery-entry",
     ],
-    [
-      (en ? "/en" : "") + "/loop-station/?lang=" + locale,
-      en
-        ? "Loop recordings and 44.1kHz continuation"
-        : "Rekaman Loop dan kelanjutan 44,1kHz",
-      "st-legacy-loop",
-    ],
+    ...(finalStudio
+      ? []
+      : [
+          [
+            (en ? "/en" : "") + "/loop-station/?lang=" + locale,
+            en
+              ? "Loop recordings and 44.1kHz continuation"
+              : "Rekaman Loop dan kelanjutan 44,1kHz",
+            "st-legacy-loop",
+          ],
+        ]),
   ]) {
     const a = el("a", label);
     a.href = href;
@@ -79,9 +92,13 @@ export function attachCanonicalLegacyPanel({
     summary,
     el(
       "p",
-      en
-        ? "Nothing is moved automatically. Review a copy, then choose Open as a copy. Original stores stay intact. Recorded Loop projects remain in Loop Station; export their complete .perkusi file to copy audio."
-        : "Tidak ada pemindahan otomatis. Tinjau salinan, lalu pilih Buka sebagai salinan. Penyimpanan asli tetap utuh. Proyek rekaman Loop tetap di Loop Station; ekspor berkas .perkusi lengkap untuk menyalin audio.",
+      finalStudio
+        ? en
+          ? "Read a copy of an older project or export its complete recording file on the recovery page. Open that file in this Studio; the original saved data stays intact."
+          : "Baca salinan proyek lama atau ekspor berkas rekaman lengkap di halaman pemulihan. Buka berkas itu di Studio ini; data tersimpan asli tetap utuh."
+        : en
+          ? "Nothing is moved automatically. Review a copy, then choose Open as a copy. Original stores stay intact. Recorded Loop projects remain in Loop Station; export their complete .perkusi file to copy audio."
+          : "Tidak ada pemindahan otomatis. Tinjau salinan, lalu pilih Buka sebagai salinan. Penyimpanan asli tetap utuh. Proyek rekaman Loop tetap di Loop Station; ekspor berkas .perkusi lengkap untuk menyalin audio.",
     ),
     links,
     refresh,

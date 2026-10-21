@@ -124,7 +124,9 @@ test("registered adapter metadata resolves exact trusted catalogs without eager 
         return "/assets/" + d.path;
       });
     assert.equal(catalog.catalog.length, 41);
-    assert.equal(catalog.nativeRights.length, 108);
+    // Original 48kHz drum kits are also trusted capture inputs; no 44.1kHz
+    // drum profile is invented or substituted.
+    assert.equal(catalog.nativeRights.length, rate === 48000 ? 124 : 108);
     assert.ok(paths.every((p) => p.startsWith("internal/")));
     assert.throws(
       () => catalog.nativeURL("/arbitrary.wav"),

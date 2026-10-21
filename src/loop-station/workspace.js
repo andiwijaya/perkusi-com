@@ -75,7 +75,14 @@ export const LOOP_DRAFT_KEY = "perkusi.loop-station.draft.v5",
   LOOP_INCOMING_KEY = "perkusi.loop-station.incoming.v4";
 const host = document.getElementById("loop-workspace");
 export let workspace = null;
-if (
+if (import.meta.env.CANONICAL_FINAL_STUDIO) {
+  location.replace(
+    (location.pathname.startsWith("/en/") ? "/en" : "") +
+      "/studio/?lang=" +
+      (location.pathname.startsWith("/en/") ? "en" : "id") +
+      "#record",
+  );
+} else if (
   !import.meta.env.GAMELAN_V5_UX ||
   !gamelanHostAllowed(location.hostname, import.meta.env.GAMELAN_PUBLIC_BUILD)
 ) {

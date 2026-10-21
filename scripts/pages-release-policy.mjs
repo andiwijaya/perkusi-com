@@ -1,4 +1,4 @@
-// Deliberate approved production selection for the existing Pages Git build.
+// Approved Preview scope; exact release artifact still requires its verdict.
 // Local npm run build and non-main preview branches retain their requested mode.
 export const PAGES_PREVIEW_RELEASE = Object.freeze({
   branch: "main",
@@ -14,9 +14,11 @@ export function pagesReleaseMode(requested, env = process.env) {
   )
     return requested;
   if (
-    !["gamelan-v5-public-candidate", PAGES_PREVIEW_RELEASE.mode].includes(
-      requested,
-    )
+    ![
+      "gamelan-v5-public-candidate",
+      "gamelan-v5-canonical-release",
+      PAGES_PREVIEW_RELEASE.mode,
+    ].includes(requested)
   )
     throw Error("unreviewedPagesProductionMode");
   if (!/^[a-f0-9]{40}$/.test(env.CF_PAGES_COMMIT_SHA ?? ""))

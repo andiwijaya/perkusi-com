@@ -12,6 +12,10 @@ import {
   MAX_CANONICAL_BYTES,
 } from "./canonical-data.js";
 import { fail, utf8Bytes } from "./instrument-contract.js";
+import {
+  retainCanonicalInputBlob,
+  createCanonicalBlobAssembler,
+} from "./canonical-blob-owner.js";
 import { importAudioBundle } from "../loop-station/audio-bundle.js";
 const MAGIC = "PKCAN001",
   HEADER = 48,
@@ -149,12 +153,29 @@ export async function createCanonicalBundle(
     fail("recordingPackageTooLarge");
   if (backup !== null && !(backup instanceof Blob))
     fail("invalidCanonicalPackage");
+  // A legacy import keeps the exact same immutable Blob as its original and
+  // input backup. Two references do not create a second payload allocation.
+  // Distinct Blob objects (even equal hashes/bytes) still pay their full size.
+  const sharedBackup =
+    backup !== null &&
+    (project.origins.some(
+      (o) => o.kind === "file" && originals.get(o.sha256) === backup,
+    ) ||
+      [...archives.values()].some((e) => e.blob === backup));
   const held = reserve(
     memory,
-    rawBytes + audioBytes + archiveBytes + (backup?.size ?? 0) + 4096,
+    rawBytes +
+      audioBytes +
+      archiveBytes +
+      (sharedBackup
+        ? -Math.min(backup.size, rawBytes + audioBytes + archiveBytes)
+        : 0) +
+      4096,
     "canonical/immutable-originals-recordings",
   );
+  let backupHeld = null;
   try {
+    if (backup) backupHeld = retainCanonicalInputBlob(backup, memory);
     check(signal);
     const raw = new Map(),
       audio = new Map();
@@ -222,7 +243,12 @@ export async function createCanonicalBundle(
       }
     }
     return wrap(project, {
-      held,
+      held: {
+        release() {
+          held.release();
+          backupHeld?.release();
+        },
+      },
       entries: audio,
       originals: raw,
       archives,
@@ -231,6 +257,7 @@ export async function createCanonicalBundle(
       refs: 0,
     });
   } catch (error) {
+    backupHeld?.release();
     held.release();
     throw error;
   }
@@ -273,10 +300,9 @@ async function exportCanonicalPackageOwned(bundle, { memory, signal } = {}) {
     ...(version === 2 ? { backups } : {}),
   });
   if (utf8Bytes(raw) > MAX_CANONICAL_BYTES) fail("projectTooLarge");
-  const held = reserve(
+  const assembler = createCanonicalBlobAssembler(
     memory,
-    2 * (HEADER + utf8Bytes(raw) + offset),
-    "canonical/portable-project-output",
+    HEADER + utf8Bytes(raw) + offset,
   );
   try {
     const bytes = new TextEncoder().encode(raw),
@@ -289,20 +315,9 @@ async function exportCanonicalPackageOwned(bundle, { memory, signal } = {}) {
     check(signal);
     for (let i = 0; i < 32; i++)
       header[16 + i] = parseInt(hash.slice(2 * i, 2 * i + 2), 16);
-    let output = new Blob([header, bytes, ...parts], {
-      type: "application/octet-stream",
-    });
-    return {
-      get blob() {
-        return output;
-      },
-      release() {
-        output = null;
-        held.release();
-      },
-    };
+    return assembler.assemble([header, bytes, ...parts]);
   } catch (error) {
-    held.release();
+    assembler.dispose();
     throw error;
   }
 }

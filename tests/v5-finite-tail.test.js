@@ -1,3 +1,4 @@
+import { withUnitNativeClock } from "./helpers/worklet-frame-clock.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -114,8 +115,8 @@ globalThis.AudioWorkletProcessor = class {
 let Reader, Tail;
 globalThis.sampleRate = 48000;
 globalThis.registerProcessor = (name, C) => {
-  if (name === "perkusi-finite-reader-v5") Reader = C;
-  else if (name === "perkusi-finite-tail-v5") Tail = C;
+  if (name === "perkusi-finite-reader-v5") Reader = withUnitNativeClock(C);
+  else if (name === "perkusi-finite-tail-v5") Tail = withUnitNativeClock(C);
   else assert.fail(name);
 };
 await import("../src/loop-station/finite-reader-worklet.js");
@@ -133,7 +134,10 @@ globalThis.__tailReaderModel = Reader;
 const { Context } = await import(
   "data:text/javascript;base64," +
     Buffer.from(
-      "const output=n=>[new Float32Array(n),new Float32Array(n)];const Processor=globalThis.__tailReaderModel;" +
+      'import {fakeWorkletParams} from "' +
+        new URL("./helpers/worklet-frame-clock.js", import.meta.url).href +
+        '";' +
+        "const output=n=>[new Float32Array(n),new Float32Array(n)];const Processor=globalThis.__tailReaderModel;" +
         helperText +
         "export {Context};",
     ).toString("base64")
@@ -142,6 +146,7 @@ globalThis.__tailContextModel = Context;
 const fixtureImports = fixtureText
   .slice(0, fixtureText.indexOf("const identity ="))
   .replaceAll('"../src/', '"' + new URL("../src/", import.meta.url).href)
+  .replaceAll('"./helpers/', '"' + new URL("./helpers/", import.meta.url).href)
   .replaceAll('"node:test"', '"node:test"');
 const fixtureCode = fixtureText.slice(
   fixtureText.indexOf("async function fixture(t)"),
@@ -201,6 +206,52 @@ function tailFactory(c, options) {
 function renderTail(n) {
   for (let f = 0; n.active; f += 128) n.render(f);
 }
+
+for (const base of [0, 49 * 1048576, 51 * 1048576])
+  test(`legal 32s finite tail at epoch${base} pre-schedules all clock events without a host interval`, (t) => {
+    let intervals = 0;
+    t.mock.method(globalThis, "setInterval", () => {
+      intervals++;
+      return { unref() {} };
+    });
+    const c = new Context(),
+      faults = [];
+    c.currentTime = base / 48000;
+    let released = 0;
+    const startFrame = base + 4800,
+      endFrame = startFrame + 1536000;
+    const v = startFiniteTail({
+      context: c,
+      identity: {
+        ...id(),
+        startFrame,
+        endFrame,
+        bodyEndFrame: endFrame - 4800,
+      },
+      input: c.createGain(),
+      output: c.createGain(),
+      nodeFactory: tailFactory,
+      onRelease: () => released++,
+      onFault: (e) => faults.push(e.code),
+    });
+    t.after(() => {
+      c.confirmClosed();
+      v.confirmClose();
+    });
+    const n = c.tailNodes.at(-1);
+    assert.ok(n);
+    assert.equal(intervals, 0);
+    assert.deepEqual(faults, []);
+    assert.ok(
+      n.parameters.get("framePhase").events.at(-1)[2] * 48000 > endFrame,
+    );
+    assert.equal(v.snapshot().kind, "pending");
+    assert.equal(released, 0);
+    c.confirmClosed();
+    v.confirmClose();
+    assert.equal(released, 1);
+    assert.notEqual(v.snapshot().kind, "verified");
+  });
 for (const mode of [
   "healthy",
   "body-only",
