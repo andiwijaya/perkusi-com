@@ -20,7 +20,7 @@ import {
   parseLoopProject,
   validateLoopProject,
 } from "../src/loop-station/project.js";
-import { emptyLoopProject, assignSource } from "../src/loop-station/model.js";
+import { eightProgrammeFixture } from "./helpers/retirement-data-fixtures.js";
 import { phaseAdvance } from "../src/loop-station/phase-alignment.js";
 import { eqGains } from "../src/loop-station/fx-model.js";
 import { recordingProject } from "../src/loop-station/recording-data.js";
@@ -133,18 +133,7 @@ test("Q1 pattern materialization retains absent roles and rejects unknown legacy
 });
 
 test("Q1 eight outer group buses can retain eight independent15-lane programmes", async () => {
-  let project = emptyLoopProject(registry);
-  for (let i = 0; i < 8; i++) {
-    const score = await json("schema4-multibar");
-    score.composition.title = "Independent source " + i;
-    project = assignSource(
-      project,
-      registry,
-      "track-" + (i + 1),
-      JSON.stringify(score),
-      { loop: false },
-    );
-  }
+  const project = eightProgrammeFixture();
   assert.equal(project.tracks.length, 8);
   assert.equal(project.origins.length, 8);
   assert.equal(project.sources.length, 8);

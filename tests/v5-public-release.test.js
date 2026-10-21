@@ -8,17 +8,10 @@ import {
   pagesHeaderRules,
 } from "./helpers/pages-headers.js";
 import { publicCandidateHTML } from "../scripts/gamelan-public-pages.mjs";
-import {
-  gamelanHostAllowed,
-  loopPublicMetadata,
-  syncLoopPublicMetadata,
-} from "../src/gamelan/public-context.js";
-import { instrumentRouteContext } from "../src/gamelan/route-context.js";
 
 test("home advertises only ordinary Rhythm Studio and Beatbox in every build mode and locale", () => {
-  const cfg = config({ mode: "gamelan-v5-final" });
-  assert.equal(cfg.define["import.meta.env.CANONICAL_FINAL_STUDIO"], "true");
-  assert.equal(cfg.define["import.meta.env.CANONICAL_PUBLIC_PREVIEW"], "false");
+  const cfg = config({ mode: "retirement-release" });
+  assert.equal(cfg.define, undefined);
   for (const locale of ["id", "en"]) {
     const html = publicCandidateHTML(renderDocument("home", locale), {
       page: "home",
@@ -39,8 +32,8 @@ test("home advertises only ordinary Rhythm Studio and Beatbox in every build mod
     );
     for (const mode of [
       "production",
-      "gamelan-public-candidate",
-      "gamelan-v5-canonical-release",
+      "retirement-review",
+      "retirement-release",
     ]) {
       const transform = config({ mode }).plugins.find(
         (p) => p.name === "localized-static-pages",
@@ -55,52 +48,8 @@ test("home advertises only ordinary Rhythm Studio and Beatbox in every build mod
   }
 });
 
-test("V5 public selection includes both Loop Station entries/assets while private and V4 modes keep their boundaries", () => {
-  const publicV5 = config({ mode: "gamelan-v5-public-candidate" }),
-    local = config({ mode: "gamelan-v5-ux" }),
-    v4 = config({ mode: "gamelan-public-candidate" });
-  assert.equal(publicV5.define["import.meta.env.GAMELAN_V5_UX"], "true");
-  assert.equal(publicV5.define["import.meta.env.GAMELAN_PUBLIC_BUILD"], "true");
-  assert.equal(publicV5.define["import.meta.env.GAMELAN_DELIVERY"], '"flac"');
-  assert.equal(local.define["import.meta.env.GAMELAN_PUBLIC_BUILD"], "false");
-  assert.equal(v4.define["import.meta.env.GAMELAN_V5_UX"], "false");
-  assert.equal(v4.build.rollupOptions.input.loopId, undefined);
-  assert.equal(
-    publicV5.build.rollupOptions.input.loopId,
-    "loop-station/index.html",
-  );
-  assert.equal(
-    publicV5.build.rollupOptions.input.loopEn,
-    "en/loop-station/index.html",
-  );
-  assert.deepEqual(
-    instrumentRouteContext(
-      "/studio/",
-      "?workspace=gamelan",
-      "gamelan-v5-public-candidate",
-    ),
-    { studio: true },
-  );
-  for (const host of ["perkusi.com", "www.perkusi.com"]) {
-    assert(
-      gamelanHostAllowed(
-        host,
-        JSON.parse(publicV5.define["import.meta.env.GAMELAN_PUBLIC_BUILD"]),
-      ),
-    );
-    assert(
-      !gamelanHostAllowed(
-        host,
-        JSON.parse(local.define["import.meta.env.GAMELAN_PUBLIC_BUILD"]),
-      ),
-    );
-  }
-  for (const host of ["evil.test", "perkusi.com.evil.test", "foo.pages.dev"])
-    assert(!gamelanHostAllowed(host, true));
-});
-
-test("cold ID/EN Loop Station pages carry canonical alternates and Preview metadata while ordinary public Studio remains indexable", () => {
-  const cfg = config({ mode: "gamelan-v5-public-candidate" }),
+test("cold ID/EN retired Loop notices retain canonical alternates and recovery while ordinary public Studio remains indexable", () => {
+  const cfg = config({ mode: "retirement-release" }),
     transform = cfg.plugins.find((p) => p.name === "localized-static-pages")
       .transformIndexHtml.handler;
   for (const locale of ["id", "en"]) {
@@ -108,12 +57,14 @@ test("cold ID/EN Loop Station pages carry canonical alternates and Preview metad
       html = transform(readFileSync("." + path + "index.html", "utf8"), {
         path: path + "index.html",
       }),
-      meta = loopPublicMetadata(locale);
-    assert(html.includes('name="robots" content="noindex,nofollow"'));
+      meta = { canonical: "https://perkusi.com" + path };
+    assert(html.includes('name="robots" content="noindex,follow"'));
     assert(html.includes('rel="canonical" href="' + meta.canonical + '"'));
-    assert(html.includes('hreflang="x-default"'));
-    assert(html.includes(meta.title));
-    assert(html.includes('name="description"'));
+    for (const lang of ["id", "en"])
+      assert(html.includes('hreflang="' + lang + '"'));
+    assert(html.includes('data-perkusi-retired="loop"'));
+    assert(!/<script\b/i.test(html));
+    assert(html.includes("/studio/recovery/originals/?lang=" + locale));
     assert(!meta.canonical.includes("?"));
   }
   const studio = readFileSync("studio/index.html", "utf8");
@@ -122,64 +73,13 @@ test("cold ID/EN Loop Station pages carry canonical alternates and Preview metad
       'name="robots" content="noindex,nofollow"',
     ),
   );
-  const local = config({ mode: "gamelan-v5-ux" }).plugins.find(
-    (p) => p.name === "localized-static-pages",
-  ).transformIndexHtml.handler;
-  assert(
-    local(studio, { path: "/studio/index.html" }).includes(
-      'name="robots" content="noindex,nofollow"',
-    ),
-  );
 });
 
-test("runtime locale metadata follows the selected language without creating an audio context", () => {
-  const previous = globalThis.document,
-    nodes = new Map();
-  globalThis.document = {
-    head: {
-      querySelector: (s) => nodes.get(s),
-      append(node) {
-        nodes.set(node.selector, node);
-      },
-    },
-    createElement(tag) {
-      return {
-        setAttribute(k, v) {
-          this[k] = v;
-          if (
-            ["rel", "name", "property", "hreflang"].includes(k) &&
-            !this.selector
-          )
-            this.selector = tag + "[" + k + '="' + v + '"]';
-        },
-      };
-    },
-  };
-  try {
-    for (const locale of ["id", "en", "id"]) {
-      const m = syncLoopPublicMetadata(locale);
-      assert.equal(globalThis.document.title, m.title);
-      assert.equal(nodes.get('link[rel="canonical"]').href, m.canonical);
-      assert.equal(
-        nodes.get('meta[name="description"]').content,
-        m.description,
-      );
-      assert.equal(
-        nodes.get('link[hreflang="en"]').href,
-        "https://perkusi.com/en/loop-station/",
-      );
-    }
-  } finally {
-    if (previous) globalThis.document = previous;
-    else delete globalThis.document;
-  }
-});
-
-test("default build selects optional Preview while rendering and global mic denial remain bounded", () => {
+test("default build selects two-tool retirement while rendering and global mic denial remain bounded", () => {
   const pkg = JSON.parse(readFileSync("package.json", "utf8"));
   assert.equal(
     pkg.scripts.build,
-    "node scripts/local-build.mjs --mode gamelan-v5-canonical-release",
+    "node scripts/local-build.mjs --mode retirement-release",
   );
   assert.match(
     readFileSync("public/_headers", "utf8"),
@@ -261,4 +161,23 @@ test("other documents, missing descendants and lookalike paths retain the origin
     );
     assert.equal(h["x-frame-options"], "DENY");
   }
+});
+
+test("failed modes and package commands cannot reactivate retired features", () => {
+  for (const mode of [
+    "gamelan-preview",
+    "gamelan-public-candidate",
+    "gamelan-v5-ux",
+    "gamelan-v5-public-candidate",
+    "gamelan-v5-canonical-release",
+    "gamelan-v5-final",
+  ])
+    assert.throws(() => config({ mode }), /retiredBuildMode/);
+  const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+  for (const key of [
+    "build:v5",
+    "build:gamelan-candidate",
+    "build:gamelan-public",
+  ])
+    assert.equal(pkg.scripts[key], undefined);
 });

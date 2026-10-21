@@ -1,0 +1,96 @@
+{
+  "format": "perkusi-project",
+  "schemaVersion": 5,
+  "mode": "loop-station",
+  "title": "Loop Station",
+  "timing": {
+    "bpm": 96,
+    "meter": [
+      4,
+      4
+    ]
+  },
+  "master": {
+    "volume": 1
+  },
+  "origins": [],
+  "assetRefs": [],
+  "tracks": [
+    {
+      "id": "track-1",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-2",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-3",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-4",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-5",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-6",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-7",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    },
+    {
+      "id": "track-8",
+      "kind": "event",
+      "gain": 1,
+      "pan": 0,
+      "mute": false,
+      "solo": false,
+      "clips": []
+    }
+  ],
+  "clock": {
+    "kind": "musical"
+  },
+  "sources": []
+}

@@ -43,10 +43,7 @@ async function sourceID(root) {
   }
   return h.digest("hex");
 }
-export async function buildPayloadMinimum(
-  root,
-  mode = "gamelan-public-candidate",
-) {
+export async function buildPayloadMinimum(root, mode = "retirement-release") {
   if (mode === "audio-prototype")
     return (await measureTree(root, join(root, "public"))).bytes;
   let bytes = 0;
@@ -153,7 +150,7 @@ export function viteRunner({
 }
 export async function runLocalBuild({
   root = workspaceRoot,
-  mode = "gamelan-public-candidate",
+  mode = "retirement-release",
   outDir = "dist",
   runner = viteRunner,
   timeoutMs = 120000,
@@ -162,15 +159,9 @@ export async function runLocalBuild({
 } = {}) {
   root = resolve(root);
   if (
-    ![
-      "gamelan-public-candidate",
-      "gamelan-preview",
-      "gamelan-v5-ux",
-      "gamelan-v5-public-candidate",
-      "gamelan-v5-canonical-release",
-      "gamelan-v5-final",
-      "audio-prototype",
-    ].includes(mode)
+    !["retirement-review", "retirement-release", "audio-prototype"].includes(
+      mode,
+    )
   )
     throw Error("unsupportedBuildMode");
   const target = inside(root, resolve(root, outDir)),

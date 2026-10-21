@@ -1,0 +1,279 @@
+{
+  "base": {
+    "format": "perkusi-project",
+    "schemaVersion": 5,
+    "mode": "loop-station",
+    "title": "Loop Station",
+    "timing": {
+      "bpm": 96,
+      "meter": [
+        4,
+        4
+      ]
+    },
+    "master": {
+      "volume": 1
+    },
+    "origins": [],
+    "assetRefs": [
+      {
+        "id": "recording-1",
+        "kind": "recording",
+        "sha256": "36dfee9ced7b7214297f8f7d20e83bbe3d9e7aa33a799fd33733453746336687",
+        "bytes": 960000,
+        "frames": 120000,
+        "channels": 2,
+        "sampleRate": 48000,
+        "encoding": "float32le",
+        "recordedBpm": 96
+      }
+    ],
+    "tracks": [
+      {
+        "id": "track-1",
+        "kind": "recording",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": [
+          {
+            "id": "clip-1",
+            "sourceId": "recording-1",
+            "startTick": 0,
+            "lengthTicks": 3840000,
+            "offsetFrames": 0,
+            "loop": true
+          }
+        ]
+      },
+      {
+        "id": "track-2",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-3",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-4",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-5",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-6",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-7",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      },
+      {
+        "id": "track-8",
+        "kind": "event",
+        "gain": 1,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "clips": []
+      }
+    ],
+    "clock": {
+      "kind": "fixed-bar",
+      "sampleRate": 48000,
+      "framesPerBar": 120000
+    },
+    "sources": []
+  },
+  "candidate": {
+    "project": {
+      "format": "perkusi-project",
+      "schemaVersion": 5,
+      "mode": "loop-station",
+      "title": "Loop Station",
+      "timing": {
+        "bpm": 96,
+        "meter": [
+          4,
+          4
+        ]
+      },
+      "master": {
+        "volume": 1
+      },
+      "origins": [],
+      "assetRefs": [
+        {
+          "id": "recording-1",
+          "kind": "recording",
+          "sha256": "36dfee9ced7b7214297f8f7d20e83bbe3d9e7aa33a799fd33733453746336687",
+          "bytes": 960000,
+          "frames": 120000,
+          "channels": 2,
+          "sampleRate": 48000,
+          "encoding": "float32le",
+          "recordedBpm": 96
+        },
+        {
+          "id": "recording-2",
+          "kind": "recording",
+          "sha256": "64a59ac7ad04da13ac99eaf6a415bd72d010624712e6ce2e86e827cf3e481619",
+          "bytes": 960000,
+          "frames": 120000,
+          "channels": 2,
+          "sampleRate": 48000,
+          "encoding": "float32le",
+          "recordedBpm": 96
+        }
+      ],
+      "tracks": [
+        {
+          "id": "track-1",
+          "kind": "recording",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": [
+            {
+              "id": "clip-1",
+              "sourceId": "recording-1",
+              "startTick": 0,
+              "lengthTicks": 3840000,
+              "offsetFrames": 0,
+              "loop": true
+            },
+            {
+              "id": "clip-2",
+              "sourceId": "recording-2",
+              "startTick": 0,
+              "lengthTicks": 3840000,
+              "offsetFrames": 0,
+              "loop": true
+            }
+          ],
+          "layering": {
+            "version": 1,
+            "baseClipId": "clip-1",
+            "overdubClipId": "clip-2"
+          }
+        },
+        {
+          "id": "track-2",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-3",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-4",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-5",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-6",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-7",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        },
+        {
+          "id": "track-8",
+          "kind": "event",
+          "gain": 1,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "clips": []
+        }
+      ],
+      "clock": {
+        "kind": "fixed-bar",
+        "sampleRate": 48000,
+        "framesPerBar": 120000
+      },
+      "sources": []
+    },
+    "ref": {
+      "id": "recording-2",
+      "kind": "recording",
+      "sha256": "64a59ac7ad04da13ac99eaf6a415bd72d010624712e6ce2e86e827cf3e481619",
+      "bytes": 960000,
+      "frames": 120000,
+      "channels": 2,
+      "sampleRate": 48000,
+      "encoding": "float32le",
+      "recordedBpm": 96
+    }
+  },
+  "baseHash": "36dfee9ced7b7214297f8f7d20e83bbe3d9e7aa33a799fd33733453746336687",
+  "layerHash": "64a59ac7ad04da13ac99eaf6a415bd72d010624712e6ce2e86e827cf3e481619"
+}

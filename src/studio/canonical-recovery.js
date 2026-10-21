@@ -64,17 +64,7 @@ const copy = en
       language: "English",
     };
 document.title = copy.title + " · Perkusi.com";
-if (import.meta.env.CANONICAL_FINAL_STUDIO) {
-  copy.intro = en
-    ? "Read saved Studio projects or export older Loop recordings as complete files, including original sources and audio. Import the downloaded file into Studio to edit a copy. Recovery does not play audio or change saved data."
-    : "Baca proyek Studio tersimpan atau ekspor rekaman Loop lama sebagai berkas lengkap, termasuk sumber asli dan audio. Impor unduhannya ke Studio untuk mengedit salinan. Pemulihan tidak memutar audio atau mengubah data tersimpan.";
-  copy.none = en
-    ? "No saved project found. Open a backup file or return to Studio. Nothing was created or changed."
-    : "Tidak ada proyek tersimpan. Buka berkas cadangan atau kembali ke Studio. Tidak ada data dibuat atau diubah.";
-  $("recovery-legacy").hidden = true;
-  for (const node of document.querySelector("footer").childNodes)
-    if (node.nodeType === Node.TEXT_NODE) node.textContent = " · Perkusi.com";
-}
+
 $("recovery-title").textContent = copy.title;
 $("recovery-intro").textContent = copy.intro;
 for (const [key, id] of [

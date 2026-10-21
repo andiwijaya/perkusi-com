@@ -1,0 +1,5 @@
+#raw-documents p, #original-status { overflow-wrap: anywhere; }
+#raw-documents, #handoff-items { min-width: 0; }
+#handoff-list, #handoff-more, #handoff-download, #handoff-metadata,
+#original-cancel, [data-raw-document] { display: block; }
+#handoff-more[hidden] { display: none; }

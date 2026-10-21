@@ -1,14 +1,11 @@
-import { AudioMemory } from "../audio/audio-memory.js";
-import { CanonicalHandoffStore } from "../project/canonical-handoff.js";
-import { canonicalStudioHref } from "../studio/canonical-route.js";
+import { readHandoffOriginal } from "../project/handoff-recovery.js";
+import { originalRecoveryHref } from "../app/legacy-recovery-link.js";
 
 // The old transfer envelope stays small. The complete, hash-checked Studio
 // archive lives in the existing handoff inbox and is addressed by this UUID.
 export function attachCanonicalBeatboxOrigin({ root, id }) {
   if (!/^[a-f0-9-]{36}$/.test(id)) return { dispose() {} };
-  const memory = new AudioMemory(),
-    store = new CanonicalHandoffStore({ memory }),
-    life = new AbortController(),
+  const life = new AbortController(),
     box = document.createElement("section"),
     note = document.createElement("p"),
     button = document.createElement("button"),
@@ -34,9 +31,9 @@ export function attachCanonicalBeatboxOrigin({ root, id }) {
       ? "Download complete Studio source"
       : "Unduh sumber Studio lengkap";
     back.textContent = en
-      ? "Review original in Studio"
-      : "Tinjau sumber di Studio";
-    back.href = canonicalStudioHref(en ? "en" : "id") + "&handoff=" + id;
+      ? "Recover original source (export only)"
+      : "Pulihkan sumber asli (ekspor saja)";
+    back.href = originalRecoveryHref(en ? "en" : "id", id);
   };
   document.addEventListener("perkusi:locale", localize, {
     signal: life.signal,
@@ -48,29 +45,34 @@ export function attachCanonicalBeatboxOrigin({ root, id }) {
       busy = true;
       button.disabled = true;
       void (async () => {
-        let reader, url;
+        let url;
         try {
-          reader = await store.read(id);
+          const reader = await readHandoffOriginal(id, { signal: life.signal });
           if (closed) return;
           url = URL.createObjectURL(reader.blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "studio-original-" + id + ".perkusi";
+          a.download =
+            "studio-original-" +
+            id +
+            (reader.verified ? ".perkusi" : ".unverified.bin");
           document.body.append(a);
           a.click();
           a.remove();
-          const held = reader;
-          reader = null;
+          const verified = reader.verified;
           const release = () => {
             const row = urls.get(url);
             if (!row) return;
             clearTimeout(row.timer);
             urls.delete(url);
             URL.revokeObjectURL(url);
-            held.release();
           };
           urls.set(url, { release, timer: setTimeout(release, 1200) });
-          status.textContent = "";
+          status.textContent = verified
+            ? ""
+            : document.documentElement.lang === "en"
+              ? "Raw original downloaded; stored version/digest is unverified. Keep its metadata from recovery."
+              : "Sumber mentah diunduh; versi/digest tersimpan belum terverifikasi. Pertahankan metadata dari pemulihan.";
         } catch {
           if (url && !urls.has(url)) URL.revokeObjectURL(url);
           status.textContent =
@@ -78,7 +80,6 @@ export function attachCanonicalBeatboxOrigin({ root, id }) {
               ? "The complete source could not be read. Keep your backups and retry from Studio's saved transfers. This Beatbox draft is unchanged."
               : "Sumber lengkap belum dapat dibaca. Simpan cadangan dan coba lagi dari transfer tersimpan di Studio. Draft Beatbox ini tetap utuh.";
         } finally {
-          reader?.release();
           busy = false;
           button.disabled = closed;
         }
@@ -91,7 +92,6 @@ export function attachCanonicalBeatboxOrigin({ root, id }) {
     dispose() {
       closed = true;
       life.abort();
-      store.close();
       for (const row of urls.values()) row.release();
     },
   };

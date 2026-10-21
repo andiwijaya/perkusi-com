@@ -1,15 +1,11 @@
 import { initAnalytics } from "./analytics.js";
 import { initNavigation } from "./app/navigation.js";
 import { initLocalization } from "./app/localization.js";
+import { handoffRecoveryRedirect } from "./app/legacy-recovery-link.js";
 
-const routedInstrumentStudio =
-  !import.meta.env.CANONICAL_FINAL_STUDIO &&
-  import.meta.env.GAMELAN_BUILD &&
-  new URL(location.href).searchParams.get("workspace") === "gamelan" &&
-  document.body.dataset.page === "studio";
-if (routedInstrumentStudio) {
-  import("./gamelan/route-studio.js");
-} else {
+const recoveryRedirect = handoffRecoveryRedirect(location.href);
+if (recoveryRedirect) location.replace(recoveryRedirect);
+else {
   initLocalization();
   initNavigation();
   document.querySelector("#year").textContent = String(

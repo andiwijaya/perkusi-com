@@ -2,9 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { InstrumentRegistry } from "../src/audio/instrument-registry.js";
 import catalog from "../internal/instrument-focus/registry-48000.json" with { type: "json" };
-import { emptyLoopProject, LoopHistory } from "../src/loop-station/model.js";
+import { audioDocumentFixture } from "./helpers/retirement-data-fixtures.js";
 import { AudioMemory } from "../src/audio/audio-memory.js";
-import { TakePool } from "../src/loop-station/take-pool.js";
 import {
   adoptRecording,
   digest,
@@ -19,45 +18,35 @@ import { AudioDocument } from "../src/loop-station/audio-document.js";
 
 const registry = new InstrumentRegistry(catalog.banks);
 async function fixture() {
-  const memory = new AudioMemory(),
-    pool = new TakePool(memory),
-    frames = 120000;
-  const channels = [0, 1].map((c) =>
-    Float32Array.from({ length: frames }, (_, f) =>
-      f === 0 ? -0 : Math.sin(f / 37) * (c ? -0.04 : 0.05),
-    ),
-  );
-  const r = pool.reserve({ capacity: frames, channels: 2, sampleRate: 48000 });
-  const take = pool.adopt(
-    r,
-    {
-      capacity: frames,
-      channels: 2,
-      sampleRate: 48000,
-      startFrame: 512,
-      frames,
-      reason: "complete",
-    },
-    channels.map((a) => a.buffer),
-  );
-  const original = pool.copyPCM(take.id),
-    hash = await digest(original.buffer);
-  const empty = structuredClone(emptyLoopProject(registry));
-  empty.clock = { kind: "fixed-bar", sampleRate: 48000, framesPerBar: frames };
-  const { project, ref } = adoptRecording(
-    empty,
-    registry,
-    "track-1",
-    take,
-    hash,
-  );
+  const memory = new AudioMemory();
+  const { empty, take, project, ref, pcmSHA256, pcmBytes } =
+    audioDocumentFixture();
+  // Directly owned synthetic planar PCM: no TakePool or history substitute.
+  // The source and each exported copy have separate real AudioMemory leases.
+  const planar = new Float32Array(take.frames * 2);
+  for (const c of [0, 1])
+    planar.set(
+      Float32Array.from({ length: take.frames }, (_, f) =>
+        f === 0 ? -0 : Math.sin(f / 37) * (c ? -0.04 : 0.05),
+      ),
+      c * take.frames,
+    );
+  let source = planar.buffer;
+  assert.equal(source.byteLength, pcmBytes);
+  assert.equal(await digest(source), pcmSHA256);
+  const sourceLease = memory.reserve(pcmBytes, "QA immutable planar source");
+  function clonePCM() {
+    const lease = memory.reserve(pcmBytes, "QA independent planar copy");
+    return { buffer: source.slice(0), release: () => lease.release() };
+  }
+  const original = clonePCM(),
+    hash = pcmSHA256;
   const entry = {
     blob: new Blob([original.buffer]),
     provenance: "CC-BY-4.0; fixture origin and exact source SHA256 " + hash,
   };
   return {
     memory,
-    pool,
     take,
     original,
     hash,
@@ -65,11 +54,14 @@ async function fixture() {
     project,
     ref,
     entry,
+    clonePCM,
     entries: new Map([[ref.id, entry]]),
     close() {
       original.buffer = null;
       original.release();
-      pool.release(take.id);
+      assert.equal(memory.snapshot().bytes, pcmBytes);
+      source = null;
+      sourceLease.release();
       assert.equal(memory.snapshot().bytes, 0);
     },
   };
@@ -182,7 +174,7 @@ test("portable import rejects missing, corrupt, nonfinite, overlapping, trailing
   assert.equal(f.memory.snapshot().bytes, baseline);
   f.close();
 });
-test("document save/reload, undo/redo retain real audio; cancellation, quota, CAS and invalid JSON preserve original document and PCM", async () => {
+test("document save/reload and explicit previous/current snapshots retain real audio; cancellation, quota, CAS and invalid JSON preserve original document and PCM", async () => {
   const f = await fixture(),
     backend = new MemoryBackend(),
     store = new AudioDocument({ registry, memory: f.memory, backend });
@@ -191,10 +183,9 @@ test("document save/reload, undo/redo retain real audio; cancellation, quota, CA
   const saved = structuredClone(backend.doc),
     reload = new AudioDocument({ registry, memory: f.memory, backend });
   assert.deepEqual(await reload.read(), f.project);
-  const history = new LoopHistory(f.empty, registry);
-  history.commit(() => f.project);
-  await store.save(history.undo());
-  await store.save(history.redo());
+  // AudioDocument snapshot persistence, independently of retired LoopHistory.
+  await store.save(structuredClone(f.empty));
+  await store.save(structuredClone(f.project));
   assert.equal(
     await digest(await backend.assets.get(f.ref.id).blob.arrayBuffer()),
     f.hash,
@@ -215,7 +206,19 @@ test("document save/reload, undo/redo retain real audio; cancellation, quota, CA
   await assert.rejects(store.save(missing), { code: "missingRecording" });
   assert.deepEqual(backend.doc, current);
   assert.equal(JSON.parse(saved.raw).assetRefs[0].sha256, f.hash);
-  const verification = f.pool.copyPCM(f.take.id);
+  // The old title mentioned invalid JSON without exercising that read path.
+  // Keep the malformed original unchanged while refusing to publish a project.
+  const malformed = { raw: "{not-json", revision: current.revision };
+  backend.doc = structuredClone(malformed);
+  const recovery = new AudioDocument({ registry, memory: f.memory, backend });
+  await assert.rejects(recovery.read(), { code: "draftRecoveryRequired" });
+  assert.deepEqual(backend.doc, malformed);
+  assert.equal(
+    await digest(await backend.assets.get(f.ref.id).blob.arrayBuffer()),
+    f.hash,
+  );
+  backend.doc = current;
+  const verification = f.clonePCM();
   try {
     assert.equal(await digest(verification.buffer), f.hash);
   } finally {

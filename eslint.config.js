@@ -8,6 +8,7 @@ export default [
       "node_modules/**",
       "qa-artifacts/**",
       ".local-candidates/**",
+      "internal/media-library/**",
     ],
   },
   js.configs.recommended,

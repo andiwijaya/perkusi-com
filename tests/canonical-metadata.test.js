@@ -25,7 +25,7 @@ import {
   parseInstrumentProject,
   PPQ,
 } from "../src/project/instrument-project.js";
-import { emptyLoopProject } from "../src/loop-station/model.js";
+import { emptyLoopFixture } from "./helpers/retirement-data-fixtures.js";
 import { AudioMemory } from "../src/audio/audio-memory.js";
 import { allMix } from "../src/project/composition-model.js";
 import { trackGain } from "../src/audio/sequencing.js";
@@ -363,7 +363,7 @@ test("Q1b current shared edits to a formerly absent role are exported, not silen
 });
 
 test("Q1b empty Loop has deterministic non-legacy defaults but no invented old fields", async () => {
-  const p = copy(emptyLoopProject(registry));
+  const p = emptyLoopFixture();
   delete p.clock;
   delete p.sources;
   const m = await migrateLegacyMetadata(JSON.stringify(p), { registry });

@@ -1,0 +1,15 @@
+# C4 residual retirement and runtime gate
+
+Local candidate only; no commit, push, deployment, permanent QA deletion or historical engine repair. HEAD remains 68d289eb03af75eaf071ae1b9c20a5f23194b732.
+
+- Removed 56 Git-restorable files: 35 failed sources, 2 retired build commands, 19 failed-only original test modules; 442,106 logical bytes. C3+C4 total 298 tracked removals. Exact blob/EOL recipes: REMOVAL-PREFLIGHT.json. Fourteen pure shared data/DSP/provenance helpers remain as explicit exceptions (READINESS.json); no normal tool graph reaches failed runtime.
+- Extracted 197 exact assertion calls; 604 failed-feature assertions explicitly retired, not counted as passing. C3 shared roots and fixture pins unchanged. All 68 retained test modules / 477 tests and lint PASS.
+- One official retirement-release build: a1fc017e-3915-4b10-ad43-78da3a3dc5c0; source 23e05831e4267ba688f3453eb76f4ebfd1f8f5d7774fc429ef716496c124f1ea; 107 files / 7,271,346 bytes. Every body is identical to accepted C3/C2. Eleven JS files / 617,082 bytes; ordinary dependency closure 221,775 JS bytes. Archived media is not deployed.
+- Firefox 155 / Playwright Core 1.63 / revision 1543 single native smoke PASS (90,778 ms), including two tools, repeat, control transitions, save/reload, non-silent WAV, V3 transfer and qualified original-data recovery. Earlier unavailable claim was a runtime/cache mismatch; no installation required.
+- One bounded 600-second session per ordinary tool: **PASS_TWO_600S_FUNCTIONAL_SESSIONS**. Details and actual controls/PCM aggregates: LONG-RESULT.json and LONG-studio.json/LONG-beatbox.json. Sessions observe native clock/source lifecycle, UI progress and parallel postmix signal, not independent frame-by-frame PCM. Synthetic pagehide tests application cleanup while document is observable; owned browser/server close follows. No user profile, microphone or production storage was opened.
+- Protection recheck: 250 file checks; archive originals and canonical copies, retained shared tests/fixtures, engineering entry/render-QA and all 107 artifact hashes verified. Run lease absent, Git index empty.
+- QA proposal only: 990 files / 33147077 logical bytes; estimated physical reclaim 35123200 bytes, not measured freed space. Exact manifest QA-DELETE-PROPOSAL.json SHA256 7ed51322187a7e04a167d8832322f35ad04b4ac8f5e6f9bb0bd28dd62a370c72. Duplicate bodies retain exact canonical rehydration hashes; Vite caches regenerate from retained snapshot lock/source. Unique evidence, media/source, Git, current artifact and active leases excluded. No deletion authorized or executed. This bounded batch does not exhaust all historical QA.
+
+## Limits and next gate
+
+Physical listening/devices, Safari, and historical fault root cause remain UNVERIFIED/UNKNOWN. The Firefox and finite sessions qualify only their observed paths; they do not revive V5/V6 or establish a historical fix. Review final package before publication. Any failure in LONG-RESULT is a release HOLD and was not retried. Permanent QA deletion needs exact fresh owner batch approval. Compact postmortem: POSTMORTEM.md.

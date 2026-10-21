@@ -1,3 +1,4 @@
+// C4 retained data/shared assertions; retired engine/UI scenarios separately archived.
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -11,25 +12,18 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { creditsCopy } from "../src/gamelan/credits-copy.js";
-import { instrumentStudioMessages } from "../src/studio/instrument-messages.js";
-import { candidateOutput } from "../scripts/build-gamelan-candidate.mjs";
-test("Final credits and dismissible desktop suggestion retain complete ID/EN keys with honest preview provenance", () => {
+import { candidateOutput } from "../scripts/gamelan-preview-assets.mjs";
+
+test("Archived credits preserve ID/EN parity and honest provenance", () => {
   assert.deepEqual(
     Object.keys(creditsCopy.id).sort(),
     Object.keys(creditsCopy.en).sort(),
   );
-  assert.deepEqual(
-    Object.keys(instrumentStudioMessages.id).sort(),
-    Object.keys(instrumentStudioMessages.en).sort(),
-  );
+
   for (const locale of ["id", "en"]) {
     assert.ok(
       creditsCopy[locale].pending.length &&
         creditsCopy[locale].flacChanges.length,
-    );
-    assert.ok(
-      instrumentStudioMessages[locale].desktopHint.length &&
-        instrumentStudioMessages[locale].dismissHint.length,
     );
   }
 });

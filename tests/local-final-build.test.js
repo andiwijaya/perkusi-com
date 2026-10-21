@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildPayloadMinimum, runLocalBuild } from "../scripts/local-build.mjs";
 
-test("local Final includes lossless delivery and instrument source forms in its space preflight", async () => {
+test("archival capacity accounting preserves source/media size admission without enabling a legacy build", async () => {
   const root = await mkdtemp(join(tmpdir(), "perkusi-final-budget-"));
   const put = async (name, data) => {
     const path = join(root, name);
@@ -41,7 +41,7 @@ test("local Final includes lossless delivery and instrument source forms in its 
   );
 });
 
-test("local Final uses the managed source fingerprint and refuses promotion after source changes", async () => {
+test("retirement release uses the managed source fingerprint and refuses promotion after source changes", async () => {
   const root = await mkdtemp(join(tmpdir(), "perkusi-final-build-"));
   await mkdir(join(root, "public"));
   await mkdir(join(root, "src"));
@@ -50,10 +50,10 @@ test("local Final uses the managed source fingerprint and refuses promotion afte
   const outDir = "qa-artifacts/final";
   const good = await runLocalBuild({
     root,
-    mode: "gamelan-v5-final",
+    mode: "retirement-release",
     outDir,
     runner: async ({ candidate, mode }) => {
-      assert.equal(mode, "gamelan-v5-final");
+      assert.equal(mode, "retirement-release");
       await mkdir(candidate, { recursive: true });
       await writeFile(join(candidate, "index.html"), "accepted final");
       return { code: 0 };
@@ -63,7 +63,7 @@ test("local Final uses the managed source fingerprint and refuses promotion afte
   assert.equal(good.sourceSHA256, good.sourceAfterSHA256);
   const changed = await runLocalBuild({
     root,
-    mode: "gamelan-v5-final",
+    mode: "retirement-release",
     outDir,
     runner: async ({ candidate }) => {
       await mkdir(candidate, { recursive: true });
@@ -89,7 +89,7 @@ test("a requested official build can defer cleanup without changing admission or
   await mkdir(join(root, "public"));
   const result = await runLocalBuild({
     root,
-    mode: "gamelan-v5-canonical-release",
+    mode: "retirement-release",
     outDir: "qa-artifacts/preview",
     cleanupAfterBuild: false,
     runner: async ({ candidate }) => {

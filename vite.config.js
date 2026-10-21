@@ -4,14 +4,17 @@ import { resolve, join, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderDocument } from "./src/app/document.js";
 import { buildEntries, pageFromPath } from "./src/app/routes.js";
-import {
-  gamelanPreviewAssets,
-  gamelanDeliveryAliases,
-} from "./scripts/gamelan-preview-assets.mjs";
-import { gamelanBuildMode } from "./src/gamelan/public-context.js";
-import { publicCandidateHTML } from "./scripts/gamelan-public-pages.mjs";
+
+import { retirementProvenance } from "./scripts/retirement-provenance.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
+const recoveryEntries = {
+  ...buildEntries,
+  recoveryId: "studio/recovery/index.html",
+  recoveryEn: "en/studio/recovery/index.html",
+  originalsId: "studio/recovery/originals/index.html",
+  originalsEn: "en/studio/recovery/originals/index.html",
+};
 function missingPageMiddleware(server, preview = false) {
   return async (req, res, next) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
@@ -65,130 +68,55 @@ function missingPageMiddleware(server, preview = false) {
   };
 }
 export default defineConfig(({ mode }) => {
-  const finalStudio = mode === "gamelan-v5-final";
-  const canonicalRelease = mode === "gamelan-v5-canonical-release";
-  const v5UX = [
-    "gamelan-v5-ux",
-    "gamelan-v5-public-candidate",
-    "gamelan-v5-canonical-release",
-    "gamelan-v5-final",
-  ].includes(mode);
-  const gamelan = gamelanBuildMode(mode) || v5UX;
-  const publicCandidate = [
-    "gamelan-public-candidate",
-    "gamelan-v5-public-candidate",
-    "gamelan-v5-canonical-release",
-    "gamelan-v5-final",
-  ].includes(mode);
-  const delivery =
-    process.env.PERKUSI_GAMELAN_DELIVERY ||
-    (publicCandidate || v5UX ? "flac" : "pcm");
+  if (
+    ![
+      "development",
+      "production",
+      "test",
+      "retirement-review",
+      "retirement-release",
+      "audio-prototype",
+    ].includes(mode)
+  )
+    throw Error("retiredBuildMode");
   return {
     appType: "mpa",
-    define: {
-      "import.meta.env.CANONICAL_FINAL_STUDIO": JSON.stringify(finalStudio),
-      "import.meta.env.CANONICAL_PUBLIC_PREVIEW":
-        JSON.stringify(canonicalRelease),
-      // Private compiled review only. Public builds keep canonical routes off.
-      "import.meta.env.CANONICAL_LOCAL_REVIEW": JSON.stringify(
-        mode === "gamelan-v5-ux",
-      ),
-      "import.meta.env.GAMELAN_V5_UX": JSON.stringify(v5UX),
-      "import.meta.env.GAMELAN_BUILD": JSON.stringify(gamelan),
-      "import.meta.env.GAMELAN_PUBLIC_BUILD": JSON.stringify(publicCandidate),
-      "import.meta.env.GAMELAN_DELIVERY": JSON.stringify(
-        gamelan && delivery === "flac" ? "flac" : "pcm",
-      ),
-    },
-    resolve: {
-      alias: gamelan ? gamelanDeliveryAliases(root, delivery) : [],
-    },
     build: {
-      ...(mode === "gamelan-preview"
-        ? { outDir: "qa-artifacts/gamelan-preview-dist", emptyOutDir: false }
-        : {}),
+      manifest: true,
       rollupOptions: {
-        input:
-          mode === "audio-prototype"
+        input: {
+          ...recoveryEntries,
+          retiredLoopId: "loop-station/index.html",
+          retiredLoopEn: "en/loop-station/index.html",
+          retiredGamelanId: "gamelan/index.html",
+          retiredGamelanEn: "en/gamelan/index.html",
+          retiredCreditsId: "gamelan/credits/index.html",
+          retiredCreditsEn: "en/gamelan/credits/index.html",
+          ...(mode === "audio-prototype"
             ? {
-                ...buildEntries,
                 audioPrototype: "internal/audio/index.html",
                 soundLab: "internal/sound-lab/index.html",
               }
-            : gamelan
-              ? {
-                  ...buildEntries,
-                  ...(publicCandidate
-                    ? {
-                        recoveryId: "studio/recovery/index.html",
-                        recoveryEn: "en/studio/recovery/index.html",
-                      }
-                    : {}),
-                  ...(v5UX
-                    ? {
-                        loopId: "loop-station/index.html",
-                        loopEn: "en/loop-station/index.html",
-                      }
-                    : {}),
-                  gamelanId: "gamelan/index.html",
-                  gamelanEn: "en/gamelan/index.html",
-                  gamelanCreditsId: "gamelan/credits/index.html",
-                  gamelanCreditsEn: "en/gamelan/credits/index.html",
-                }
-              : buildEntries,
+            : {}),
+        },
       },
     },
     plugins: [
-      ...(gamelan
-        ? [
-            gamelanPreviewAssets(root, {
-              delivery,
-              localV5: v5UX,
-            }),
-          ]
-        : []),
+      retirementProvenance(root),
       {
         name: "localized-static-pages",
         transformIndexHtml: {
           order: "pre",
           handler(html, context) {
-            if (context.path.includes("/studio/recovery/"))
-              return finalStudio
-                ? html
-                    .replace(/ Preview/g, "")
-                    .replace(
-                      'id="recovery-legacy"',
-                      'id="recovery-legacy" hidden',
-                    )
-                    .replace(/\?candidate=canonical&amp;lang=/g, "?lang=")
-                : html;
-            if (context.path.includes("/loop-station/"))
-              return v5UX
-                ? publicCandidateHTML(html, {
-                    loop: true,
-                    locale: context.path.startsWith("/en/") ? "en" : "id",
-                  })
-                : html;
+            if (
+              context.path.includes("/studio/recovery/") ||
+              html.includes("data-perkusi-retired=")
+            )
+              return html;
             const match = html.match(
               /<!-- perkusi-page:(home|beatbox|studio|privacy|notFound):(id|en) -->/,
             );
-            let rendered = match ? renderDocument(match[1], match[2]) : html;
-            if (publicCandidate || v5UX)
-              rendered = publicCandidateHTML(rendered, {
-                v5UX,
-                finalStudio,
-                page: match?.[1] || null,
-                locale:
-                  match?.[2] || (context.path.startsWith("/en/") ? "en" : "id"),
-                credits: context.path.includes("/credits/"),
-              });
-            return (mode === "gamelan-preview" || (v5UX && !publicCandidate)) &&
-              match?.[1] === "studio"
-              ? rendered.replace(
-                  "<head>",
-                  '<head><meta name="robots" content="noindex,nofollow">',
-                )
-              : rendered;
+            return match ? renderDocument(match[1], match[2]) : html;
           },
         },
         configureServer(server) {

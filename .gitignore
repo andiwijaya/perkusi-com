@@ -7,3 +7,9 @@ dist/
 *.log
 .wrangler/
 qa-artifacts/
+
+# Local archival media is excluded unless explicitly selected for a future release.
+/internal/media-library/*
+!/internal/media-library/MEDIA_INVENTORY.csv
+!/internal/media-library/ARCHIVE_MANIFEST.json
+!/internal/media-library/README.md

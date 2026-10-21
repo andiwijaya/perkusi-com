@@ -41,106 +41,28 @@ import {
 } from "../project/files.js";
 import { projectMessages } from "../project/messages.js";
 import { trackEvent, exportFailureCategory } from "../analytics.js";
-import { initCanonicalStudioPanel } from "./canonical-panel.js";
-import { initCanonicalEditableStudio } from "./canonical-workspace.js";
 import {
-  canonicalLocalBuild,
-  canonicalLocalRoute,
-  canonicalStudioHref,
-  canonicalLegacyHref,
-  canonicalRecoveryHref,
-} from "./canonical-route.js";
+  legacyRecoveryHref,
+  originalRecoveryHref,
+} from "../app/legacy-recovery-link.js";
 
-export function initStudio({ canonicalCandidate = null } = {}) {
+export function initStudio() {
   const root = document.querySelector(".studio-page"),
     $ = (id) => root.querySelector("#st-" + id);
-  if (
-    (import.meta.env.DEV ||
-      import.meta.env.CANONICAL_LOCAL_REVIEW ||
-      import.meta.env.CANONICAL_FINAL_STUDIO ||
-      import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
-    !canonicalCandidate &&
-    canonicalLocalRoute(
-      true,
-      location.href,
-      import.meta.env.CANONICAL_PUBLIC_PREVIEW,
-    )
-  )
-    return import("./canonical-entry.js")
-      .then(({ initCanonicalLocalEntry }) => initCanonicalLocalEntry())
-      .catch((error) => {
-        root.dataset.canonicalError = error.code ?? error.message;
-        $("project-status").setAttribute("role", "alert");
-        $("project-status").textContent =
-          document.documentElement.lang === "en"
-            ? "Local Studio could not open. Your saved projects remain available."
-            : "Studio lokal belum dapat dibuka. Proyek tersimpan tetap tersedia.";
-        for (const [href, label] of [
-          ...(import.meta.env.CANONICAL_FINAL_STUDIO
-            ? []
-            : [
-                [
-                  canonicalLegacyHref(document.documentElement.lang),
-                  document.documentElement.lang === "en"
-                    ? "Previous Studio"
-                    : "Studio sebelumnya",
-                ],
-              ]),
-          [
-            canonicalRecoveryHref(document.documentElement.lang),
-            document.documentElement.lang === "en"
-              ? "Recover saved projects"
-              : "Pulihkan proyek tersimpan",
-          ],
-        ]) {
-          const a = document.createElement("a");
-          a.href = href;
-          a.textContent = label;
-          $("project-status").append(document.createTextNode(" · "), a);
-        }
-        throw error;
-      });
-  if (
-    (import.meta.env.DEV ||
-      import.meta.env.CANONICAL_LOCAL_REVIEW ||
-      import.meta.env.CANONICAL_PUBLIC_PREVIEW) &&
-    !canonicalCandidate &&
-    canonicalLocalBuild(
-      true,
-      location.href,
-      import.meta.env.CANONICAL_PUBLIC_PREVIEW,
-    )
-  ) {
-    const entry = document.createElement("a");
-    entry.id = "st-canonical-entry";
-    entry.dataset.stCopy = "canonicalEntry";
-    entry.href = canonicalStudioHref(document.documentElement.lang);
-    entry.addEventListener("click", () => {
-      entry.href = canonicalStudioHref(document.documentElement.lang);
-    });
-    root.querySelector(".st-intro").append(entry);
-    const recovery = document.createElement("a");
-    recovery.id = "st-canonical-recovery";
-    recovery.dataset.stCopy = "canonicalRecovery";
-    recovery.href = canonicalRecoveryHref(document.documentElement.lang);
-    recovery.addEventListener("click", () => {
-      recovery.href = canonicalRecoveryHref(document.documentElement.lang);
-    });
-    root.querySelector(".st-intro").append(recovery);
-  }
-  if (canonicalCandidate) {
-    if (
-      !canonicalLocalBuild(
-        true,
-        location.href,
-        import.meta.env.CANONICAL_PUBLIC_PREVIEW ||
-          import.meta.env.CANONICAL_FINAL_STUDIO,
-      )
-    )
-      throw Error("canonicalLocalOnly");
-    return canonicalCandidate.editable
-      ? initCanonicalEditableStudio({ root, ...canonicalCandidate })
-      : initCanonicalStudioPanel({ root, ...canonicalCandidate });
+  const oldRequest = new URL(location.href).searchParams,
+    retiredNotice =
+      oldRequest.get("candidate") === "canonical" ||
+      oldRequest.get("workspace") === "gamelan"
+        ? document.createElement("p")
+        : null;
+  if (retiredNotice) {
+    retiredNotice.id = "st-retired-notice";
+    retiredNotice.append(
+      document.createElement("span"),
+      document.createTextNode(" "),
+      document.createElement("a"),
+    );
+    root.querySelector(".st-intro").append(retiredNotice);
   }
   const engine = new AudioEngine(studioPack(1), {
     variantPacks: [studioPack(2), studioPack(3)],
@@ -444,6 +366,26 @@ export function initStudio({ canonicalCandidate = null } = {}) {
   function localize() {
     locale = document.documentElement.lang === "en" ? "en" : "id";
     c = studioMessages[locale];
+    if (retiredNotice) {
+      retiredNotice.querySelector("span").textContent =
+        locale === "en"
+          ? "The requested experimental editor is retired. This is ordinary Rhythm Studio; saved experimental data has not been converted."
+          : "Editor eksperimen yang diminta telah dihentikan. Ini Rhythm Studio biasa; data eksperimen tersimpan tidak dikonversi.";
+      const link = retiredNotice.querySelector("a"),
+        gamelan = oldRequest.get("workspace") === "gamelan";
+      link.href = gamelan
+        ? originalRecoveryHref(locale)
+        : legacyRecoveryHref(locale);
+      link.textContent = gamelan
+        ? locale === "en"
+          ? "Export original Gamelan data (temporary legacy access)"
+          : "Ekspor data Gamelan asli (akses lama sementara)"
+        : locale === "en"
+          ? "Export saved experimental projects"
+          : "Ekspor proyek eksperimen tersimpan";
+    }
+    for (const link of root.querySelectorAll("[data-st-recovery]"))
+      link.href = legacyRecoveryHref(locale);
     errors = { ...projectMessages[locale], ...compositionMessages[locale] };
     root
       .querySelectorAll("[data-st-copy]")
