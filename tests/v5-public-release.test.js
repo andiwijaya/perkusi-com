@@ -15,7 +15,7 @@ import {
 } from "../src/gamelan/public-context.js";
 import { instrumentRouteContext } from "../src/gamelan/route-context.js";
 
-test("final home retains Rhythm Studio and neutral instrument copy in ID and EN", () => {
+test("home advertises only ordinary Rhythm Studio and Beatbox in every build mode and locale", () => {
   const cfg = config({ mode: "gamelan-v5-final" });
   assert.equal(cfg.define["import.meta.env.CANONICAL_FINAL_STUDIO"], "true");
   assert.equal(cfg.define["import.meta.env.CANONICAL_PUBLIC_PREVIEW"], "false");
@@ -26,10 +26,32 @@ test("final home retains Rhythm Studio and neutral instrument copy in ID and EN"
       v5UX: true,
       finalStudio: true,
     });
-    assert(html.includes('data-i18n="home.card2.title"'));
+    assert.equal((html.match(/class="tool-card"/g) ?? []).length, 2);
+    assert(html.includes('data-i18n="home.card1.title"'));
+    assert(html.includes('data-i18n="home.card3.title"'));
+    assert(!html.includes('data-i18n="home.card2.title"'));
+    assert(!html.includes('data-i18n="home.card4.title"'));
     assert(!html.includes("data-v5-loop-card"));
     assert(!html.includes('data-i18n="common.gamelanPreview"'));
-    assert(html.includes('data-i18n="common.gamelan"'));
+    assert(!html.includes('data-i18n="common.gamelan"'));
+    assert(
+      !/href="[^"]*(?:gamelan|loop-station|candidate=canonical)/.test(html),
+    );
+    for (const mode of [
+      "production",
+      "gamelan-public-candidate",
+      "gamelan-v5-canonical-release",
+    ]) {
+      const transform = config({ mode }).plugins.find(
+        (p) => p.name === "localized-static-pages",
+      ).transformIndexHtml.handler;
+      const path = locale === "en" ? "/en/index.html" : "/index.html";
+      const built = transform(readFileSync("." + path, "utf8"), { path });
+      assert.equal((built.match(/class="tool-card"/g) ?? []).length, 2);
+      assert(
+        !/href="[^"]*(?:gamelan|loop-station|candidate=canonical)/.test(built),
+      );
+    }
   }
 });
 
@@ -168,8 +190,8 @@ test("default build selects optional Preview while rendering and global mic deni
     locale: "id",
     v5UX: true,
   });
-  assert.match(html, /Gamelan Preview/);
-  assert.match(html, /data-loop-link/);
+  assert.doesNotMatch(html, /Gamelan Preview|data-loop-link/);
+  assert.equal((html.match(/class="tool-card"/g) ?? []).length, 2);
 });
 
 test("approved mic permission is same-origin only on exact bilingual Loop Station and Studio document aliases", () => {

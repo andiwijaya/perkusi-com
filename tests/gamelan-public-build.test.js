@@ -75,17 +75,14 @@ test("source publication rejects missing originals, duplicate/traversal archives
     assert.throws(() => validateSourceForms(bad, credits));
   }
 });
-test("public-only document decoration links playable Preview with truthful pending copy and keeps index suppression", () => {
+test("homepage decoration leaves only the two retained tools and keeps feature page index suppression", () => {
   for (const locale of ["id", "en"]) {
     const original = renderDocument("home", locale),
       decorated = publicCandidateHTML(original, { page: "home", locale });
     assert.ok(!original.includes("data-gamelan-link"));
-    assert.ok(decorated.includes("data-gamelan-link"));
-    assert.ok(
-      decorated.includes(
-        locale === "id" ? "Validasi budaya" : "Culture, listening",
-      ),
-    );
+    assert.equal(decorated, original);
+    assert.equal((decorated.match(/class="tool-card"/g) ?? []).length, 2);
+    assert.ok(!decorated.includes("data-gamelan-link"));
     const page = publicCandidateHTML(
       '<html><head><meta name="robots" content="noindex,nofollow"><title>Local</title></head></html>',
       { locale, credits: true },

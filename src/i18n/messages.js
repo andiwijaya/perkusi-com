@@ -18,12 +18,12 @@ const pairs = {
     "Perkusi.com - Make Rhythm. Build Loops. Play.",
   ],
   "meta.home.description": [
-    "Mainkan Beatbox di browser: enam karakter asli, dua variasi setiap suara, dan irama yang kamu susun. Tanpa akun atau instalasi.",
-    "Play Beatbox in your browser: six original characters, two variations per voice, and a groove you build. No account or installation.",
+    "Mainkan Beatbox Playground dan susun beat di Rhythm Studio langsung di browser. Tanpa akun atau instalasi.",
+    "Play Beatbox Playground and build beats in Rhythm Studio, right in your browser. No account or installation.",
   ],
   "meta.home.social": [
-    "Alat ritme, perkusi, dan loop di browser. Ruang baru untuk ketukanmu berikutnya.",
-    "Browser-based rhythm, percussion, and loop tools for musicians. A new space for your next beat.",
+    "Dua alat ritme di browser: Rhythm Studio dan Beatbox Playground. Mulai bermain tanpa instalasi.",
+    "Two rhythm tools in your browser: Rhythm Studio and Beatbox Playground. Start playing without installation.",
   ],
   "meta.privacy.title": ["Privasi — Perkusi.com", "Privacy - Perkusi.com"],
   "meta.privacy.description": [
@@ -84,8 +84,8 @@ const pairs = {
     "Good music starts with a little curiosity.",
   ],
   "home.description": [
-    "Ketuk enam karakter Beatbox, pilih variasi, dan susun iramamu langsung di browser.",
-    "Tap six Beatbox characters, choose variations, and build your groove in the browser.",
+    "Mainkan enam karakter Beatbox atau susun pola dan rantai beat di Rhythm Studio.",
+    "Play six Beatbox characters or arrange patterns and beat chains in Rhythm Studio.",
   ],
   "home.explore": ["Main Sekarang", "Play Now"],
   "home.note": [
@@ -94,13 +94,13 @@ const pairs = {
   ],
   "home.artLabel": [
     "Ilustrasi irama abstrak: lingkaran loop mengelilingi kisi pad perkusi empat kali empat. Ini adalah konsep visual, bukan alat yang dapat dimainkan.",
-    "Abstract rhythm illustration: concentric loops surrounding a four-by-four percussion pad grid. This is a visual preview of the product direction.",
+    "Abstract rhythm illustration: concentric circles surrounding a four-by-four percussion pad grid. Illustration only, not an audio control.",
   ],
   "home.artTop": ["BENTUK SEBUAH GROOVE", "THE SHAPE OF A GROOVE"],
   "home.artBottom": ["SETIAP KETUKAN ADALAH AWAL", "EVERY BEAT IS A BEGINNING"],
   "home.artCaption": [
-    "Konsep visual — alat sedang dikembangkan",
-    "Visual concept — tools in development",
+    "Ilustrasi ritme - bukan kontrol audio",
+    "Rhythm illustration - not an audio control",
   ],
   "home.strip1": ["LEBIH SEDIKIT PERSIAPAN.", "LESS SETUP."],
   "home.strip2": ["LEBIH BANYAK BERMAIN.", "MORE PLAY."],
@@ -114,8 +114,8 @@ const pairs = {
   "home.card1.meta": ["01 / PERKUSI", "01 / PERCUSSION"],
   "home.card1.title": ["Rhythm Studio", "Rhythm Studio"],
   "home.card1.copy": [
-    "Delapan track, tiga kit orisinal, loop Beatbox, dan instrumen Bilah. Susun musik dan unduh WAV.",
-    "Eight tracks, three original kits, Beatbox loops, and the Bilah instrument. Build music and download WAV.",
+    "Buat pola ritme, susun rantai, dan simpan atau ekspor beat ke WAV.",
+    "Build rhythm patterns, arrange a chain, and save or export your beat as WAV.",
   ],
   "home.card1.foot": ["TEMUKAN GROOVE", "FIND THE POCKET"],
   "home.card2.meta": ["02 / LAPISAN SUARA", "02 / LAYERING"],
@@ -128,7 +128,7 @@ const pairs = {
     "Bring your sounds together. A future space to build, layer, and shape loops.",
   ],
   "home.card2.foot": ["BANGUN SUARAMU", "BUILD YOUR SOUND"],
-  "home.card3.meta": ["03 / EKSPLORASI", "03 / EXPLORATION"],
+  "home.card3.meta": ["02 / EKSPLORASI", "02 / EXPLORATION"],
   "home.card3.title": ["Beatbox Playground", "Beatbox Playground"],
   "home.card3.copy": [
     "Bumi, Sabet, Cicik, Dum, Luma, dan Tara. Enam karakter, dua variasi setiap suara.",
@@ -143,8 +143,8 @@ const pairs = {
   ],
   "home.card4.foot": ["RASAKAN KETUKAN", "FEEL THE TIME"],
   "home.toolsNote": [
-    "Beatbox dan Rhythm Studio dapat dimainkan. Looper multi-instrumen dan alat latihan menyusul.",
-    "Beatbox and Rhythm Studio are playable. Multi-instrument loopers and practice tools are coming next.",
+    "Pilih alatmu, mulai bermain, dan simpan idemu secara lokal.",
+    "Choose a tool, start playing, and save your ideas locally.",
   ],
   "home.why": ["MENGAPA PERKUSI?", "WHY PERKUSI?"],
   "home.approach1": ["Idemu.", "Your idea."],
@@ -190,8 +190,8 @@ const pairs = {
   "home.closing2": ["dimulai dari", "starts with"],
   "home.closing3": ["satu ketukan.", "one beat."],
   "home.closingCopy": [
-    "Inilah awal kami. Lebih banyak alat dan kemungkinan akan hadir di Perkusi.com.",
-    "This is ours. More tools, more possibilities, coming to Perkusi.com.",
+    "Mulai dengan satu ketukan di Beatbox Playground atau susun pola di Rhythm Studio.",
+    "Start with one beat in Beatbox Playground or arrange patterns in Rhythm Studio.",
   ],
   "home.backTop": ["Kembali ke ketukan pertama", "Back to the first beat"],
   "privacy.heading": ["Privasi", "Privacy"],
