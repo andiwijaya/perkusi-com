@@ -711,6 +711,18 @@
   flex: 0 0 44px;
   padding: 4px;
 }
+.kendhang-section {
+  border-top: 1px solid #3c5048;
+  padding-block: 12px;
+  min-width: 0;
+}
+.kendhang-section p {
+  overflow-wrap: anywhere;
+}
+.kendhang-section button[aria-pressed="true"] {
+  background: #d3ea99;
+  color: #11211c;
+}
 .v3-mix {
   display: flex;
   flex-wrap: wrap;

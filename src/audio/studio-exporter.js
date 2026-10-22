@@ -1,6 +1,6 @@
 import { mixedStudioView } from "../project/composition-model.js";
 import { SampleBank } from "./sample-bank.js";
-import { encodeWav, throwIfCancelled } from "./wav.js";
+import { encodeWav, throwIfCancelled, wavWithCredits } from "./wav.js";
 import { ProjectError, validateProject } from "../project/schema.js";
 import {
   arrangementEvents,
@@ -243,6 +243,11 @@ export class StudioWavExporter {
       const encoded = pcmOptions
         ? { pcm, frames: pcm.length, sampleRate: pcm.sampleRate, channels: 2 }
         : await encodeWav(pcm, { signal, onProgress });
+      if (encoded.blob)
+        encoded.blob = await wavWithCredits(
+          encoded.blob,
+          this.extensions?.credits?.(budget.valid),
+        );
       throwIfCancelled(signal);
       return {
         ...encoded,

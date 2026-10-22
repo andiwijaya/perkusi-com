@@ -6,6 +6,7 @@ import {
   patternClips,
   compositionClips,
 } from "../project/composition-model.js";
+import { initKendhangPanel } from "./kendhang-panel.js";
 const copy = {
   id: {
     title: "Loop pola & Bilah",
@@ -62,7 +63,14 @@ const copy = {
   },
 };
 export const compositionMessages = copy;
-export function initCompositionPanel({ root, current, edit, engine, locked }) {
+export function initCompositionPanel({
+  root,
+  current,
+  edit,
+  engine,
+  locked,
+  kendhangNotices,
+}) {
   const panel = document.createElement("section");
   panel.className = "composition-panel st-panel";
   panel.innerHTML = `<h2 data-v3-copy="title"></h2><p data-v3-copy="help"></p><p data-v3-copy="identity"></p><div class="v3-note-picks"></div><label><span data-v3-copy="velocity"></span><input id="v3-velocity" type="range" min="0.1" max="1" step="0.1" value="0.7"></label><div class="v3-note-grid" role="group"></div><div class="v3-instrument-mix"></div><p data-v3-scope></p><div class="v3-clips"></div>`;
@@ -168,9 +176,18 @@ export function initCompositionPanel({ root, current, edit, engine, locked }) {
     container.append(row);
   }
   controls(panel.querySelector(".v3-instrument-mix"), "bilah", false);
+  const kendhang = initKendhangPanel({
+    after: panel.querySelector(".v3-instrument-mix"),
+    current,
+    edit,
+    engine,
+    locked,
+    notices: kendhangNotices,
+  });
   for (const role of CLIP_ROLES)
     controls(panel.querySelector(".v3-clips"), role, true);
   function update() {
+    kendhang.update();
     const p = current(),
       c = copy[locale()];
     panel
@@ -262,6 +279,7 @@ export function initCompositionPanel({ root, current, edit, engine, locked }) {
   return {
     update,
     dispose() {
+      kendhang.dispose();
       life.abort();
       panel.remove();
     },

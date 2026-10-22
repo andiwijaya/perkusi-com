@@ -21,6 +21,8 @@ import {
 import { initModeTransfer } from "../project/mode-transfer.js";
 import { CompositionStore } from "../project/composition-store.js";
 import { studioCatalog, studioPack, instrumentPack } from "./pack.js";
+import { kendhangPack, kendhangNotices } from "./kendhang-pack.js";
+import { withKendhang, emptyKendhang } from "../project/kendhang.js";
 import { studioMessages, studioRoleNames } from "./messages.js";
 import {
   ProjectHistory,
@@ -76,9 +78,11 @@ export function initStudio() {
   const playback = new CompositionPlayback(engine, {
     loopPack: originalGroovePack,
     instrumentPack,
+    kendhangPack,
   });
-  const history = new ProjectHistory(withPatternLoops(newComposition()), (p) =>
-    validateProject(p, studioCatalog),
+  const history = new ProjectHistory(
+    withKendhang(withPatternLoops(newComposition())),
+    (p) => validateProject(p, studioCatalog),
   );
   const store = new CompositionStore(studioCatalog),
     delivery = new FileDelivery();
@@ -89,6 +93,7 @@ export function initStudio() {
     extensions: compositionExportExtras({
       loopPack: originalGroovePack,
       instrumentPack,
+      kendhangPack,
     }),
     outputStageFactory: createBeatboxOutputStage,
     matchProgramme: true,
@@ -184,7 +189,9 @@ export function initStudio() {
     }
   }
   function apply(p) {
-    const valid = withPatternLoops(validateProject(p, studioCatalog));
+    const valid = withKendhang(
+      withPatternLoops(validateProject(p, studioCatalog)),
+    );
     engine.rewind();
     engine.arrangement = true;
     $("chain-mode").checked = true;
@@ -337,12 +344,16 @@ export function initStudio() {
       if (current) el.setAttribute("aria-current", "step");
       else el.removeAttribute("aria-current");
     });
-    root.querySelectorAll("[data-v3-step]").forEach((el) => {
-      const current = Number(el.dataset.v3Step) === step;
-      el.classList.toggle("st-playhead", current);
-      if (current) el.setAttribute("aria-current", "step");
-      else el.removeAttribute("aria-current");
-    });
+    root
+      .querySelectorAll("[data-v3-step],[data-kendhang-step]")
+      .forEach((el) => {
+        const current =
+          Number(el.dataset.v3Step ?? el.dataset.kendhangStep.split(":")[1]) ===
+          step;
+        el.classList.toggle("st-playhead", current);
+        if (current) el.setAttribute("aria-current", "step");
+        else el.removeAttribute("aria-current");
+      });
     root
       .querySelectorAll("[data-st-step]")
       .forEach((el) =>
@@ -730,7 +741,9 @@ export function initStudio() {
           edit((p) =>
             Object.assign(
               p,
-              withPatternLoops(compositionDemo($("demo-kind").value)),
+              withKendhang(
+                withPatternLoops(compositionDemo($("demo-kind").value)),
+              ),
             ),
           );
           engine.rewind();
@@ -743,6 +756,7 @@ export function initStudio() {
             const a = p.patterns.find((a) => a.id === p.activePattern);
             a.steps = emptyPattern().steps;
             a.notes = Array(16).fill(null);
+            a.kendhang = emptyKendhang();
             if (p.loopScope === "pattern-v1") a.clips = [];
           });
           break;
@@ -760,6 +774,7 @@ export function initStudio() {
                   : {
                       ...emptyPattern(),
                       notes: Array(16).fill(null),
+                      kendhang: emptyKendhang(),
                       ...(p.loopScope === "pattern-v1" ? { clips: [] } : {}),
                     };
             a.id = id;
@@ -967,6 +982,7 @@ export function initStudio() {
     frame = requestAnimationFrame(tick);
   }
   const compositionPanel = initCompositionPanel({
+    kendhangNotices,
     root,
     current,
     edit,

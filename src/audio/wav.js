@@ -31,6 +31,24 @@ export function wavHeader(frames, sampleRate, channels = 1) {
 export function throwIfCancelled(signal) {
   if (signal?.aborted) throw new ProjectError("cancelled");
 }
+// Append standard RIFF INFO metadata without copying the large PCM payload.
+export async function wavWithCredits(blob, credits) {
+  if (!credits) return blob;
+  const text = new TextEncoder().encode(credits + "\0"),
+    chunk = new Uint8Array(20 + text.length + (text.length % 2)),
+    view = new DataView(chunk.buffer),
+    put = (at, s) =>
+      [...s].forEach((c, i) => (chunk[at + i] = c.charCodeAt(0)));
+  put(0, "LIST");
+  view.setUint32(4, chunk.length - 8, true);
+  put(8, "INFO");
+  put(12, "ICMT");
+  view.setUint32(16, text.length, true);
+  chunk.set(text, 20);
+  const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  new DataView(header.buffer).setUint32(4, blob.size + chunk.length - 8, true);
+  return new Blob([header, blob.slice(12), chunk], { type: "audio/wav" });
+}
 export async function encodeWav(
   buffer,
   {

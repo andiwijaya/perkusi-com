@@ -4,6 +4,11 @@ import {
   validateStudioProject,
   studioDemo,
 } from "./studio-model.js";
+import {
+  KENDHANG_STROKES,
+  KENDHANG_CREDITS,
+  kendhangUsed,
+} from "./kendhang.js";
 export const CLIP_ROLES = [
   "kick",
   "snare",
@@ -94,6 +99,7 @@ export function studioView(p) {
   delete base.clips;
   delete base.loopScope;
   delete base.instrument;
+  delete base.kendhang;
   return {
     ...base,
     schemaVersion: 2,
@@ -139,6 +145,7 @@ export function validateComposition(v, catalog) {
     "clipPack",
     ...(v.loopScope === "pattern-v1" ? ["loopScope"] : ["clips"]),
     "instrument",
+    ...(Object.hasOwn(v, "kendhang") ? ["kendhang"] : []),
   ]);
   if (v.schemaVersion !== 3 || v.mode !== "composition")
     throw new ProjectError("unsupportedVersion");
@@ -177,6 +184,24 @@ export function validateComposition(v, catalog) {
   if (v.instrument.id !== "bilah" || v.instrument.version !== "1.0.0")
     throw new ProjectError("unknownPack");
   validateMix(v.instrument);
+  if (Object.hasOwn(v, "kendhang")) {
+    object(v.kendhang, [
+      "id",
+      "version",
+      "credits",
+      "volume",
+      "pan",
+      "mute",
+      "solo",
+    ]);
+    if (
+      v.kendhang.id !== "kendhang-ciblon" ||
+      v.kendhang.version !== "1.0.0" ||
+      v.kendhang.credits !== KENDHANG_CREDITS
+    )
+      throw new ProjectError("unknownPack");
+    validateMix(v.kendhang);
+  }
   if (compositionClips(v).some((c) => c.enabled) && v.timing?.bpm !== 96)
     throw new ProjectError("clipTempo");
   for (const p of v.patterns || []) {
@@ -186,7 +211,18 @@ export function validateComposition(v, catalog) {
       "steps",
       "notes",
       ...(v.loopScope === "pattern-v1" ? ["clips"] : []),
+      ...(Object.hasOwn(v, "kendhang") ? ["kendhang"] : []),
     ]);
+    if (Object.hasOwn(v, "kendhang")) {
+      object(p.kendhang, KENDHANG_STROKES);
+      for (const row of Object.values(p.kendhang))
+        if (
+          !Array.isArray(row) ||
+          row.length !== 16 ||
+          row.some((x) => !Number.isFinite(x) || x < 0 || x > 1)
+        )
+          throw new ProjectError("invalidProject");
+    }
     if (!Array.isArray(p.notes) || p.notes.length !== 16)
       throw new ProjectError("invalidProject");
     for (const n of p.notes)
@@ -246,6 +282,7 @@ export function reverseReasons(p) {
   )
     reasons.push("drums");
   if (p.patterns.some((a) => a.notes.some(Boolean))) reasons.push("notes");
+  if (kendhangUsed(p)) reasons.push("kendhang");
   if (
     patternClips(p).length !== 6 ||
     compositionClips(p).some(
@@ -299,6 +336,7 @@ export function allMix(p, patternId = p.activePattern) {
       mute: c.mute || !c.enabled,
     })),
     { ...p.instrument, role: "bilah" },
+    ...(p.kendhang ? [{ ...p.kendhang, role: "kendhang" }] : []),
   ];
 }
 export function mixedStudioView(p, patternId = p.activePattern) {
