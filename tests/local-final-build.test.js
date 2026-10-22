@@ -33,11 +33,16 @@ test("archival capacity accounting preserves source/media size admission without
     join(root, "internal/loop-instruments/source-forms/original.txt"),
     "original",
   );
-  const expected = 101 + 103 + 107 + 109 + 8;
-  assert.equal(await buildPayloadMinimum(root, "gamelan-v5-final"), expected);
-  assert.equal(
-    await buildPayloadMinimum(root, "gamelan-v5-public-candidate"),
-    expected,
+  const expected = 999 + 103 + 107;
+  assert.equal(await buildPayloadMinimum(root, "retirement-release"), expected);
+  assert.equal(await buildPayloadMinimum(root, "retirement-review"), expected);
+  await assert.rejects(
+    buildPayloadMinimum(root, "audio-prototype"),
+    /unsupportedBuildMode/,
+  );
+  await assert.rejects(
+    buildPayloadMinimum(root, "gamelan-v5-final"),
+    /unsupportedBuildMode/,
   );
 });
 

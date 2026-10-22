@@ -14,7 +14,6 @@ import {
   cancelFade,
   gainValueAt,
 } from "../src/audio/voice.js";
-import { prototypeMessages } from "../internal/audio/messages.js";
 import { createPlaybackMilestones } from "../src/beatbox/playback-milestones.js";
 
 const pack = () => ({
@@ -708,14 +707,6 @@ test("resume failure is retryable and all-asset failure never starts timer", asy
   assert.equal(failed.engine.status, "error");
   assert.equal(failed.timers.size, 0);
   await failed.engine.dispose();
-});
-test("prototype bilingual copy has parity", () => {
-  assert.deepEqual(
-    Object.keys(prototypeMessages.id).sort(),
-    Object.keys(prototypeMessages.en).sort(),
-  );
-  assert(Object.values(prototypeMessages.id).every(Boolean));
-  assert(Object.values(prototypeMessages.en).every(Boolean));
 });
 
 test("concurrent dispose shares cleanup; later controls cannot revive a disposed transport", async () => {

@@ -75,7 +75,6 @@ export default defineConfig(({ mode }) => {
       "test",
       "retirement-review",
       "retirement-release",
-      "audio-prototype",
     ].includes(mode)
   )
     throw Error("retiredBuildMode");
@@ -92,12 +91,6 @@ export default defineConfig(({ mode }) => {
           retiredGamelanEn: "en/gamelan/index.html",
           retiredCreditsId: "gamelan/credits/index.html",
           retiredCreditsEn: "en/gamelan/credits/index.html",
-          ...(mode === "audio-prototype"
-            ? {
-                audioPrototype: "internal/audio/index.html",
-                soundLab: "internal/sound-lab/index.html",
-              }
-            : {}),
         },
       },
     },

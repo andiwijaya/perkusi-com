@@ -11,7 +11,6 @@ import {
   characterDefinitions,
   characterSvg,
 } from "../src/characters/characters.js";
-import { labMessages } from "../internal/sound-lab/messages.js";
 
 const base = new URL("../internal/original-groove/", import.meta.url);
 const catalog = JSON.parse(await readFile(new URL("manifest.json", base)));
@@ -101,18 +100,6 @@ test("six original silhouettes and actual SVG exports match the registry", async
     assert(record.commercialUse && record.rawRedistribution);
     assert.equal(record.states.length, 6);
   }
-});
-test("sound lab copy has full ID/EN keys and six localized role labels", () => {
-  assert.deepEqual(
-    Object.keys(labMessages.id).sort(),
-    Object.keys(labMessages.en).sort(),
-  );
-  assert.deepEqual(
-    Object.keys(labMessages.id.states).sort(),
-    Object.keys(labMessages.en.states).sort(),
-  );
-  for (const locale of ["id", "en"])
-    assert(VOCAL_ROLES.every((role) => labMessages[locale].states[role]));
 });
 
 test("S3 P3 duration and required recipe/master provenance mutations are rejected", () => {

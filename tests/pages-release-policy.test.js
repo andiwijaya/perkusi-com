@@ -2,6 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadConfigFromFile } from "vite";
 import { pagesReleaseMode } from "../scripts/pages-release-policy.mjs";
+import viteConfig from "../vite.config.js";
+
+test("retired prototype mode cannot reactivate engineering entries", () => {
+  assert.throws(
+    () => viteConfig({ mode: "audio-prototype" }),
+    /retiredBuildMode/,
+  );
+});
 
 test("Pages main legacy command selects two-tool retirement release; local and branches keep requested modes", () => {
   const mode = "gamelan-v5-public-candidate";
@@ -38,12 +46,11 @@ test("Pages main legacy command selects two-tool retirement release; local and b
   );
 });
 
-test("supported release/review/prototype modes retain isolated recovery and cannot define failed activation flags", async () => {
+test("supported release/review modes retain isolated recovery and cannot define failed activation flags", async () => {
   for (const mode of [
     "production",
     "retirement-release",
     "retirement-review",
-    "audio-prototype",
   ]) {
     const result = await loadConfigFromFile(
         { command: "build", mode },

@@ -4,6 +4,7 @@ import {
   BEATBOX_BOOST,
   BEATBOX_CEILING,
   beatboxOutputSample,
+  createBeatboxOutputStage,
 } from "../src/beatbox/output-stage.js";
 import { prepareBumiBuffer } from "../src/beatbox/bumi-presence.js";
 
@@ -73,4 +74,34 @@ test("Bumi preparation leaves every other character's PCM untouched", () => {
     assert.equal(prepareBumiBuffer(buffer, { id }), buffer);
     assert.deepEqual(x, original);
   }
+});
+
+test("active Beatbox stage retains the complete Float32 mastering curve and disposes both nodes", () => {
+  let shaper,
+    disconnected = 0;
+  const ctx = {
+    createGain: () => ({
+      gain: {},
+      connect() {},
+      disconnect() {
+        disconnected++;
+      },
+    }),
+    createWaveShaper: () =>
+      (shaper = {
+        connect() {},
+        disconnect() {
+          disconnected++;
+        },
+      }),
+  };
+  const stage = createBeatboxOutputStage(ctx, { connect() {} });
+  for (let i = 0; i < 65537; i++)
+    assert.equal(
+      shaper.curve[i],
+      Math.fround(beatboxOutputSample((i / 65536) * 2 - 1)),
+    );
+  assert.equal(shaper.oversample, "none");
+  stage.dispose();
+  assert.equal(disconnected, 2);
 });

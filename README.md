@@ -1,8 +1,8 @@
 # Perkusi.com
 
-Browser-based Beatbox Playground, Rhythm Studio, Gamelan Preview and Loop Station Preview. Indonesian is the default; English has UI and metadata parity. V5 adds eight-track arranging, local recording, audio-bearing projects, mixer/FX and bounded WAV exports. Audio stays in the browser; no account or database is required. See the [V5 Preview release notes](docs/v5-preview-release.md) for the accepted scope and remaining device, latency and cultural limitations.
+Browser-based Beatbox Playground and ordinary Rhythm Studio. Indonesian is the default; English has UI and metadata parity. Audio stays in the browser; no account or server database is required. Failed V5/V6 playback experiments are retired. Former Gamelan and Loop URLs show static notices; same-origin recovery routes preserve access to original saved data without restoring the failed playback engine.
 
-The optional [unified Studio Preview](docs/v5-unified-preview-release.md) uses an explicit entry from the previous Studio, which remains the default. Existing projects are copied only by choice. New schema6 projects remain exportable through the retained recovery reader during compatible routing rollback.
+Studio Preview cannot be activated by a candidate flag. Downloaded and optimized instrument media, licenses and provenance remain in `internal/`; they are not automatically deployed. Recovery preserves original data and is not a promise that retired projects can play in the ordinary editor. Develop one feature at a time, build and verify its end-to-end journey before starting another.
 
 ## Development
 
@@ -23,13 +23,13 @@ npm run format
 
 Static entry shells are transformed at build/dev time by `src/app/document.js` and the Vite plugin. Copy, metadata, and ARIA labels share `src/i18n/messages.js`. Locale selection is explicit URL (`/en/` or `?lang=id|en`), then a saved preference, then `id`. Same-page language links use History API and update text/metadata without rebuilding the DOM or in-memory workspace session. Back/forward restores that page's selected locale. Storage failure does not block switching. `appType: mpa` and local 404 middleware prevent unknown paths from becoming homepage responses. Cloudflare uses the built static entries and existing `404.html`; live verification remains a later release gate.
 
-## Internal audio prototype (S2)
+## Retired engineering tooling
 
-S2 adds a shared audio domain and three original technical DSP fixtures. They are not accepted V1 vocal Beatbox sounds. The public Beatbox uses the separate twelve-asset Original Groove candidate. Normal production builds exclude `/internal/audio/` and all audio fixtures; the separate `audio-prototype` mode writes to ignored local QA output.
+The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.
 
-Run `npm run fixtures:audio` to recreate the source WAVs, `npm run build:audio-prototype` to build the internal route, and `npm run test:audio` for actual Chrome audio/lifecycle tests and a two-minute graph capture. `PERKUSI_AUDIO_FULL=0` runs the shorter browser smoke; `PERKUSI_AUDIO_CHANNEL=msedge` selects installed Edge; `PERKUSI_AUDIO_QA_DIR` selects separate evidence. Playwright comes from the same supported runtime as foundation tests. Human listening and physical devices require their own evidence.
+Use `npm test`, `npm run lint`, a normal `npm run build`, then the ordinary `npm run test:e2e` workflow. Historical PCM captures and experiment snapshots are not inputs for future development. Human listening and physical devices require their own evidence.
 
-See [audio architecture](docs/audio-architecture.md) and [asset provenance / sound acceptance](docs/asset-licenses.md). Local development can open `/internal/audio/?lang=id` after `npm run dev`; no microphone permission is requested.
+Qualified recovery and raw/handoff export are independent entries under `/studio/recovery/` and `/studio/recovery/originals/` in both languages. No microphone permission is needed for those data-only routes.
 
 ## Deployment architecture
 
@@ -41,7 +41,7 @@ GitHub `main` → Cloudflare Pages Git integration → `perkusi.com`.
 
 Cloudflare Pages project: `perkusi-com`. Production branch: `main`. Build command: `npm run build`. Build output: `dist`. Repository root is the build root. Every push to `main` triggers a production deployment through the Git integration; do not replace this with manual uploads. The existing Cloudflare zone and nameservers are retained. Both apex and www have proxied CNAME records pointing to `perkusi-com.pages.dev`. The zone rule `Canonical www to perkusi.com` redirects `http*://www.perkusi.com/*` to `https://perkusi.com/${2}` with HTTP 301 and preserves the query string. HTTP and HTTPS www redirects were verified with a nested path and query.
 
-Local `npm run build` remains canonical-off. `scripts/pages-release-policy.mjs` deliberately selects `gamelan-v5-canonical-release` only for the existing Pages `main` build with its full commit identity; branch previews retain the requested mode. All public build modes retain the schema6 recovery entries, even when canonical editing is off. Future publications and rollbacks must keep this reader and visible access. Stock b0570f1 alone cannot read new schema6 projects; use the recovery-capable rollback plan in the unified Preview release notes.
+Local `npm run build` and existing Pages main builds select the two-tool `retirement-release` pipeline. `scripts/pages-release-policy.mjs` maps accepted historical command spellings to that mode; they cannot reactivate Preview. All supported review/release builds retain qualified composition/Loop recovery and raw/handoff export. Future publications and rollback plans must preserve access to original saved data; a stock old editor is not equivalent to the recovery reader.
 
 The existing Cloudflare Workers and Pages GitHub app uses **Only select repositories**. `perkusi-com` is included. New repositories must be explicitly added to this selection before their automatic deploys can work; listing a public repository in the Pages import screen alone does not grant webhook access.
 

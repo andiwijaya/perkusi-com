@@ -14,8 +14,6 @@ import {
   eventFrame,
   PPQ,
 } from "../src/project/instrument-project.js";
-import { takePlan } from "../src/project/instrument-take.js";
-import { gamelanRepeatPlan } from "../src/project/gamelan-repeat.js";
 import {
   parseLoopProject,
   validateLoopProject,
@@ -159,10 +157,6 @@ test("Q1 score retains independent native/accompaniment clocks, off-grid attacks
   );
   for (const rate of [44100, 48000]) {
     assert.equal(eventFrame(137, 96, rate), 4);
-    assert(
-      takePlan(score, registry, rate).frames >= rate * 10,
-      "four-bar accompaniment is not cut to two native bars",
-    );
   }
   const events = arrangementEvents(score.composition);
   assert(events.some((e) => e.patternId === "p1"));
@@ -171,9 +165,6 @@ test("Q1 score retains independent native/accompaniment clocks, off-grid attacks
     events.some((e) => e.when >= 7.5),
     "later accompaniment bars survive",
   );
-  assert.throws(() => gamelanRepeatPlan(score, registry, 48000), {
-    code: "repeatNeedsEventOnly",
-  });
 });
 
 test("Q1 FX/layer/alignment specimen has explicit destination and tested semantic inverse", async () => {

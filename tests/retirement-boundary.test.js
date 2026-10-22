@@ -90,7 +90,6 @@ test("recovery entries are independent of feature flags and production transform
   for (const mode of [
     "production",
     "development",
-    "audio-prototype",
     "retirement-review",
     "retirement-release",
   ]) {

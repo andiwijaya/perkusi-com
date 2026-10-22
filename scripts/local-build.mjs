@@ -44,29 +44,16 @@ async function sourceID(root) {
   return h.digest("hex");
 }
 export async function buildPayloadMinimum(root, mode = "retirement-release") {
-  if (mode === "audio-prototype")
-    return (await measureTree(root, join(root, "public"))).bytes;
+  if (!["retirement-review", "retirement-release"].includes(mode))
+    throw Error("unsupportedBuildMode");
   let bytes = 0;
   const load = async (p) =>
     (await exists(join(root, p)))
       ? JSON.parse(await readFile(join(root, p), "utf8"))
       : null;
-  const delivery =
-    process.env.PERKUSI_GAMELAN_DELIVERY ??
-    ([
-      "gamelan-public-candidate",
-      "gamelan-v5-ux",
-      "gamelan-v5-public-candidate",
-      "gamelan-v5-canonical-release",
-      "gamelan-v5-final",
-    ].includes(mode)
-      ? "flac"
-      : "pcm");
-  const flac = await load(
-      "internal/" +
-        (delivery === "flac" ? "gamelan-flac" : "gamelan-delivery") +
-        "/asset-map.json",
-    ),
+  // Keep the existing conservative ordinary-build capacity floor. Archived
+  // media is counted for admission, never copied into the application output.
+  const flac = await load("internal/gamelan-delivery/asset-map.json"),
     forms = await load("internal/gamelan-source-forms/manifest.json");
   bytes +=
     (flac?.files ?? []).reduce((n, a) => n + a.bytes, 0) +
@@ -82,23 +69,6 @@ export async function buildPayloadMinimum(root, mode = "retirement-release") {
       bytes += a.bytes;
   }
   bytes += (await measureTree(root, join(root, "public"))).bytes;
-  if (
-    [
-      "gamelan-v5-ux",
-      "gamelan-v5-public-candidate",
-      "gamelan-v5-canonical-release",
-      "gamelan-v5-final",
-    ].includes(mode)
-  ) {
-    const notes = await load("internal/loop-instruments/manifest.json");
-    bytes += (notes?.assets ?? []).reduce((n, a) => n + a.derivative.bytes, 0);
-    bytes += (
-      await measureTree(
-        root,
-        join(root, "internal/loop-instruments/source-forms"),
-      )
-    ).bytes;
-  }
   if (!Number.isSafeInteger(bytes) || bytes < 0)
     throw Error("invalidBuildPayload");
   return bytes;
@@ -158,11 +128,7 @@ export async function runLocalBuild({
   cleanupAfterBuild = true,
 } = {}) {
   root = resolve(root);
-  if (
-    !["retirement-review", "retirement-release", "audio-prototype"].includes(
-      mode,
-    )
-  )
+  if (!["retirement-review", "retirement-release"].includes(mode))
     throw Error("unsupportedBuildMode");
   const target = inside(root, resolve(root, outDir)),
     isDist = target === join(root, "dist");
