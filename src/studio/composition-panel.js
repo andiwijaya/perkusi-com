@@ -3,14 +3,18 @@ import {
   PITCHES,
   editCompositionClip,
   newCompositionClip,
+  patternClips,
+  compositionClips,
 } from "../project/composition-model.js";
 const copy = {
   id: {
-    title: "Loop & Bilah",
+    title: "Loop pola & Bilah",
     help: "Ketuk nada untuk memilih, lalu isi 16 langkah di bawahnya. Loop Beatbox berulang dalam frasa 2 bar, selalu 96 BPM. Pilih rantai 2/4/6/8 bar untuk frasa lengkap; WAV memuat satu putaran rantai. Perubahan pilihan suara menjeda musik; ketuk Mainkan untuk melanjutkan.",
     identity:
       "Nusantara Fusion: perkusi tangan dan warna metal sintetis orisinal, terinspirasi musik Indonesia masa kini. Bilah adalah sampler metal bernada D minor. Bukan rekaman tradisional atau klaim laras gamelan autentik.",
     notes: "Nada",
+    scope:
+      "Loop untuk pola {pattern}. Aktif, variasi dan mix disimpan pada pola ini. Perubahan kontrol loop menjeda pemutaran; tekan Putar lagi. Kosongkan pola juga menghapus loop pola tersebut.",
     volume: "Volume",
     pan: "Pan",
     mute: "Bisukan",
@@ -31,11 +35,13 @@ const copy = {
       "Proyek lama tetap disimpan. Simpan salinan V3 untuk mengubahnya.",
   },
   en: {
-    title: "Loops & Bilah",
+    title: "Pattern loops & Bilah",
     help: "Pick a note, then fill the 16 steps below. Beatbox loops repeat in two-bar phrases, always at 96 BPM. Choose a 2/4/6/8-bar chain for complete phrases; WAV contains one chain pass. Changing sound selections pauses the music; press Play to continue.",
     identity:
       "Nusantara Fusion: original synthetic hand percussion and metallic colors, inspired by contemporary Indonesian music. Bilah is a D minor struck-metal sampler. These are not traditional recordings or an authentic gamelan tuning claim.",
     notes: "Notes",
+    scope:
+      "Loops for pattern {pattern}. Enabled, variation and mix belong to this pattern. Editing loop controls pauses playback; press Play again. Clear pattern also clears its loops.",
     volume: "Volume",
     pan: "Pan",
     mute: "Mute",
@@ -59,7 +65,7 @@ export const compositionMessages = copy;
 export function initCompositionPanel({ root, current, edit, engine, locked }) {
   const panel = document.createElement("section");
   panel.className = "composition-panel st-panel";
-  panel.innerHTML = `<h2 data-v3-copy="title"></h2><p data-v3-copy="help"></p><p data-v3-copy="identity"></p><div class="v3-note-picks"></div><label><span data-v3-copy="velocity"></span><input id="v3-velocity" type="range" min="0.1" max="1" step="0.1" value="0.7"></label><div class="v3-note-grid" role="group"></div><div class="v3-instrument-mix"></div><div class="v3-clips"></div>`;
+  panel.innerHTML = `<h2 data-v3-copy="title"></h2><p data-v3-copy="help"></p><p data-v3-copy="identity"></p><div class="v3-note-picks"></div><label><span data-v3-copy="velocity"></span><input id="v3-velocity" type="range" min="0.1" max="1" step="0.1" value="0.7"></label><div class="v3-note-grid" role="group"></div><div class="v3-instrument-mix"></div><p data-v3-scope></p><div class="v3-clips"></div>`;
   root.querySelector(".st-grid-scroll").after(panel);
   const life = new AbortController();
   let pitch = "d4";
@@ -171,6 +177,10 @@ export function initCompositionPanel({ root, current, edit, engine, locked }) {
       .querySelectorAll("[data-v3-copy]")
       .forEach((el) => (el.textContent = c[el.dataset.v3Copy]));
     const a = p.patterns.find((a) => a.id === p.activePattern);
+    panel.querySelector("[data-v3-scope]").textContent = c.scope.replace(
+      "{pattern}",
+      a.name,
+    );
     grid.setAttribute("aria-label", c.notes);
     for (const b of grid.children) {
       const i = Number(b.dataset.v3Step),
@@ -214,7 +224,7 @@ export function initCompositionPanel({ root, current, edit, engine, locked }) {
       const t =
         row.dataset.v3Mix === "bilah"
           ? p.instrument
-          : p.clips.find((c) => c.role === row.dataset.v3Mix) ||
+          : patternClips(p).find((c) => c.role === row.dataset.v3Mix) ||
             newCompositionClip(row.dataset.v3Mix);
       for (const input of row.querySelectorAll("[data-v3-field]")) {
         const field = input.dataset.v3Field;
@@ -226,7 +236,7 @@ export function initCompositionPanel({ root, current, edit, engine, locked }) {
       }
     }
     root.querySelector("#st-bpm").disabled =
-      locked() || p.clips.some((c) => c.enabled);
+      locked() || compositionClips(p).some((c) => c.enabled);
   }
   listen(document, "keydown", (event) => {
     if (

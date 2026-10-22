@@ -1,10 +1,18 @@
 import { SampleBank } from "./sample-bank.js";
 import { prepareBumiBuffer } from "../beatbox/bumi-presence.js";
-import { createLoopVoice, createOneShotVoice, fadeOutVoice } from "./voice.js";
+import {
+  createLoopVoice,
+  createOneShotVoice,
+  fadeOutVoice,
+  cancelFade,
+} from "./voice.js";
 import {
   CLIP_ROLES,
   allMix,
   mixedStudioView,
+  studioView,
+  patternClips,
+  compositionClips,
 } from "../project/composition-model.js";
 import { trackGain, stepTime } from "./sequencing.js";
 import { ProjectError } from "../project/schema.js";
@@ -12,10 +20,35 @@ import { ProjectError } from "../project/schema.js";
 // All loops occupy the full arrangement, at their original 96 BPM. Their native
 // two-bar phase continues across pattern boundaries. No time stretch or repitch.
 export function compositionNote(project, index, arrangement = true) {
-  const id = arrangement
+  const id = compositionPatternId(project, index, arrangement);
+  return project.patterns.find((p) => p.id === id).notes[index % 16];
+}
+export function compositionPatternId(project, index, arrangement = true) {
+  return arrangement
     ? project.chain[Math.floor(index / 16) % project.chain.length]
     : project.activePattern;
-  return project.patterns.find((p) => p.id === id).notes[index % 16];
+}
+// Shared live/offline transition rule: equal role+variant retains its native
+// source. Changed/disabled sources crossfade; joins use absolute two-bar phase.
+export function transitionPatternLoops(state, clips, start, end) {
+  const next = new Map(),
+    started = [],
+    ended = [];
+  for (const c of clips.filter((c) => c.enabled)) {
+    const old = state.get(c.role);
+    if (old?.variant === c.variant) next.set(c.role, old);
+    else {
+      const voice = start(c);
+      started.push(voice);
+      next.set(c.role, { variant: c.variant, voice });
+    }
+  }
+  for (const [role, old] of state)
+    if (next.get(role) !== old) {
+      end(old.voice);
+      ended.push(old.voice);
+    }
+  return { next, started, ended };
 }
 export function createCompositionMixer(context, master, project) {
   const nodes = new Map();
@@ -40,15 +73,20 @@ export function createCompositionMixer(context, master, project) {
   }
   const mixer = {
     nodes,
-    update(p, immediate = false) {
-      const tracks = allMix(p);
+    update(
+      p,
+      immediate = false,
+      when = context.currentTime,
+      patternId = p.activePattern,
+    ) {
+      const tracks = allMix(p, patternId);
       for (const t of tracks) {
         const n = nodes.get(t.role);
         if (!n) continue;
         const set = (param, value) =>
           immediate
             ? (param.value = value)
-            : param.setTargetAtTime(value, context.currentTime, 0.004);
+            : param.setTargetAtTime(value, when, 0.004);
         set(n.gain.gain, trackGain(t, tracks));
         if (n.pan) set(n.pan.pan, t.pan);
         else {
@@ -68,6 +106,18 @@ export function createCompositionMixer(context, master, project) {
           );
         }
       }
+    },
+    cancelFrom(when) {
+      for (const n of nodes.values())
+        for (const node of Object.values(n))
+          for (const param of [node.gain, node.pan].filter(Boolean)) {
+            try {
+              param.cancelAndHoldAtTime?.(when);
+            } catch {
+              /* Explicit target below remains the fallback. */
+            }
+            param.cancelScheduledValues(when);
+          }
     },
     dispose() {
       for (const n of nodes.values())
@@ -91,7 +141,13 @@ export class CompositionBanks {
     this.banks = [...this.loops, this.instrument];
   }
   async load(p, context, signal) {
-    const jobs = p.clips
+    const jobs = [
+      ...new Map(
+        compositionClips(p)
+          .filter((c) => c.enabled)
+          .map((c) => [c.role + "/" + c.variant, c]),
+      ).values(),
+    ]
       .filter((c) => c.enabled)
       .map((c) => [this.loops[c.variant - 1], c.role]);
     if (p.patterns.some((a) => a.notes.some(Boolean)))
@@ -156,12 +212,21 @@ export class CompositionPlayback {
   }
   configure(p, variant, force = false) {
     const previous = this.project;
+    const patterned = p.loopScope === "pattern-v1";
+    const loopChange =
+      previous &&
+      JSON.stringify(
+        patterned ? previous.patterns.map((a) => a.clips) : previous.clips,
+      ) !==
+        JSON.stringify(patterned ? p.patterns.map((a) => a.clips) : p.clips);
     if (
       previous &&
-      (JSON.stringify(
-        previous.clips.map((c) => [c.role, c.variant, c.enabled]),
-      ) !==
-        JSON.stringify(p.clips.map((c) => [c.role, c.variant, c.enabled])) ||
+      ((patterned
+        ? loopChange
+        : JSON.stringify(
+            previous.clips.map((c) => [c.role, c.variant, c.enabled]),
+          ) !==
+          JSON.stringify(p.clips.map((c) => [c.role, c.variant, c.enabled]))) ||
         (p.patterns.some((a) => a.notes.some(Boolean)) &&
           !previous.patterns.some((a) => a.notes.some(Boolean))))
     )
@@ -171,12 +236,31 @@ export class CompositionPlayback {
       JSON.stringify(previous.patterns.map((a) => a.notes)) !==
         JSON.stringify(p.patterns.map((a) => a.notes));
     this.project = structuredClone(p);
+    const sequence = patterned ? studioView(p) : mixedStudioView(p);
+    // In chain mode selection belongs to the editor, not the sounding bar.
+    if (
+      patterned &&
+      this.engine.arrangement &&
+      this.engine.sequence &&
+      sequence.patterns.some((a) => a.id === this.engine.sequence.activePattern)
+    )
+      sequence.activePattern = this.engine.sequence.activePattern;
+    const mixChanged =
+      patterned &&
+      previous &&
+      JSON.stringify([previous.tracks, previous.instrument]) !==
+        JSON.stringify([p.tracks, p.instrument]);
     this.engine.configureSequence(
-      mixedStudioView(p),
+      sequence,
       variant,
-      force || notesChanged,
+      force || notesChanged || mixChanged,
     );
-    this.mixer?.update(p);
+    if (patterned && this.context)
+      this.applyPatternMix(
+        Math.floor(this.engine.transport.beatsAt(this.context.currentTime) * 4),
+        this.context.currentTime,
+      );
+    else this.mixer?.update(p);
   }
   async load(context) {
     if (this.context !== context) {
@@ -200,6 +284,17 @@ export class CompositionPlayback {
     return v;
   }
   start(when) {
+    if (this.project.loopScope === "pattern-v1") {
+      this.loopState = new Map();
+      this.loopTransitions = [];
+      this.lastLoopBar = null;
+      this.patternBoundary(
+        Math.floor(this.engine.transport.position * 4),
+        when,
+        true,
+      );
+      return;
+    }
     for (const c of this.project.clips.filter((c) => c.enabled))
       this.own(
         compositionLoop(
@@ -215,6 +310,11 @@ export class CompositionPlayback {
       );
   }
   step(index, when) {
+    if (
+      this.project.loopScope === "pattern-v1" &&
+      this.lastLoopBar !== Math.floor(index / 16)
+    )
+      this.patternBoundary(index, when);
     const n = compositionNote(this.project, index, this.engine.arrangement);
     if (!n || this.engine.voices.size >= 64) return;
     const prior = [...this.engine.voices]
@@ -224,6 +324,81 @@ export class CompositionPlayback {
       compositionShot(this.context, this.mixer, this.banks, n, when, prior),
       "note",
       { index, pitch: n.pitch, velocity: n.velocity },
+    );
+  }
+  applyPatternMix(index, when, immediate = false) {
+    const id = compositionPatternId(
+      this.project,
+      index,
+      this.engine.arrangement,
+    );
+    this.mixer?.update(this.project, immediate, when, id);
+    this.engine.mixer?.update(
+      mixedStudioView(this.project, id).tracks,
+      when,
+      immediate,
+    );
+  }
+  patternBoundary(index, when, initial = false) {
+    const patternId = compositionPatternId(
+      this.project,
+      index,
+      this.engine.arrangement,
+    );
+    const clips = patternClips(this.project, patternId);
+    const joins = clips.filter(
+      (c) => c.enabled && this.loopState?.get(c.role)?.variant !== c.variant,
+    ).length;
+    if (this.engine.voices.size + joins > 64) {
+      this.engine.pause();
+      this.engine.error = "audio-start: pattern-loop-voice-limit";
+      return;
+    }
+    this.applyPatternMix(index, when, initial);
+    this.lastLoopBar = Math.floor(index / 16);
+    this.loopTransitions ??= [];
+    this.loopTransitions = this.loopTransitions.filter(
+      (t) => t.when > this.context.currentTime,
+    );
+    const prior = this.loopState ?? new Map(),
+      id = compositionPatternId(this.project, index, this.engine.arrangement);
+    const result = transitionPatternLoops(
+      prior,
+      patternClips(this.project, id),
+      (c) =>
+        this.own(
+          compositionLoop(
+            this.context,
+            this.mixer,
+            this.banks,
+            c,
+            when,
+            this.engine.transport.phaseSeconds(when, 2),
+          ),
+          "pattern-clip",
+          { index, patternId: id, variant: c.variant },
+        ),
+      (v) => fadeOutVoice(v, when),
+    );
+    this.loopState = result.next;
+    this.loopTransitions.push({ when, prior, ...result });
+  }
+  cancelScheduled(when) {
+    if (this.project?.loopScope !== "pattern-v1") return;
+    for (const t of [...(this.loopTransitions ?? [])].reverse())
+      if (t.when > when) {
+        for (const v of t.started) this.engine.removeVoice(v);
+        for (const v of t.ended)
+          if (this.engine.voices.has(v)) cancelFade(v, when);
+        this.loopState = t.prior;
+      }
+    this.loopTransitions = [];
+    this.lastLoopBar = null;
+    this.mixer?.cancelFrom(when);
+    this.engine.mixer?.cancelFrom(when);
+    this.applyPatternMix(
+      Math.floor(this.engine.transport.beatsAt(when) * 4),
+      when,
     );
   }
   async pad(pitch) {
@@ -276,23 +451,28 @@ export function compositionExportExtras({ loopPack, instrumentPack }) {
   return {
     budget(p) {
       if (p.schemaVersion !== 3) return { decode: 0, audible: false };
-      const mix = allMix(p),
-        i = mix.find((t) => t.role === "bilah");
-      const audible =
-        p.clips.some(
-          (c) =>
-            c.enabled &&
-            trackGain(
-              mix.find((t) => t.role === "clip-" + c.role),
-              mix,
-            ) > 0,
-        ) ||
-        (trackGain(i, mix) > 0 &&
-          p.patterns.some(
-            (a) => p.chain.includes(a.id) && a.notes.some(Boolean),
-          ));
+      const audible = p.chain.some((id) => {
+        const mix = allMix(p, id),
+          pattern = p.patterns.find((a) => a.id === id);
+        return (
+          patternClips(p, id).some(
+            (c) => c.enabled && !c.mute && trackGain(c, mix) > 0,
+          ) ||
+          (trackGain(
+            mix.find((t) => t.role === "bilah"),
+            mix,
+          ) > 0 &&
+            pattern.notes.some(Boolean))
+        );
+      });
       const decode =
-        p.clips.filter((c) => c.enabled).length * 240000 * 4 +
+        new Set(
+          compositionClips(p)
+            .filter((c) => c.enabled)
+            .map((c) => c.role + "/" + c.variant),
+        ).size *
+          240000 *
+          4 +
         (p.patterns.some((a) => a.notes.some(Boolean)) ? 5 * 67200 * 4 : 0);
       return { decode, audible };
     },
@@ -310,15 +490,41 @@ export function compositionExportExtras({ loopPack, instrumentPack }) {
         throw e;
       }
     },
-    schedule(context, master, p, extras, voices) {
+    schedule(context, master, p, extras, voices, drumMixer) {
       if (!extras) return;
       const mixer = createCompositionMixer(context, master, p);
-      mixer.update(p, true);
+      mixer.update(p, true, 0, compositionPatternId(p, 0));
       extras.mixer = mixer;
-      for (const c of p.clips.filter((c) => c.enabled))
-        voices.push(compositionLoop(context, mixer, extras.banks, c, 0));
+      if (p.loopScope !== "pattern-v1")
+        for (const c of p.clips.filter((c) => c.enabled))
+          voices.push(compositionLoop(context, mixer, extras.banks, c, 0));
+      let loopState = new Map();
       let prior;
       for (let i = 0; i < p.chain.length * 16; i++) {
+        if (p.loopScope === "pattern-v1" && i % 16 === 0) {
+          const id = compositionPatternId(p, i),
+            when = stepTime(i, p.timing.bpm, p.timing.swing);
+          mixer.update(p, i === 0, when, id);
+          drumMixer?.update(mixedStudioView(p, id).tracks, when, i === 0);
+          const result = transitionPatternLoops(
+            loopState,
+            patternClips(p, id),
+            (c) => {
+              const v = compositionLoop(
+                context,
+                mixer,
+                extras.banks,
+                c,
+                when,
+                (((i / 4) * 60) / p.timing.bpm) % 5,
+              );
+              voices.push(v);
+              return v;
+            },
+            (v) => fadeOutVoice(v, when),
+          );
+          loopState = result.next;
+        }
         const n = compositionNote(p, i);
         if (!n) continue;
         const v = compositionShot(

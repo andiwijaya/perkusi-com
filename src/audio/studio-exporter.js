@@ -36,15 +36,20 @@ export function studioExportBudget(
   if (
     valid.master.volume === 0 ||
     (!extra.audible &&
-      !arrangementEvents(mixed).some(
-        (e) =>
+      !arrangementEvents(mixed).some((e) => {
+        const eventTracks =
+          valid.loopScope === "pattern-v1"
+            ? mixedStudioView(valid, e.patternId).tracks
+            : mixed.tracks;
+        return (
           trackGain(
-            mixed.tracks.find((t) => t.role === e.role),
-            mixed.tracks,
+            eventTracks.find((t) => t.role === e.role),
+            eventTracks,
           ) *
             e.velocity >
-          0,
-      ))
+          0
+        );
+      }))
   )
     throw new ProjectError("emptyMix");
   return { valid, frames, seconds, bytes };
@@ -202,7 +207,14 @@ export class StudioWavExporter {
         voices.push(v);
         last.set(e.role, v);
       }
-      this.extensions?.schedule(context, master, budget.valid, extras, voices);
+      this.extensions?.schedule(
+        context,
+        master,
+        budget.valid,
+        extras,
+        voices,
+        mixer,
+      );
       // Exact arrangement length; fade the end rather than append hidden tail bars.
       master.gain.setValueAtTime(
         budget.valid.master.volume,

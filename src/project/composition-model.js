@@ -26,10 +26,32 @@ export function newCompositionClip(role) {
   if (!CLIP_ROLES.includes(role)) throw new ProjectError("invalidProject");
   return { role, variant: 1, enabled: false, ...mix() };
 }
+export function patternClips(p, id = p.activePattern) {
+  return p.loopScope === "pattern-v1"
+    ? p.patterns.find((pattern) => pattern.id === id).clips
+    : p.clips;
+}
+export function compositionClips(p) {
+  return p.loopScope === "pattern-v1"
+    ? p.patterns.flatMap((pattern) => pattern.clips)
+    : p.clips;
+}
+export function withPatternLoops(value) {
+  const p = structuredClone(value);
+  if (p.loopScope === "pattern-v1") return p;
+  p.loopScope = "pattern-v1";
+  p.patterns = p.patterns.map((pattern) => ({
+    ...pattern,
+    clips: structuredClone(p.clips),
+  }));
+  delete p.clips;
+  return p;
+}
 export function editCompositionClip(p, role, field, value) {
   if (!["enabled", "variant", "volume", "pan", "mute", "solo"].includes(field))
     throw new ProjectError("invalidProject");
-  const existing = p.clips.find((c) => c.role === role);
+  const clips = patternClips(p),
+    existing = clips.find((c) => c.role === role);
   const next = { ...(existing || newCompositionClip(role)), [field]: value };
   if (
     !CLIP_ROLES.includes(role) ||
@@ -39,7 +61,7 @@ export function editCompositionClip(p, role, field, value) {
     throw new ProjectError("invalidProject");
   validateMix(next);
   if (existing) Object.assign(existing, next);
-  else p.clips.push(next);
+  else clips.push(next);
   if (field === "enabled" && value) p.timing.bpm = 96;
 }
 function object(v, keys) {
@@ -70,6 +92,7 @@ export function studioView(p) {
   const base = { ...p };
   delete base.clipPack;
   delete base.clips;
+  delete base.loopScope;
   delete base.instrument;
   return {
     ...base,
@@ -114,7 +137,7 @@ export function validateComposition(v, catalog) {
     "chain",
     "export",
     "clipPack",
-    "clips",
+    ...(v.loopScope === "pattern-v1" ? ["loopScope"] : ["clips"]),
     "instrument",
   ]);
   if (v.schemaVersion !== 3 || v.mode !== "composition")
@@ -122,29 +145,48 @@ export function validateComposition(v, catalog) {
   object(v.clipPack, Object.keys(CLIP_PACK));
   if (Object.keys(CLIP_PACK).some((k) => v.clipPack[k] !== CLIP_PACK[k]))
     throw new ProjectError("unknownPack");
-  if (!Array.isArray(v.clips) || v.clips.length > 6)
-    throw new ProjectError("invalidProject");
-  const roles = new Set();
-  for (const c of v.clips) {
-    object(c, ["role", "variant", "enabled", "volume", "pan", "mute", "solo"]);
-    if (
-      !CLIP_ROLES.includes(c.role) ||
-      roles.has(c.role) ||
-      ![1, 2].includes(c.variant) ||
-      typeof c.enabled !== "boolean"
-    )
+  const collections =
+    v.loopScope === "pattern-v1" ? v.patterns?.map((p) => p.clips) : [v.clips];
+  if (!Array.isArray(collections)) throw new ProjectError("invalidProject");
+  for (const clips of collections) {
+    if (!Array.isArray(clips) || clips.length > 6)
       throw new ProjectError("invalidProject");
-    roles.add(c.role);
-    validateMix(c);
+    const roles = new Set();
+    for (const c of clips) {
+      object(c, [
+        "role",
+        "variant",
+        "enabled",
+        "volume",
+        "pan",
+        "mute",
+        "solo",
+      ]);
+      if (
+        !CLIP_ROLES.includes(c.role) ||
+        roles.has(c.role) ||
+        ![1, 2].includes(c.variant) ||
+        typeof c.enabled !== "boolean"
+      )
+        throw new ProjectError("invalidProject");
+      roles.add(c.role);
+      validateMix(c);
+    }
   }
   object(v.instrument, ["id", "version", "volume", "pan", "mute", "solo"]);
   if (v.instrument.id !== "bilah" || v.instrument.version !== "1.0.0")
     throw new ProjectError("unknownPack");
   validateMix(v.instrument);
-  if (v.clips.some((c) => c.enabled) && v.timing?.bpm !== 96)
+  if (compositionClips(v).some((c) => c.enabled) && v.timing?.bpm !== 96)
     throw new ProjectError("clipTempo");
   for (const p of v.patterns || []) {
-    object(p, ["id", "name", "steps", "notes"]);
+    object(p, [
+      "id",
+      "name",
+      "steps",
+      "notes",
+      ...(v.loopScope === "pattern-v1" ? ["clips"] : []),
+    ]);
     if (!Array.isArray(p.notes) || p.notes.length !== 16)
       throw new ProjectError("invalidProject");
     for (const n of p.notes)
@@ -205,8 +247,10 @@ export function reverseReasons(p) {
     reasons.push("drums");
   if (p.patterns.some((a) => a.notes.some(Boolean))) reasons.push("notes");
   if (
-    p.clips.length !== 6 ||
-    p.clips.some((c) => c.volume !== 1 || c.pan !== 0 || c.mute || c.solo) ||
+    patternClips(p).length !== 6 ||
+    compositionClips(p).some(
+      (c) => c.volume !== 1 || c.pan !== 0 || c.mute || c.solo,
+    ) ||
     p.tracks.some((t) => t.volume !== 0.8 || t.pan !== 0 || t.mute || t.solo) ||
     p.instrument.volume !== 0.65 ||
     p.instrument.pan !== 0 ||
@@ -214,6 +258,13 @@ export function reverseReasons(p) {
     p.instrument.solo
   )
     reasons.push("mix");
+  if (
+    p.loopScope === "pattern-v1" &&
+    p.patterns.some(
+      (a) => JSON.stringify(a.clips) !== JSON.stringify(patternClips(p)),
+    )
+  )
+    reasons.push("patternLoops");
   return reasons;
 }
 export function toBeatbox(p, derived = false) {
@@ -229,7 +280,7 @@ export function toBeatbox(p, derived = false) {
     timing: { bpm: 96, meter: [4, 4] },
     master: { ...p.master },
     tracks: CLIP_ROLES.map((role) => {
-      const c = p.clips.find((c) => c.role === role);
+      const c = patternClips(p).find((c) => c.role === role);
       return {
         role,
         variant: c?.variant || 1,
@@ -239,10 +290,10 @@ export function toBeatbox(p, derived = false) {
     export: { bars: p.chain.length === 8 ? 8 : 4 },
   };
 }
-export function allMix(p) {
+export function allMix(p, patternId = p.activePattern) {
   return [
     ...p.tracks,
-    ...p.clips.map((c) => ({
+    ...patternClips(p, patternId).map((c) => ({
       ...c,
       role: "clip-" + c.role,
       mute: c.mute || !c.enabled,
@@ -250,9 +301,9 @@ export function allMix(p) {
     { ...p.instrument, role: "bilah" },
   ];
 }
-export function mixedStudioView(p) {
+export function mixedStudioView(p, patternId = p.activePattern) {
   const v = studioView(p),
-    solo = allMix(p).some((t) => t.solo);
+    solo = allMix(p, patternId).some((t) => t.solo);
   v.tracks = v.tracks.map((t) => ({ ...t, mute: t.mute || (solo && !t.solo) }));
   return v;
 }

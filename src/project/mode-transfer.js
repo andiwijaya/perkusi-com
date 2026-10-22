@@ -27,6 +27,8 @@ const copy = {
     drums: "Step drum kustom",
     notes: "Nada Bilah",
     mix: "Mix atau layer berbeda",
+    patternLoops:
+      "Pilihan loop berbeda antar pola; salinan hanya memakai pola terpilih",
     continue: "Lanjutkan",
     derived: "Buat salinan turunan",
     cancel: "Batal",
@@ -64,6 +66,8 @@ const copy = {
     drums: "Custom drum steps",
     notes: "Bilah notes",
     mix: "Different mix or layers",
+    patternLoops:
+      "Different loops across patterns; the copy uses the selected pattern only",
     continue: "Continue",
     derived: "Create derived copy",
     cancel: "Cancel",

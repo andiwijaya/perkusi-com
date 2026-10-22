@@ -12,6 +12,7 @@ import {
 import {
   newComposition,
   compositionDemo,
+  withPatternLoops,
 } from "../project/composition-model.js";
 import {
   initCompositionPanel,
@@ -76,7 +77,7 @@ export function initStudio() {
     loopPack: originalGroovePack,
     instrumentPack,
   });
-  const history = new ProjectHistory(newComposition(), (p) =>
+  const history = new ProjectHistory(withPatternLoops(newComposition()), (p) =>
     validateProject(p, studioCatalog),
   );
   const store = new CompositionStore(studioCatalog),
@@ -183,7 +184,7 @@ export function initStudio() {
     }
   }
   function apply(p) {
-    const valid = validateProject(p, studioCatalog);
+    const valid = withPatternLoops(validateProject(p, studioCatalog));
     engine.rewind();
     engine.arrangement = true;
     $("chain-mode").checked = true;
@@ -726,7 +727,12 @@ export function initStudio() {
             )
           )
             break;
-          edit((p) => Object.assign(p, compositionDemo($("demo-kind").value)));
+          edit((p) =>
+            Object.assign(
+              p,
+              withPatternLoops(compositionDemo($("demo-kind").value)),
+            ),
+          );
           engine.rewind();
           engine.arrangement = true;
           $("chain-mode").checked = true;
@@ -737,6 +743,7 @@ export function initStudio() {
             const a = p.patterns.find((a) => a.id === p.activePattern);
             a.steps = emptyPattern().steps;
             a.notes = Array(16).fill(null);
+            if (p.loopScope === "pattern-v1") a.clips = [];
           });
           break;
         case "st-new":
@@ -750,7 +757,11 @@ export function initStudio() {
                   ? structuredClone(
                       p.patterns.find((a) => a.id === p.activePattern),
                     )
-                  : { ...emptyPattern(), notes: Array(16).fill(null) };
+                  : {
+                      ...emptyPattern(),
+                      notes: Array(16).fill(null),
+                      ...(p.loopScope === "pattern-v1" ? { clips: [] } : {}),
+                    };
             a.id = id;
             a.name = id.toUpperCase();
             p.patterns.push(a);

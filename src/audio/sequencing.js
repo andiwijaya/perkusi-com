@@ -69,6 +69,17 @@ export function createTrackMixer(context, output, tracks) {
       }
       nodes.clear();
     },
+    cancelFrom(when) {
+      for (const n of nodes.values())
+        for (const param of [n.gain.gain, n.pan.pan]) {
+          try {
+            param.cancelAndHoldAtTime?.(when);
+          } catch {
+            /* A new target follows cancellation. */
+          }
+          param.cancelScheduledValues(when);
+        }
+    },
   };
 }
 export function scheduleShot(

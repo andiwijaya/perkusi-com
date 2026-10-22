@@ -651,6 +651,7 @@ export class AudioEngine {
       running = this.transport.running;
     const beat = this.transport.beatsAt(now);
     if (running && reschedule) {
+      this.composition?.cancelScheduled?.(now);
       this.rememberSequencePosition(now);
       for (const v of [...this.voices]) if (v.when > now) this.removeVoice(v);
       this.transport.pause(now);
@@ -717,6 +718,7 @@ export class AudioEngine {
       this.nextStep++;
       if (when < now + 0.002) continue;
       this.composition?.step(index, when);
+      if (!this.transport.running) return;
       for (const e of sequenceEvents(this.sequence, index, this.arrangement))
         this.addShot(e.role, when, e.velocity, { index, ...e });
     }
@@ -774,6 +776,7 @@ export class AudioEngine {
   pause() {
     if (this.disposed) return;
     this.playbackRequested = false;
+    this.composition?.cancelScheduled?.(this.context?.currentTime || 0);
     this.rememberSequencePosition(this.context?.currentTime || 0);
     ++this.operation;
     for (const bank of this.banks) bank.cancelLoading();
