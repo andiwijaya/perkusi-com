@@ -1,4 +1,10 @@
 import {
+  demungPelogPack,
+  demungSlendroPack,
+  demungLevel,
+  demungNotices,
+} from "./instruments/demung.js";
+import {
   bonangBarungPelogPack,
   bonangBarungSlendroPack,
   bonangBarungLevel,
@@ -59,6 +65,16 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "demung-pelog": createExtraSampler(engine, demungPelogPack, demungLevel, {
+      releaseBudget: 4,
+      maxOneShotSeconds: 15,
+    }),
+    "demung-slendro": createExtraSampler(
+      engine,
+      demungSlendroPack,
+      demungLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 15 },
+    ),
     "bonang-barung-pelog": createExtraSampler(
       engine,
       bonangBarungPelogPack,
@@ -127,7 +143,10 @@ export function initPadStation() {
     "saron-barung-slendro",
     "bonang-barung-pelog",
     "bonang-barung-slendro",
+    "demung-pelog",
+    "demung-slendro",
   ]);
+  const exclusive = new Set(["demung-pelog", "demung-slendro"]);
   const extra = {
     play: (pitch) => samplers[selected].play(pitch),
     stop: () => Object.values(samplers).forEach((s) => s.stop()),
@@ -215,6 +234,7 @@ export function initPadStation() {
     peking: pekingNotices,
     "saron-barung": saronBarungNotices,
     "bonang-barung": bonangBarungNotices,
+    demung: demungNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
@@ -242,7 +262,10 @@ export function initPadStation() {
     if (!Object.hasOwn(samplers, e.target.value) || e.target.value === selected)
       return;
     owner.stop();
-    if (sustained.has(selected)) samplers[selected].unload();
+    // Large banks replace extra caches; core banks are owned separately.
+    if (exclusive.has(e.target.value))
+      for (const sampler of Object.values(samplers)) sampler.unload();
+    else if (sustained.has(selected)) samplers[selected].unload();
     selected = e.target.value;
     root.querySelector(".ps-extra-pads").innerHTML =
       renderExtraButtons(selected);

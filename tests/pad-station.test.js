@@ -263,3 +263,16 @@ test("standalone Bonang barung exposes eight curated strikes and clearly holds f
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Demung preserves all recorded notes and discloses cache replacement without Studio expansion", () => {
+  assert.equal(extraPadNotes["demung-pelog"].notes.length, 7);
+  assert.equal(extraPadNotes["demung-slendro"].notes.length, 5);
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="demung"'));
+    assert(html.includes("SARON_SDPL1.wav"));
+    assert(html.includes("SARON_SDSL6.wav"));
+    assert(extraPadNotes["demung-pelog"].info[l].includes("cache"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});

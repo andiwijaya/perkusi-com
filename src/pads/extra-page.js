@@ -262,3 +262,45 @@ for (const locale of ["id", "en"])
     (locale === "id"
       ? "Sumber Pelog 3/4/7 dan Slendro 6 ditahan untuk kurasi. Gain bukan perbaikan clipping sumber."
       : "Pelog 3/4/7 and Slendro 6 sources are held for curation. Gain is not a source-clipping repair.");
+
+Object.assign(extraPadNotes, {
+  "demung-pelog": {
+    name: "Demung",
+    option: "Demung - Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-4", "Pelog 4"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan. Memilih bank ini membersihkan cache instrumen tambahan sebelumnya agar tetap dalam batas memori; pad utama tetap tersedia.",
+      en: "Full recorded tails are retained. Selecting this bank clears previous additional-instrument caches to stay within the memory budget; core pads remain available.",
+    },
+  },
+  "demung-slendro": {
+    name: "Demung",
+    option: "Demung - Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan. Memilih bank ini membersihkan cache instrumen tambahan sebelumnya agar tetap dalam batas memori; pad utama tetap tersedia.",
+      en: "Full recorded tails are retained. Selecting this bank clears previous additional-instrument caches to stay within the memory budget; core pads remain available.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].demungCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Demung: SARON_SDPL1.wav, SARON_SDPL2.wav, SARON_SDPL3.wav, SARON_SDPL4.wav, SARON_SDPL5.wav, SARON_SDPL6.wav, SARON_SDPL7.wav, SARON_SDSL1.wav, SARON_SDSL2.wav, SARON_SDSL3.wav, SARON_SDSL5.wav, SARON_SDSL6.wav",
+  );
