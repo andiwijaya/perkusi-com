@@ -279,6 +279,8 @@ export function initCompositionPanel({
   }
   listen(document, "keydown", (event) => {
     if (
+      event.defaultPrevented ||
+      event.target.closest(".st-live-pads") ||
       event.ctrlKey ||
       event.metaKey ||
       event.altKey ||

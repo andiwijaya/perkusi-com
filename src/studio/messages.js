@@ -55,8 +55,8 @@ const pairs = {
   ],
   pads: ["Pad dimainkan langsung", "Play the pads"],
   padsHint: [
-    "Tombol 1–8 memainkan pad saat tidak sedang mengetik. Pad tidak merekam atau mengubah pola.",
-    "Keys 1–8 play pads when you are not typing. Pads do not record or change the pattern.",
+    "1-8: drum; A/S: Kendhang; D/F/G: bass; H/J/K: gitar. Saat fokus di area pad, Z/X/C/V/B: Bilah. Pintasan aktif saat tidak mengetik. Pad tidak merekam, mengubah pola, atau mengganti nada pilihan editor.",
+    "1-8: drums; A/S: Kendhang; D/F/G: bass; H/J/K: guitar. While focused in the pad area, Z/X/C/V/B: Bilah. Shortcuts work when not typing. Pads do not record, change patterns, or select editor notes.",
   ],
   mixer: ["Mixer", "Mixer"],
   volume: ["Level", "Level"],

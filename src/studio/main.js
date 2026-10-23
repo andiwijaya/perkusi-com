@@ -28,6 +28,7 @@ import { withGuitar, emptyGuitarNotes } from "../project/guitar.js";
 import { bassPack, bassNotices } from "./bass-pack.js";
 import { guitarPack, guitarNotices } from "./guitar-pack.js";
 import { studioMessages, studioRoleNames } from "./messages.js";
+import { initLivePads } from "./live-pads.js";
 import {
   ProjectHistory,
   emptyPattern,
@@ -128,6 +129,7 @@ export function initStudio() {
   let savedItems = [],
     storeAvailable = true;
   const padTimers = new Set();
+  let livePads = null;
   const importLocks = new Map();
   const life = new AbortController(),
     listen = (target, event, fn) =>
@@ -222,6 +224,7 @@ export function initStudio() {
       studioCatalog.kits.findIndex((k) => k.id === p.pack.id) + 1,
     );
     compositionPanel.update();
+    livePads?.update();
     $("kit").value = p.pack.id;
     $("bpm").value = p.timing.bpm;
     $("swing").value = p.timing.swing;
@@ -518,6 +521,17 @@ export function initStudio() {
       }
     }
   }
+  async function instrumentPad(family, pitch) {
+    if (busy || reading || receiving || disposed) return;
+    if (engine.status !== "playing") engine.outputStage?.setProgrammeGain(1);
+    try {
+      await engine.composition.pad(pitch, family);
+    } catch {
+      engine.error = "audio-start";
+    } finally {
+      if (!disposed) renderStatus();
+    }
+  }
   function nextPattern(p) {
     let i = 1;
     while (p.patterns.some((a) => a.id === "p" + i)) i++;
@@ -550,6 +564,7 @@ export function initStudio() {
     $("redo").disabled = !history.future.length || busy || reading || receiving;
     if (reading) for (const el of importLocks.keys()) el.disabled = true;
     compositionPanel.update();
+    livePads?.update();
   }
   function ownFocus() {
     const el = document.activeElement;
@@ -637,13 +652,7 @@ export function initStudio() {
       return;
     }
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
-    if (/^[1-8]$/.test(event.key)) {
-      event.preventDefault();
-      void pad(STUDIO_ROLES[Number(event.key) - 1]);
-    } else if (
-      event.code === "Space" &&
-      !event.target.closest("button,a,summary")
-    ) {
+    if (event.code === "Space" && !event.target.closest("button,a,summary")) {
       event.preventDefault();
       if (engine.transport.running) engine.pause();
       else void play();
@@ -707,7 +716,6 @@ export function initStudio() {
       return;
     }
     if (target.dataset.stPad) {
-      void pad(target.dataset.stPad);
       return;
     }
     if (target.dataset.stMute || target.dataset.stSolo) {
@@ -991,6 +999,7 @@ export function initStudio() {
     life.abort();
     transfer.dispose();
     compositionPanel.dispose();
+    livePads?.dispose();
     exporter.dispose();
     delivery.dispose();
     readyFile = null;
@@ -1014,6 +1023,16 @@ export function initStudio() {
     edit,
     engine,
     locked: () => busy || reading || receiving || disposed,
+  });
+  livePads = initLivePads({
+    root,
+    playDrum: pad,
+    playInstrument: instrumentPad,
+    locked: () => busy || reading || receiving || disposed,
+    onError: () => {
+      engine.error = "audio-start";
+      renderStatus();
+    },
   });
   for (const kind of ["kit", "demo-kind"]) {
     $(kind).replaceChildren(
