@@ -1,4 +1,10 @@
 import {
+  bonangBarungPelogPack,
+  bonangBarungSlendroPack,
+  bonangBarungLevel,
+  bonangBarungNotices,
+} from "./instruments/bonang-barung.js";
+import {
   saronBarungPelogPack,
   saronBarungSlendroPack,
   saronBarungLevel,
@@ -53,6 +59,18 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "bonang-barung-pelog": createExtraSampler(
+      engine,
+      bonangBarungPelogPack,
+      bonangBarungLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 15 },
+    ),
+    "bonang-barung-slendro": createExtraSampler(
+      engine,
+      bonangBarungSlendroPack,
+      bonangBarungLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 15 },
+    ),
     "saron-barung-pelog": createExtraSampler(
       engine,
       saronBarungPelogPack,
@@ -107,6 +125,8 @@ export function initPadStation() {
     "peking-slendro",
     "saron-barung-pelog",
     "saron-barung-slendro",
+    "bonang-barung-pelog",
+    "bonang-barung-slendro",
   ]);
   const extra = {
     play: (pitch) => samplers[selected].play(pitch),
@@ -194,6 +214,7 @@ export function initPadStation() {
     kenong: kenongNotices,
     peking: pekingNotices,
     "saron-barung": saronBarungNotices,
+    "bonang-barung": bonangBarungNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);

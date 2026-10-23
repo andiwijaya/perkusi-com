@@ -219,3 +219,46 @@ for (const locale of ["id", "en"])
       " KETHUK_KtSL2.wav",
     "Saron barung: SARON_SBPL1.wav, SARON_SBPL2.wav, SARON_SBPL3.wav, SARON_SBPL4.wav, SARON_SBPL5.wav, SARON_SBPL6.wav, SARON_SBPL7.wav, SARON_SBSL1.wav, SARON_SBSL2.wav, SARON_SBSL3.wav, SARON_SBSL5.wav, SARON_SBSL6.wav",
   );
+
+Object.assign(extraPadNotes, {
+  "bonang-barung-pelog": {
+    name: "Bonang barung",
+    option: "Bonang barung - Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+    ],
+    info: {
+      id: "Pilihan strike Pelog. Derajat 3, 4, dan 7 belum disertakan karena masih memerlukan kurasi audio. Tail rekaman penuh dipertahankan.",
+      en: "Selected Pelog strikes. Degrees 3, 4 and 7 are not included pending audio curation. Full recorded tails are retained.",
+    },
+  },
+  "bonang-barung-slendro": {
+    name: "Bonang barung",
+    option: "Bonang barung - Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+    ],
+    info: {
+      id: "Pilihan strike Slendro. Derajat 6 belum disertakan karena masih memerlukan kurasi audio. Tail rekaman penuh dipertahankan.",
+      en: "Selected Slendro strikes. Degree 6 is not included pending audio curation. Full recorded tails are retained.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].bonangBarungCredits =
+    extraPadCopy[locale].credits.replace(
+      "Kethuk: KETHUK_KtPL6.wav " +
+        (locale === "id" ? "dan" : "and") +
+        " KETHUK_KtSL2.wav",
+      "Bonang barung: BONANG_BBPL1.wav, BONANG_BBPL2.wav, BONANG_BBPL5.wav, BONANG_BBPL6.wav, BONANG_BBSL1.wav, BONANG_BBSL2.wav, BONANG_BBSL3.wav, BONANG_BBSL5.wav",
+    ) +
+    " " +
+    (locale === "id"
+      ? "Sumber Pelog 3/4/7 dan Slendro 6 ditahan untuk kurasi. Gain bukan perbaikan clipping sumber."
+      : "Pelog 3/4/7 and Slendro 6 sources are held for curation. Gain is not a source-clipping repair.");

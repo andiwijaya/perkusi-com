@@ -12,10 +12,10 @@ No retired V5/V6 runtime, mic, loop transport, new downloads or tuning claims.
 | Kempyang       | LIVE — 26333a5f                               | Two retained strikes; next only after Kethuk production gate.                                           |
 | Kenong         | LIVE — ef37d9c9                               | 11 retained strikes; organize by recorded laras, no invented notes.                                     |
 | Demung         | Pending                                       | Source tails 5.9–12.2 s; measure sustain and budgets before admission.                                  |
-| Saron barung   | Local qualification PASS; publication pending | Source tails up to 17.3 s; no arbitrary blanket 2 s crop.                                               |
+| Saron barung   | LIVE - 83bd28a4                               | Source tails up to 17.3 s; no arbitrary blanket 2 s crop.                                               |
 | Peking         | LIVE - 84f81c1d                               | Source tails 2.8–14.5 s; tail/onset review required.                                                    |
 | Slenthem       | Pending                                       | Source tails up to 45 s; bounded sustain contract required.                                             |
-| Bonang barung  | Pending                                       | Long tails; note/laras and retrigger policy required.                                                   |
+| Bonang barung  | Local qualification PASS; publication pending | Eight curated strikes; four source-quality holds, not a complete12-note bank.                           |
 | Bonang panerus | LIVE - d1805943                               | Long tails; note/laras and retrigger policy required.                                                   |
 | Kempul         | Pending                                       | Long resonance; voice/tail review required.                                                             |
 | Gong ageng     | Pending                                       | 20 s retained source; do not repeat former overlap behavior.                                            |
@@ -429,6 +429,88 @@ all-pad knee occupancy ~0.501% Pelog / 0.332% Slendro; double stress
 ~0.995% / 0.736%. Quiet tails affect this fraction; stress mixes exceed steady
 polyphony. Compression is retained, with no new limiter or attenuation.
 
-Evidence: qa-artifacts/pad-saron-barung-2026-10-23. Publication pending.
+Published 83bd28a481ccd472a259c3f2a33e01e45c165de1; Cloudflare deployment
+d94736a3-3ab9-43e2-972f-00fc4e92a109 succeeded. All 227 strict bodies /
+18 routes completed over an initial 79 verified reads and 148 resumed reads.
+One 4,250-byte guitar manifest request timed out at 15 s; its isolated diagnostic
+returned exact bytes. The original 79 records remain hash-identical. No body
+comparison was weakened or network root cause claimed. Four production all-note
+profiles, controls, bursts, Studio 21 pads / 21 decodes without Saron requests,
+three WAV kit oracles and Beatbox repeat/reset passed. Receipt:
+qa-artifacts/pad-saron-barung-2026-10-23/publication/RECEIPT.json, SHA256
+dc653eaf17505a7641bf5349c58a83800c94afd9f0cf0f9f05e9eb39bcdc7be7.
 Physical phone/listening/Safari, long sessions and historical timing/Stop/loading
 observations remain outside the demonstrated gates.
+
+## Bonang barung qualification - 2026-10-23
+
+Eight eligible source-labelled strikes: Pelog 1/2/5/6 and Slendro 1/2/3/5.
+Four originals remain held: fs-261805 (Pelog3), fs-261803 (Pelog4), fs-261783
+(Pelog7), fs-261710 (Slendro6), flagged for full-scale integer samples in the
+original source. Audible distortion has not been established; delivery gain
+is not a repair. No complete 12-note-bank claim. Held originals, optimized
+versions, source archives and license evidence remain protected locally;
+they are not imported as playable pads. UI and credits state the omissions.
+
+All actual eligible FLAC hashes match the retained registry. CC BY 3.0
+recording attribution, raw source forms, modification notices and Artistic 2.0
+package notices are exposed. Full 5.625-10.315 s available stereo tails and
+source timing are retained. Channels differ and often have different levels;
+no mono fold or per-channel gain alteration. No crop, denoise or retune.
+Eligible delivered files have zero full-scale frames, DC near -0.000012,
+onsets 0-61 frames at -60 dB and quiet final 50 ms. Source/culture/listening
+qualification remains distinct from these technical measurements.
+
+Calibration uses only the eight eligible files, not the four held strikes.
+Uniform gain x1.207029 raises strongest K400 -22.153 to -20.519 and peak
+0.53851 to 0.6500. The ~3.46 dB energy gap to nylon protects transient
+headroom and within-bank dynamics; no perceived-loudness equality claim.
+Explicit standalone 15 s profile and existing four sounding + four releases
+(maximum eight); no change to encoded 4 MiB / retained 32 MiB guards,
+shared engine, Studio catalog, project schema, mappings or current gains.
+
+611 tests, lint and official build 9c4b634b-3a13-4749-8f8f-e84f226836e8 passed.
+Four desktop/mobile ID/EN CSP profiles play all eight actual mappings and
+verify the longest eligible natural tail, touch/keyboard/typing guards,
+same-bank warmth, intentional reload and disposal. Mobile screenshot inspected.
+Five native lifecycle gates: 20 Stop/restarts plus 31.69 s repeat admit
+162 sources, all ended; two decoded notes / 6,928,216 bytes stay stable.
+Twenty twelve-gesture bursts: 240 attempted, 84 admitted, maximum eight
+native voices, zero after Stop and no phantom work; overload is refused,
+not queued. Cold Stop/resume, failure/retry, controls, locale and route/back
+gates passed. No human listening or physical-touch qualification is implied.
+
+Actual hot core cache 4,293,128 bytes; all short + core 10,746,352.
+Saron-to-Bonang transition evicts the prior long cache before new admission.
+Bonang Pelog peak 24,618,992 bytes, Slendro 23,538,672. Leaving returns
+exactly to the short baseline. Pending native leases remain until real
+settlement; zero stale voice and fresh intent succeeds. Disposal leaves
+zero retained cache/voices and a closed context. Higher device rates may
+reach the unchanged cache guard sooner and remain unqualified.
+
+All 98 previously published audio files and 62 Studio binary assets are exact.
+Active audio/Studio/Beatbox/project source blobs are unchanged. Generated
+alias differences are not alpha-normalized as semantic proof. Seven Station,
+ten Studio/Beatbox gates and three independent kit WAV oracles (<=1 LSB) pass.
+Core matched runs each create/end 255 sources with 4,293,128 decoded bytes
+and zero active/intervals. Heap snapshots 3,742,804 before / 5,275,824 after
+are GC-sensitive, not precise overhead. Combined 31.5 s workload: 619
+created/ended, 25 decodes / 18,165,768 bytes stable. Owned-browser private
+committed sums: 297,902,080 baseline core, 307,507,200 candidate core,
+315,445,248 combined, 314,351,616 disposed. These include browser/native
+allocator behavior and do not isolate audio-thread CPU or resident PCM.
+Separate controlled-GC blocks restore listeners/nodes to 51/894 each time
+(33 listeners disposed); heap 2.782-3.571 MB is not claimed flat or leak-free.
+
+32 full-tail renders cover default/maximum master at 44.1/48 kHz, using
+one recorded scale and the actual default Pad Station kit per render.
+Native controls separately verify mute/master zero; Studio's three kits
+are covered by independent WAV regression. Peak about 0.881606 through
+the inherited limiter. At 48 kHz / maximum master, all-pad knee occupancy
+~0.609% Pelog / 0.595% Slendro; double stress ~1.253% / 1.302%.
+Conservative stress exceeds steady admitted polyphony and quiet tails
+affect the denominator. Compression remains; no new limiter or attenuation.
+
+Evidence: qa-artifacts/pad-bonang-barung-2026-10-23. Publication pending.
+Physical listening/phone/Safari, long sessions and historical timing,
+Stop observer and loading observations remain unqualified, not declared fixed.

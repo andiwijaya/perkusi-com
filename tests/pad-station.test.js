@@ -243,3 +243,23 @@ test("standalone Saron barung preserves source-labelled scale banks and attribut
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Bonang barung exposes eight curated strikes and clearly holds four source degrees", () => {
+  assert.deepEqual(
+    extraPadNotes["bonang-barung-pelog"].notes.map((n) => n[0]),
+    ["pelog-1", "pelog-2", "pelog-5", "pelog-6"],
+  );
+  assert.deepEqual(
+    extraPadNotes["bonang-barung-slendro"].notes.map((n) => n[0]),
+    ["slendro-1", "slendro-2", "slendro-3", "slendro-5"],
+  );
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="bonang-barung"'));
+    assert(html.includes("BONANG_BBPL1.wav"));
+    assert(html.includes("BONANG_BBSL5.wav"));
+    assert(extraPadNotes["bonang-barung-pelog"].info[l].includes("3, 4"));
+    assert(extraPadNotes["bonang-barung-slendro"].info[l].includes("6"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});
