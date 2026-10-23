@@ -9,6 +9,8 @@ import {
   KENDHANG_CREDITS,
   kendhangUsed,
 } from "./kendhang.js";
+import { BASS_PITCHES, BASS_CREDITS, bassUsed } from "./bass.js";
+import { GUITAR_PITCHES, GUITAR_CREDITS, guitarUsed } from "./guitar.js";
 export const CLIP_ROLES = [
   "kick",
   "snare",
@@ -100,6 +102,8 @@ export function studioView(p) {
   delete base.loopScope;
   delete base.instrument;
   delete base.kendhang;
+  delete base.bass;
+  delete base.guitar;
   return {
     ...base,
     schemaVersion: 2,
@@ -146,6 +150,8 @@ export function validateComposition(v, catalog) {
     ...(v.loopScope === "pattern-v1" ? ["loopScope"] : ["clips"]),
     "instrument",
     ...(Object.hasOwn(v, "kendhang") ? ["kendhang"] : []),
+    ...(Object.hasOwn(v, "bass") ? ["bass"] : []),
+    ...(Object.hasOwn(v, "guitar") ? ["guitar"] : []),
   ]);
   if (v.schemaVersion !== 3 || v.mode !== "composition")
     throw new ProjectError("unsupportedVersion");
@@ -202,6 +208,42 @@ export function validateComposition(v, catalog) {
       throw new ProjectError("unknownPack");
     validateMix(v.kendhang);
   }
+  if (Object.hasOwn(v, "bass")) {
+    object(v.bass, [
+      "id",
+      "version",
+      "credits",
+      "volume",
+      "pan",
+      "mute",
+      "solo",
+    ]);
+    if (
+      v.bass.id !== "electric-bass-short" ||
+      v.bass.version !== "1.0.0" ||
+      v.bass.credits !== BASS_CREDITS
+    )
+      throw new ProjectError("unknownPack");
+    validateMix(v.bass);
+  }
+  if (Object.hasOwn(v, "guitar")) {
+    object(v.guitar, [
+      "id",
+      "version",
+      "credits",
+      "volume",
+      "pan",
+      "mute",
+      "solo",
+    ]);
+    if (
+      v.guitar.id !== "nylon-guitar-short" ||
+      v.guitar.version !== "1.0.0" ||
+      v.guitar.credits !== GUITAR_CREDITS
+    )
+      throw new ProjectError("unknownPack");
+    validateMix(v.guitar);
+  }
   if (compositionClips(v).some((c) => c.enabled) && v.timing?.bpm !== 96)
     throw new ProjectError("clipTempo");
   for (const p of v.patterns || []) {
@@ -212,7 +254,39 @@ export function validateComposition(v, catalog) {
       "notes",
       ...(v.loopScope === "pattern-v1" ? ["clips"] : []),
       ...(Object.hasOwn(v, "kendhang") ? ["kendhang"] : []),
+      ...(Object.hasOwn(v, "bass") ? ["bassNotes"] : []),
+      ...(Object.hasOwn(v, "guitar") ? ["guitarNotes"] : []),
     ]);
+    if (Object.hasOwn(v, "bass")) {
+      if (!Array.isArray(p.bassNotes) || p.bassNotes.length !== 16)
+        throw new ProjectError("invalidProject");
+      for (const n of p.bassNotes)
+        if (n !== null) {
+          object(n, ["pitch", "velocity"]);
+          if (
+            !BASS_PITCHES.includes(n.pitch) ||
+            !Number.isFinite(n.velocity) ||
+            n.velocity <= 0 ||
+            n.velocity > 1
+          )
+            throw new ProjectError("invalidProject");
+        }
+    }
+    if (Object.hasOwn(v, "guitar")) {
+      if (!Array.isArray(p.guitarNotes) || p.guitarNotes.length !== 16)
+        throw new ProjectError("invalidProject");
+      for (const n of p.guitarNotes)
+        if (n !== null) {
+          object(n, ["pitch", "velocity"]);
+          if (
+            !GUITAR_PITCHES.includes(n.pitch) ||
+            !Number.isFinite(n.velocity) ||
+            n.velocity <= 0 ||
+            n.velocity > 1
+          )
+            throw new ProjectError("invalidProject");
+        }
+    }
     if (Object.hasOwn(v, "kendhang")) {
       object(p.kendhang, KENDHANG_STROKES);
       for (const row of Object.values(p.kendhang))
@@ -283,6 +357,8 @@ export function reverseReasons(p) {
     reasons.push("drums");
   if (p.patterns.some((a) => a.notes.some(Boolean))) reasons.push("notes");
   if (kendhangUsed(p)) reasons.push("kendhang");
+  if (bassUsed(p)) reasons.push("bass");
+  if (guitarUsed(p)) reasons.push("guitar");
   if (
     patternClips(p).length !== 6 ||
     compositionClips(p).some(
@@ -292,7 +368,17 @@ export function reverseReasons(p) {
     p.instrument.volume !== 0.65 ||
     p.instrument.pan !== 0 ||
     p.instrument.mute ||
-    p.instrument.solo
+    p.instrument.solo ||
+    (p.bass &&
+      (p.bass.volume !== 0.65 ||
+        p.bass.pan !== 0 ||
+        p.bass.mute ||
+        p.bass.solo)) ||
+    (p.guitar &&
+      (p.guitar.volume !== 0.65 ||
+        p.guitar.pan !== 0 ||
+        p.guitar.mute ||
+        p.guitar.solo))
   )
     reasons.push("mix");
   if (
@@ -337,6 +423,8 @@ export function allMix(p, patternId = p.activePattern) {
     })),
     { ...p.instrument, role: "bilah" },
     ...(p.kendhang ? [{ ...p.kendhang, role: "kendhang" }] : []),
+    ...(p.bass ? [{ ...p.bass, role: "bass" }] : []),
+    ...(p.guitar ? [{ ...p.guitar, role: "guitar" }] : []),
   ];
 }
 export function mixedStudioView(p, patternId = p.activePattern) {

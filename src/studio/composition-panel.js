@@ -7,6 +7,8 @@ import {
   compositionClips,
 } from "../project/composition-model.js";
 import { initKendhangPanel } from "./kendhang-panel.js";
+import { initBassPanel } from "./bass-panel.js";
+import { initGuitarPanel } from "./guitar-panel.js";
 const copy = {
   id: {
     title: "Loop pola & Bilah",
@@ -70,6 +72,8 @@ export function initCompositionPanel({
   engine,
   locked,
   kendhangNotices,
+  bassNotices,
+  guitarNotices,
 }) {
   const panel = document.createElement("section");
   panel.className = "composition-panel st-panel";
@@ -184,10 +188,28 @@ export function initCompositionPanel({
     locked,
     notices: kendhangNotices,
   });
+  const bass = initBassPanel({
+    after: panel.querySelector(".kendhang-section"),
+    current,
+    edit,
+    engine,
+    locked,
+    notices: bassNotices,
+  });
+  const guitar = initGuitarPanel({
+    after: panel.querySelector(".bass-section"),
+    current,
+    edit,
+    engine,
+    locked,
+    notices: guitarNotices,
+  });
   for (const role of CLIP_ROLES)
     controls(panel.querySelector(".v3-clips"), role, true);
   function update() {
     kendhang.update();
+    bass.update();
+    guitar.update();
     const p = current(),
       c = copy[locale()];
     panel
@@ -280,6 +302,8 @@ export function initCompositionPanel({
     update,
     dispose() {
       kendhang.dispose();
+      bass.dispose();
+      guitar.dispose();
       life.abort();
       panel.remove();
     },

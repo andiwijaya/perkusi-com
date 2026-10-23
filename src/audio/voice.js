@@ -130,15 +130,15 @@ function holdGain(voice, requestedTime) {
   return time;
 }
 
-function rampGain(voice, target, requestedTime) {
+function rampGain(voice, target, requestedTime, duration = MICROFADE) {
   const time = holdGain(voice, requestedTime);
-  voice.gain.gain.linearRampToValueAtTime(target, time + MICROFADE);
-  voice.envelope.push({ time: time + MICROFADE, value: target });
-  return time + MICROFADE;
+  voice.gain.gain.linearRampToValueAtTime(target, time + duration);
+  voice.envelope.push({ time: time + duration, value: target });
+  return time + duration;
 }
 
-export function fadeOutVoice(voice, when) {
-  voice.endTime = rampGain(voice, 0, when);
+export function fadeOutVoice(voice, when, duration = MICROFADE) {
+  voice.endTime = rampGain(voice, 0, when, duration);
 }
 
 export function cancelFade(voice, when) {

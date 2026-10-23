@@ -27,6 +27,8 @@ const copy = {
     drums: "Step drum kustom",
     notes: "Nada Bilah",
     kendhang: "Pukulan Kendhang Ciblon",
+    bass: "Nada bass elektrik",
+    guitar: "Nada gitar nylon",
     mix: "Mix atau layer berbeda",
     patternLoops:
       "Pilihan loop berbeda antar pola; salinan hanya memakai pola terpilih",
@@ -67,6 +69,8 @@ const copy = {
     drums: "Custom drum steps",
     notes: "Bilah notes",
     kendhang: "Kendhang Ciblon hits",
+    bass: "Electric bass notes",
+    guitar: "Nylon guitar notes",
     mix: "Different mix or layers",
     patternLoops:
       "Different loops across patterns; the copy uses the selected pattern only",

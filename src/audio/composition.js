@@ -21,6 +21,12 @@ import {
   KENDHANG_CREDITS,
   kendhangUsed,
 } from "../project/kendhang.js";
+import { BASS_PITCHES, BASS_CREDITS, bassUsed } from "../project/bass.js";
+import {
+  GUITAR_PITCHES,
+  GUITAR_CREDITS,
+  guitarUsed,
+} from "../project/guitar.js";
 
 // All loops occupy the full arrangement, at their original 96 BPM. Their native
 // two-bar phase continues across pattern boundaries. No time stretch or repitch.
@@ -61,6 +67,8 @@ export function createCompositionMixer(context, master, project) {
     ...CLIP_ROLES.map((role) => "clip-" + role),
     "bilah",
     ...(project.kendhang ? ["kendhang"] : []),
+    ...(project.bass ? ["bass"] : []),
+    ...(project.guitar ? ["guitar"] : []),
   ]) {
     const gain = context.createGain();
     if (role.startsWith("clip-")) {
@@ -150,10 +158,18 @@ export class CompositionBanks {
     this.kendhang = options.kendhangPack
       ? new SampleBank(options.kendhangPack(), options)
       : null;
+    this.bass = options.bassPack
+      ? new SampleBank(options.bassPack(), options)
+      : null;
+    this.guitar = options.guitarPack
+      ? new SampleBank(options.guitarPack(), options)
+      : null;
     this.banks = [
       ...this.loops,
       this.instrument,
       ...(this.kendhang ? [this.kendhang] : []),
+      ...(this.bass ? [this.bass] : []),
+      ...(this.guitar ? [this.guitar] : []),
     ];
   }
   async load(p, context, signal) {
@@ -173,6 +189,20 @@ export class CompositionBanks {
       for (const id of KENDHANG_STROKES)
         if (p.patterns.some((a) => a.kendhang[id].some((v) => v > 0)))
           jobs.push([this.kendhang, id]);
+    if (bassUsed(p))
+      for (const id of new Set(
+        p.patterns.flatMap((a) =>
+          a.bassNotes.filter(Boolean).map((n) => n.pitch),
+        ),
+      ))
+        jobs.push([this.bass, id]);
+    if (guitarUsed(p))
+      for (const id of new Set(
+        p.patterns.flatMap((a) =>
+          a.guitarNotes.filter(Boolean).map((n) => n.pitch),
+        ),
+      ))
+        jobs.push([this.guitar, id]);
     await Promise.all(
       jobs.map(async ([bank, id]) => {
         await bank.load(id, context);
@@ -214,11 +244,22 @@ export function compositionShot(
   family = "bilah",
 ) {
   if (prior && prior.endTime > when && prior.when <= when)
-    fadeOutVoice(prior, when);
+    fadeOutVoice(
+      prior,
+      when,
+      family === "bass" ? 0.02 : family === "guitar" ? 0.01 : undefined,
+    );
   const v = createOneShotVoice(
     context,
     mixer.nodes.get(family).gain,
-    (family === "bilah" ? banks.instrument : banks.kendhang).get(n.pitch),
+    (family === "bilah"
+      ? banks.instrument
+      : family === "bass"
+        ? banks.bass
+        : family === "guitar"
+          ? banks.guitar
+          : banks.kendhang
+    ).get(n.pitch),
     when,
     n.velocity,
   );
@@ -227,12 +268,17 @@ export function compositionShot(
   return v;
 }
 export class CompositionPlayback {
-  constructor(engine, { loopPack, instrumentPack, kendhangPack }) {
+  constructor(
+    engine,
+    { loopPack, instrumentPack, kendhangPack, bassPack, guitarPack },
+  ) {
     this.engine = engine;
     this.project = null;
     this.mixer = null;
     this.banks = new CompositionBanks(loopPack, instrumentPack, {
       kendhangPack,
+      bassPack,
+      guitarPack,
       validateCandidate: (entry, metrics) =>
         engine.admitCandidate(entry, metrics),
     });
@@ -246,6 +292,16 @@ export class CompositionPlayback {
       JSON.stringify(previous.patterns.map((a) => a.kendhang)) !==
         JSON.stringify(p.patterns.map((a) => a.kendhang));
     if (kendhangChanged) this.engine.pause();
+    const bassChanged =
+      !!previous &&
+      JSON.stringify(previous.patterns.map((a) => a.bassNotes)) !==
+        JSON.stringify(p.patterns.map((a) => a.bassNotes));
+    if (bassChanged) this.engine.pause();
+    const guitarChanged =
+      !!previous &&
+      JSON.stringify(previous.patterns.map((a) => a.guitarNotes)) !==
+        JSON.stringify(p.patterns.map((a) => a.guitarNotes));
+    if (guitarChanged) this.engine.pause();
     const patterned = p.loopScope === "pattern-v1";
     const loopChange =
       previous &&
@@ -286,11 +342,19 @@ export class CompositionPlayback {
         previous.tracks,
         previous.instrument,
         previous.kendhang,
-      ]) !== JSON.stringify([p.tracks, p.instrument, p.kendhang]);
+        previous.bass,
+        previous.guitar,
+      ]) !==
+        JSON.stringify([p.tracks, p.instrument, p.kendhang, p.bass, p.guitar]);
     this.engine.configureSequence(
       sequence,
       variant,
-      force || notesChanged || mixChanged || kendhangChanged,
+      force ||
+        notesChanged ||
+        mixChanged ||
+        kendhangChanged ||
+        bassChanged ||
+        guitarChanged,
     );
     if (patterned && this.context)
       this.applyPatternMix(
@@ -321,6 +385,8 @@ export class CompositionPlayback {
     return v;
   }
   start(when) {
+    this.bassChokes = [];
+    this.guitarChokes = [];
     if (this.project.loopScope === "pattern-v1") {
       this.loopState = new Map();
       this.loopTransitions = [];
@@ -381,6 +447,14 @@ export class CompositionPlayback {
         );
       }
     const n = compositionNote(this.project, index, this.engine.arrangement);
+    const bassNote = this.project.bass ? pattern.bassNotes[index % 16] : null;
+    if (bassNote && this.engine.voices.size < 64)
+      this.bassShot(bassNote, when, { index });
+    const guitarNote = this.project.guitar
+      ? pattern.guitarNotes[index % 16]
+      : null;
+    if (guitarNote && this.engine.voices.size < 64)
+      this.guitarShot(guitarNote, when, { index });
     if (!n || this.engine.voices.size >= 64) return;
     const prior = [...this.engine.voices]
       .filter((v) => v.id === "bilah" && v.when <= when)
@@ -390,6 +464,60 @@ export class CompositionPlayback {
       "note",
       { index, pitch: n.pitch, velocity: n.velocity },
     );
+  }
+  bassShot(n, when, detail = {}) {
+    const prior = [...this.engine.voices]
+        .reverse()
+        .filter((v) => v.id === "bass" && v.when <= when)
+        .sort((a, b) => b.when - a.when)[0],
+      priorEnd = prior?.endTime;
+    const v = compositionShot(
+      this.context,
+      this.mixer,
+      this.banks,
+      n,
+      when,
+      prior,
+      "bass",
+    );
+    this.bassChokes = (this.bassChokes ?? []).filter(
+      (t) => t.when > this.context.currentTime,
+    );
+    if (prior && priorEnd > when && when > this.context.currentTime)
+      this.bassChokes.push({ when, prior, priorEnd });
+    return this.own(v, "bass", {
+      pitch: n.pitch,
+      velocity: n.velocity,
+      ...detail,
+    });
+  }
+  guitarShot(n, when, detail = {}) {
+    const prior = [...this.engine.voices]
+        .reverse()
+        .filter(
+          (v) => v.id === "guitar" && v.pitch === n.pitch && v.when <= when,
+        )
+        .sort((a, b) => b.when - a.when)[0],
+      priorEnd = prior?.endTime;
+    const v = compositionShot(
+      this.context,
+      this.mixer,
+      this.banks,
+      n,
+      when,
+      prior,
+      "guitar",
+    );
+    this.guitarChokes = (this.guitarChokes ?? []).filter(
+      (t) => t.when > this.context.currentTime,
+    );
+    if (prior && priorEnd > when && when > this.context.currentTime)
+      this.guitarChokes.push({ when, prior, priorEnd });
+    return this.own(v, "guitar", {
+      pitch: n.pitch,
+      velocity: n.velocity,
+      ...detail,
+    });
   }
   applyPatternMix(index, when, immediate = false) {
     const id = compositionPatternId(
@@ -449,6 +577,28 @@ export class CompositionPlayback {
     this.loopTransitions.push({ when, prior, ...result });
   }
   cancelScheduled(when) {
+    for (const t of [...(this.bassChokes ?? [])].reverse())
+      if (
+        t.when > when &&
+        t.prior.when <= when &&
+        this.engine.voices.has(t.prior) &&
+        t.priorEnd > when
+      ) {
+        cancelFade(t.prior, when);
+        t.prior.endTime = t.priorEnd;
+      }
+    for (const t of [...(this.guitarChokes ?? [])].reverse())
+      if (
+        t.when > when &&
+        t.prior.when <= when &&
+        this.engine.voices.has(t.prior) &&
+        t.priorEnd > when
+      ) {
+        cancelFade(t.prior, when);
+        t.prior.endTime = t.priorEnd;
+      }
+    this.bassChokes = [];
+    this.guitarChokes = [];
     if (this.project?.loopScope !== "pattern-v1") return;
     for (const t of [...(this.loopTransitions ?? [])].reverse())
       if (t.when > when) {
@@ -468,8 +618,13 @@ export class CompositionPlayback {
   }
   async pad(pitch, family = "bilah") {
     if (
-      (family !== "bilah" && family !== "kendhang") ||
-      (family === "kendhang" && !KENDHANG_STROKES.includes(pitch))
+      (family !== "bilah" &&
+        family !== "kendhang" &&
+        family !== "bass" &&
+        family !== "guitar") ||
+      (family === "kendhang" && !KENDHANG_STROKES.includes(pitch)) ||
+      (family === "bass" && !BASS_PITCHES.includes(pitch)) ||
+      (family === "guitar" && !GUITAR_PITCHES.includes(pitch))
     )
       throw new Error("Unknown pad");
     const e = this.engine;
@@ -484,7 +639,13 @@ export class CompositionPlayback {
       this.mixer.update(this.project, true);
     }
     const bank =
-      family === "bilah" ? this.banks.instrument : this.banks.kendhang;
+      family === "bilah"
+        ? this.banks.instrument
+        : family === "bass"
+          ? this.banks.bass
+          : family === "guitar"
+            ? this.banks.guitar
+            : this.banks.kendhang;
     const entry = bank.get(pitch);
     if (!entry.buffer) await bank.load(pitch, context);
     if (e.disposed || operation !== e.operation || context.state !== "running")
@@ -499,6 +660,16 @@ export class CompositionPlayback {
       when = e.transport.timeAt(
         index / 4 + (index % 2 ? this.project.timing.swing / 4 : 0),
       );
+    }
+    if (family === "bass") {
+      if (e.voices.size < 64)
+        this.bassShot({ pitch, velocity: 1 }, when, { pad: true });
+      return;
+    }
+    if (family === "guitar") {
+      if (e.voices.size < 64)
+        this.guitarShot({ pitch, velocity: 1 }, when, { pad: true });
+      return;
     }
     if (e.voices.size < 64)
       this.own(
@@ -524,6 +695,8 @@ export class CompositionPlayback {
   dispose() {
     this.mixer?.dispose();
     this.mixer = null;
+    this.bassChokes = [];
+    this.guitarChokes = [];
     this.banks.dispose();
   }
 }
@@ -531,10 +704,20 @@ export function compositionExportExtras({
   loopPack,
   instrumentPack,
   kendhangPack,
+  bassPack,
+  guitarPack,
 }) {
   return {
     credits(p) {
-      return kendhangUsed(p) ? KENDHANG_CREDITS : null;
+      return (
+        [
+          kendhangUsed(p) ? KENDHANG_CREDITS : null,
+          bassUsed(p) ? BASS_CREDITS : null,
+          guitarUsed(p) ? GUITAR_CREDITS : null,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null
+      );
     },
     budget(p) {
       if (p.schemaVersion !== 3) return { decode: 0, audible: false };
@@ -545,6 +728,12 @@ export function compositionExportExtras({
           patternClips(p, id).some(
             (c) => c.enabled && !c.mute && trackGain(c, mix) > 0,
           ) ||
+          (p.bass &&
+            trackGain({ ...p.bass, role: "bass" }, mix) > 0 &&
+            pattern.bassNotes.some(Boolean)) ||
+          (p.guitar &&
+            trackGain({ ...p.guitar, role: "guitar" }, mix) > 0 &&
+            pattern.guitarNotes.some(Boolean)) ||
           (p.kendhang &&
             trackGain({ ...p.kendhang, role: "kendhang" }, mix) > 0 &&
             KENDHANG_STROKES.some((id) =>
@@ -566,13 +755,33 @@ export function compositionExportExtras({
           240000 *
           4 +
         (p.patterns.some((a) => a.notes.some(Boolean)) ? 5 * 67200 * 4 : 0) +
-        (kendhangUsed(p) ? (42780 + 32821) * 2 * 4 : 0);
+        (kendhangUsed(p) ? (42780 + 32821) * 2 * 4 : 0) +
+        (bassUsed(p)
+          ? new Set(
+              p.patterns.flatMap((a) =>
+                a.bassNotes.filter(Boolean).map((n) => n.pitch),
+              ),
+            ).size *
+            57600 *
+            4
+          : 0) +
+        (guitarUsed(p)
+          ? new Set(
+              p.patterns.flatMap((a) =>
+                a.guitarNotes.filter(Boolean).map((n) => n.pitch),
+              ),
+            ).size *
+            86400 *
+            4
+          : 0);
       return { decode, audible };
     },
     async prepare(context, p, signal) {
       if (p.schemaVersion !== 3) return null;
       const banks = new CompositionBanks(loopPack, instrumentPack, {
         kendhangPack,
+        bassPack,
+        guitarPack,
       });
       const cancel = () => banks.cancel();
       signal.addEventListener("abort", cancel);
@@ -595,6 +804,8 @@ export function compositionExportExtras({
           voices.push(compositionLoop(context, mixer, extras.banks, c, 0));
       let loopState = new Map();
       let prior;
+      let priorBass;
+      const priorGuitar = new Map();
       const kendhangPrior = new Map();
       for (let i = 0; i < p.chain.length * 16; i++) {
         if (p.loopScope === "pattern-v1" && i % 16 === 0) {
@@ -641,6 +852,34 @@ export function compositionExportExtras({
             voices.push(v);
             kendhangPrior.set(id, v);
           }
+        const bassNote = p.bass ? pattern.bassNotes[i % 16] : null;
+        if (bassNote) {
+          const b = compositionShot(
+            context,
+            mixer,
+            extras.banks,
+            bassNote,
+            stepTime(i, p.timing.bpm, p.timing.swing),
+            priorBass,
+            "bass",
+          );
+          voices.push(b);
+          priorBass = b;
+        }
+        const guitarNote = p.guitar ? pattern.guitarNotes[i % 16] : null;
+        if (guitarNote) {
+          const b = compositionShot(
+            context,
+            mixer,
+            extras.banks,
+            guitarNote,
+            stepTime(i, p.timing.bpm, p.timing.swing),
+            priorGuitar.get(guitarNote.pitch),
+            "guitar",
+          );
+          voices.push(b);
+          priorGuitar.set(guitarNote.pitch, b);
+        }
         if (!n) continue;
         const v = compositionShot(
           context,
