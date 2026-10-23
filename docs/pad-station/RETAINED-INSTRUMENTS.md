@@ -14,13 +14,13 @@ No retired V5/V6 runtime, mic, loop transport, new downloads or tuning claims.
 | Demung         | LIVE - 5897419c | Twelve retained strikes; large-bank extra-cache replacement preserves core21 and32MiB.                  |
 | Saron barung   | LIVE - 83bd28a4                               | Source tails up to 17.3 s; no arbitrary blanket 2 s crop.                                               |
 | Peking         | LIVE - 84f81c1d                               | Source tails 2.8–14.5 s; tail/onset review required.                                                    |
-| Slenthem       | Pending                                       | Source tails up to 45 s; bounded sustain contract required.                                             |
+| Slenthem | Local qualification PASS; publication pending | Selected Pelog2/3/4/5/7 and Slendro1/2/6; four originals held, not a complete bank. |
 | Bonang barung  | LIVE - cb6cb772                               | Eight curated strikes; four source-quality holds, not a complete12-note bank.                           |
 | Bonang panerus | LIVE - d1805943                               | Long tails; note/laras and retrigger policy required.                                                   |
 | Kempul | LIVE - 65708351; bounded review accepted | Eleven strikes; original observer event remains UNKNOWN. |
-| Gong ageng | Local qualification PASS; publication pending | One retained strike; same-pitch damping, full natural tail and no tuned-bank claim. |
-| Suling         | Assess after curated strikes                  | Retained demo is not a curated tuned note bank. No fake bank.                                           |
-| Vocal loops    | Assess last                                   | Audition only if sensible without adding a transport.                                                   |
+| Gong ageng | LIVE - 76ef7790 | One full original strike; same-pitch damping; bounded lifecycle qualification with historical unknowns retained. |
+| Suling | DEFERRED - demo only | Six retained source/diagnostic media; not a qualified isolated-note bank. Preserve CC BY-SA4 provenance. |
+| Vocal loops | Assessed; optional audition deferred | Existing twelve5s/two-bar96BPM phrases remain in Beatbox/Studio. No new loop transport. |
 
 Architecture: standalone runtime registries and sampler adapters are imported only
 by `src/pads/main.js`. Normal Studio catalogs, mappings, schema, calibration and
@@ -774,6 +774,217 @@ limiter. At 48 kHz / maximum master, all-pad knee occupancy is approximately
 0.319%; double stress is 0.967%. Quiet tails and conservative simultaneous hits
 affect those fractions. Compression and burst refusal remain explicit tradeoffs.
 
-Evidence: qa-artifacts/pad-gong-ageng-2026-10-24. Publication pending. Physical
+Evidence: qa-artifacts/pad-gong-ageng-2026-10-24. LIVE commit76ef7790f61dab038aa64343bcb6cdc7ce081f22, Pages c00b495c-9201-46c3-baaa-97a3b8db5e7a. Production4profiles/lifecycle/burst,Studio21,WAV3kits,BeatboxPASS;291artifactpaths/18routes.82unchanged archives carry prior exact proof/currentHEAD;others currentGET. Receipt publication/RECEIPT.json. Physical
 hearing/phones/Safari, higher sample rates, total native memory and long sessions
 remain unqualified. No Rhythm Studio instrument, pad count or schema was added.
+
+
+## Slenthem curated increment (qualification pending)
+
+Eight selected retained registry Slenthem recordings: Pelog2/3/4/5/7 and Slendro1/2/6. Original GENDER_GS filenames and CC BY3/Artistic source-form/credit notices preserved; classification is not independent cultural verification. Full stereo6.839–22.149s; no forced tail cut or original edit. Uniform runtime gain x2.1928469760513. Four sources excluded: P1/S3/S5 exceed encoded4MiB and30s contracts; P6 has a tail-review advisory and including all Pelog exceeds the unchanged32MiB retained cache budget. Advisory does not establish distortion. Core+curated Pelog30,404,208B / Slendro24,109,040B at48k; these are not total native/process memory. Existing exclusive cache and4non-releasing/8total release-overlap policies reused. Studio remains21pads. Local gates pending.
+
+
+## Slenthem final local qualification — 2026-10-24 WIB
+
+615 unit cases, lint, one official build9be1d10c-01c2-4d28-8259-1d4086917850, four production-CSP ID/EN desktop/mobile viewport profiles, all8 mapping/full-frame checks, native multitouch/keyboard, natural22.149s tail, master/mute/locale/navigation, cold-load Stop/fresh retry, deferred resume R1, source and compiled cache ownership, burst endpoint contract, retained Studio/Beatbox and independent3-kit WAV regression passed. Both desktop/mobile candidate screenshots inspected. No physical listening/phone/Safari claim.
+
+Uniform runtime calibration x2.1928469760513 moves maximum400ms K-weighted hit energy from -23.878416 to -17.058249; maximum solo default-output peak 0.392793. This is not perceptual equal-loudness or whole-song LUFS. Existing lossless48k stereo optimized FLAC, full frames/tails, raw/source archives, names and licenses are preserved, without arbitrary crop, mono, denoise, retune or destructive edits. Timing correlation advisories remain metadata, not proof of sample alignment.
+
+Core+curated Pelog30,404,208 bytes / Slendro24,109,040 bytes at native48k. Exact source-cache and compiled admission/old-native-lease tests passed under unchanged32MiB retention limit. Maximum4 non-releasing and8 total/render-active sources including release overlap; no strict four-audible-voice claim. Source ownership is not total browser-native memory.
+
+Matched measurements and combined repeat observations (one pair, not a statistical guarantee):
+
+```json
+[
+  {
+    "kind": "before",
+    "samples": [
+      {
+        "phase": "final-stop",
+        "starts": 255,
+        "ended": 255,
+        "active": 0,
+        "decodeCount": 21,
+        "decodedBytes": 4293128,
+        "intervals": 0,
+        "metrics": {
+          "JSEventListeners": 65,
+          "Nodes": 1185,
+          "ScriptDuration": 0.247123,
+          "TaskDuration": 0.789777,
+          "JSHeapUsedSize": 4040328
+        },
+        "privateCommittedSum": 294395904,
+        "workingSetSum": 557711360,
+        "processCPUSum": 7.775048999999999
+      },
+      {
+        "phase": "disposed",
+        "starts": 255,
+        "ended": 255,
+        "active": 0,
+        "decodeCount": 21,
+        "decodedBytes": 4293128,
+        "intervals": 0,
+        "metrics": {
+          "JSEventListeners": 66,
+          "Nodes": 1185,
+          "ScriptDuration": 0.250403,
+          "TaskDuration": 0.805867,
+          "JSHeapUsedSize": 3916104
+        },
+        "privateCommittedSum": 293441536,
+        "workingSetSum": 557510656,
+        "processCPUSum": 7.813486
+      }
+    ]
+  },
+  {
+    "kind": "after",
+    "samples": [
+      {
+        "phase": "final-stop",
+        "starts": 255,
+        "ended": 255,
+        "active": 0,
+        "decodeCount": 21,
+        "decodedBytes": 4293128,
+        "intervals": 0,
+        "metrics": {
+          "JSEventListeners": 603,
+          "Nodes": 1766,
+          "ScriptDuration": 0.190948,
+          "TaskDuration": 0.78969,
+          "JSHeapUsedSize": 5098528
+        },
+        "privateCommittedSum": 304541696,
+        "workingSetSum": 566333440,
+        "processCPUSum": 8.020658999999998
+      },
+      {
+        "phase": "long-final-stop",
+        "starts": 620,
+        "ended": 620,
+        "active": 0,
+        "decodeCount": 26,
+        "decodedBytes": 30404208,
+        "intervals": 0,
+        "metrics": {
+          "JSEventListeners": 233,
+          "Nodes": 1382,
+          "ScriptDuration": 0.49138,
+          "TaskDuration": 1.978424,
+          "JSHeapUsedSize": 3737220
+        },
+        "privateCommittedSum": 338976768,
+        "workingSetSum": 605491200,
+        "processCPUSum": 17.797048
+      },
+      {
+        "phase": "disposed",
+        "starts": 620,
+        "ended": 620,
+        "active": 0,
+        "decodeCount": 26,
+        "decodedBytes": 30404208,
+        "intervals": 0,
+        "metrics": {
+          "JSEventListeners": 234,
+          "Nodes": 1382,
+          "ScriptDuration": 0.494388,
+          "TaskDuration": 1.990791,
+          "JSHeapUsedSize": 3576432
+        },
+        "privateCommittedSum": 337891328,
+        "workingSetSum": 604917760,
+        "processCPUSum": 17.896881
+      }
+    ]
+  }
+]
+```
+
+Separate controlled-GC retention diagnostic (not normal-performance forced collection):
+
+```json
+[
+  {
+    "phase": "warm-after-GC",
+    "starts": 5,
+    "ended": 5,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 51,
+      "Nodes": 1193,
+      "JSHeapUsedSize": 2864712
+    }
+  },
+  {
+    "phase": "block-0-before-GC",
+    "starts": 86,
+    "ended": 86,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 213,
+      "Nodes": 1314,
+      "JSHeapUsedSize": 3650440
+    }
+  },
+  {
+    "phase": "block-0-after-GC",
+    "starts": 86,
+    "ended": 86,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 51,
+      "Nodes": 1193,
+      "JSHeapUsedSize": 3255440
+    }
+  },
+  {
+    "phase": "block-1-before-GC",
+    "starts": 167,
+    "ended": 167,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 213,
+      "Nodes": 1314,
+      "JSHeapUsedSize": 3348716
+    }
+  },
+  {
+    "phase": "block-1-after-GC",
+    "starts": 167,
+    "ended": 167,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 51,
+      "Nodes": 1193,
+      "JSHeapUsedSize": 3599916
+    }
+  },
+  {
+    "phase": "disposed-after-GC",
+    "starts": 167,
+    "ended": 167,
+    "active": 0,
+    "metrics": {
+      "JSEventListeners": 33,
+      "Nodes": 1193,
+      "JSHeapUsedSize": 3516436
+    }
+  }
+]
+```
+
+32 full-tail24s offline renders at44.1/48k cover both scales, default/max master and solo/all/double/ensemble. Maximum peak 0.8816059827804565; maximum inherited-knee occupancy 0.6789% of active frames. Conservative all-hit sums can exceed real polyphony and quiet tails affect fractions. Existing limiter compression/refused excessive bursts remain explicit; no limiter or timing change. All130 prior audio binaries and62 Studio graph binaries exact,80 active source inputs unchanged. Compiled alias differences are not silently normalized into semantic equivalence.
+
+Evidence: qa-artifacts/pad-slenthem-2026-10-24. Publication pending; previous Gong/Kempul/Kenong/Bonang loading/Stop/network/timing observations remain preserved with UNKNOWN causes where unproven. Bounded passes do not fix those historical events. Higher native rates, total audio-thread CPU/native memory and long-session listening unqualified.
+
+## Remaining-media disposition
+
+Suling is deferred, not fabricated into pitch pads: six verified retained media (11,650,035 bytes) include the8.836644s stereo performance and technical excerpts; provisional tonal cores do not establish clean note boundaries. Source/provenance: Muthi’ah Zahra / Pinggala09, WikiWaditra/ISBI Bandung; CC BY-SA4 metadata/legal code preserved in internal/media-library/suling. Physical/cultural/listening qualification absent. No media deleted.
+
+Existing vocal phrases were assessed as phrases rather than new instrumental hits. Twelve retained mono32k PCM16 WAVs (3,840,528 bytes), two variants for each of six roles, are5s/two bars at96BPM. CC0 procedural-mouth-synthesis notice preserved under internal/original-groove/audio and source metadata. Current Beatbox imports them already; historical candidate labels do not mean they are absent from production. Optional extra standalone phrase audition is deferred: adding a synchronized loop transport or microphone is outside this increment.
+
+Program now exposes eleven added instrument families /89 selected source strikes in standalone (after Slenthem publication qualification), plus unchanged21 core pads; additional selector shows only one bank, maximum7 extra buttons, rather than a giant89-button mobile grid. No automatic Rhythm Studio additions. Remaining exclusions: two original-full-scale Bonang panerus, four Bonang barung, four Slenthem sources, Suling uncurated demo, optional vocal audition. Originals, optimized media and licensing remain retained.

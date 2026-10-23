@@ -306,3 +306,23 @@ test("standalone Gong is one source-labelled strike, not a note bank or Studio e
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Slenthem exposes only eight curated source-labelled notes without Studio expansion", () => {
+  assert.deepEqual(
+    extraPadNotes["slenthem-pelog"].notes.map((n) => n[0]),
+    ["pelog-2", "pelog-3", "pelog-4", "pelog-5", "pelog-7"],
+  );
+  assert.deepEqual(
+    extraPadNotes["slenthem-slendro"].notes.map((n) => n[0]),
+    ["slendro-1", "slendro-2", "slendro-6"],
+  );
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="slenthem"'));
+    assert(html.includes("GENDER_GSPL2.wav"));
+    assert(html.includes("GENDER_GSSL6.wav"));
+    assert(!html.includes("GENDER_GSPL6.wav"));
+    assert(extraPadNotes["slenthem-pelog"].info[l].includes("cache"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});

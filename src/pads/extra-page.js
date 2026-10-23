@@ -362,3 +362,41 @@ for (const locale of ["id", "en"])
       " KETHUK_KtSL2.wav",
     "Gong ageng: GONG_GAf.wav",
   );
+
+Object.assign(extraPadNotes, {
+  "slenthem-pelog": {
+    name: "Slenthem",
+    option: "Slenthem - Pelog (5)",
+    notes: [
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-4", "Pelog 4"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Pilihan 5 nada Pelog / 3 nada Slendro dari sumber berlabel GENDER_GS; bukan bank lengkap. Tail penuh dipertahankan. Bank mengganti cache tambahan sebelumnya, pad utama tetap tersedia. Retrigger meredam nada yang sama; Stop menghentikan semua pad.",
+      en: "Selected 5 Pelog / 3 Slendro notes from GENDER_GS-labelled sources; not a complete bank. Full tails retained. This bank replaces previous additional caches; core pads remain available. Retrigger fades the same note; Stop ends all pads.",
+    },
+  },
+  "slenthem-slendro": {
+    name: "Slenthem",
+    option: "Slenthem - Slendro (3)",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Pilihan 5 nada Pelog / 3 nada Slendro dari sumber berlabel GENDER_GS; bukan bank lengkap. Tail penuh dipertahankan. Bank mengganti cache tambahan sebelumnya, pad utama tetap tersedia. Retrigger meredam nada yang sama; Stop menghentikan semua pad.",
+      en: "Selected 5 Pelog / 3 Slendro notes from GENDER_GS-labelled sources; not a complete bank. Full tails retained. This bank replaces previous additional caches; core pads remain available. Retrigger fades the same note; Stop ends all pads.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].slenthemCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Slenthem (retained registry classification; original titles): GENDER_GSPL2.wav, GENDER_GSPL3.wav, GENDER_GSPL4.wav, GENDER_GSPL5.wav, GENDER_GSPL7.wav, GENDER_GSSL1.wav, GENDER_GSSL2.wav, GENDER_GSSL6.wav",
+  );

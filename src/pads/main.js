@@ -1,3 +1,9 @@
+import {
+  slenthemPelogPack,
+  slenthemSlendroPack,
+  slenthemLevel,
+  slenthemNotices,
+} from "./instruments/slenthem.js";
 import { gongPack, gongLevel, gongNotices } from "./instruments/gong-ageng.js";
 import {
   kempulPelogPack,
@@ -72,6 +78,18 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "slenthem-pelog": createExtraSampler(
+      engine,
+      slenthemPelogPack,
+      slenthemLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 25 },
+    ),
+    "slenthem-slendro": createExtraSampler(
+      engine,
+      slenthemSlendroPack,
+      slenthemLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 25 },
+    ),
     "gong-ageng": createExtraSampler(engine, gongPack, gongLevel, {
       releaseBudget: 4,
       maxOneShotSeconds: 25,
@@ -156,6 +174,8 @@ export function initPadStation() {
   };
   let selected = "kethuk";
   const sustained = new Set([
+    "slenthem-pelog",
+    "slenthem-slendro",
     "gong-ageng",
     "kempul-pelog",
     "kempul-slendro",
@@ -171,6 +191,8 @@ export function initPadStation() {
     "demung-slendro",
   ]);
   const exclusive = new Set([
+    "slenthem-pelog",
+    "slenthem-slendro",
     "kempul-pelog",
     "kempul-slendro",
     "demung-pelog",
@@ -265,6 +287,7 @@ export function initPadStation() {
     "bonang-barung": bonangBarungNotices,
     demung: demungNotices,
     kempul: kempulNotices,
+    slenthem: slenthemNotices,
     "gong-ageng": gongNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
