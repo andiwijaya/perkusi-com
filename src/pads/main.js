@@ -1,4 +1,10 @@
 import {
+  kempulPelogPack,
+  kempulSlendroPack,
+  kempulLevel,
+  kempulNotices,
+} from "./instruments/kempul.js";
+import {
   demungPelogPack,
   demungSlendroPack,
   demungLevel,
@@ -65,6 +71,16 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "kempul-pelog": createExtraSampler(engine, kempulPelogPack, kempulLevel, {
+      releaseBudget: 4,
+      maxOneShotSeconds: 20,
+    }),
+    "kempul-slendro": createExtraSampler(
+      engine,
+      kempulSlendroPack,
+      kempulLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 20 },
+    ),
     "demung-pelog": createExtraSampler(engine, demungPelogPack, demungLevel, {
       releaseBudget: 4,
       maxOneShotSeconds: 15,
@@ -135,6 +151,8 @@ export function initPadStation() {
   };
   let selected = "kethuk";
   const sustained = new Set([
+    "kempul-pelog",
+    "kempul-slendro",
     "bonang-panerus-pelog",
     "bonang-panerus-slendro",
     "peking-pelog",
@@ -146,7 +164,12 @@ export function initPadStation() {
     "demung-pelog",
     "demung-slendro",
   ]);
-  const exclusive = new Set(["demung-pelog", "demung-slendro"]);
+  const exclusive = new Set([
+    "kempul-pelog",
+    "kempul-slendro",
+    "demung-pelog",
+    "demung-slendro",
+  ]);
   const extra = {
     play: (pitch) => samplers[selected].play(pitch),
     stop: () => Object.values(samplers).forEach((s) => s.stop()),
@@ -235,6 +258,7 @@ export function initPadStation() {
     "saron-barung": saronBarungNotices,
     "bonang-barung": bonangBarungNotices,
     demung: demungNotices,
+    kempul: kempulNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);

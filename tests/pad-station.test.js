@@ -276,3 +276,22 @@ test("standalone Demung preserves all recorded notes and discloses cache replace
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Kempul preserves source-labelled six Pelog/five Slendro notes without Studio expansion", () => {
+  assert.deepEqual(
+    extraPadNotes["kempul-pelog"].notes.map((n) => n[0]),
+    ["pelog-1", "pelog-2", "pelog-3", "pelog-5", "pelog-6", "pelog-7"],
+  );
+  assert.deepEqual(
+    extraPadNotes["kempul-slendro"].notes.map((n) => n[0]),
+    ["slendro-1", "slendro-2", "slendro-3", "slendro-5", "slendro-6"],
+  );
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="kempul"'));
+    assert(html.includes("GONG_GKPL1f.wav"));
+    assert(html.includes("GONG_GKSL6f.wav"));
+    assert(extraPadNotes["kempul-pelog"].info[l].includes("cache"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});

@@ -304,3 +304,44 @@ for (const locale of ["id", "en"])
       " KETHUK_KtSL2.wav",
     "Demung: SARON_SDPL1.wav, SARON_SDPL2.wav, SARON_SDPL3.wav, SARON_SDPL4.wav, SARON_SDPL5.wav, SARON_SDPL6.wav, SARON_SDPL7.wav, SARON_SDSL1.wav, SARON_SDSL2.wav, SARON_SDSL3.wav, SARON_SDSL5.wav, SARON_SDSL6.wav",
   );
+
+Object.assign(extraPadNotes, {
+  "kempul-pelog": {
+    name: "Kempul",
+    option: "Kempul - Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan. Memilih bank ini membersihkan cache instrumen tambahan sebelumnya agar tetap dalam batas memori; pad utama tetap tersedia.",
+      en: "Full recorded tails are retained. Selecting this bank clears previous additional-instrument caches to stay within the memory budget; core pads remain available.",
+    },
+  },
+  "kempul-slendro": {
+    name: "Kempul",
+    option: "Kempul - Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan. Memilih bank ini membersihkan cache instrumen tambahan sebelumnya agar tetap dalam batas memori; pad utama tetap tersedia.",
+      en: "Full recorded tails are retained. Selecting this bank clears previous additional-instrument caches to stay within the memory budget; core pads remain available.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].kempulCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Kempul: GONG_GKPL1f.wav, GONG_GKPL2f.wav, GONG_GKPL3f.wav, GONG_GKPL5f.wav, GONG_GKPL6f.wav, GONG_GKPL7f.wav, GONG_GKSL1f.wav, GONG_GKSL2f.wav, GONG_GKSL3f.wav, GONG_GKSL5f.wav, GONG_GKSL6f.wav",
+  );

@@ -11,13 +11,13 @@ No retired V5/V6 runtime, mic, loop transport, new downloads or tuning claims.
 | Kethuk         | LIVE — 8c301596                               | Two retained strikes: Pelog 6 and Slendro 2; full 1.425/1.935 s tails fit existing short-shot contract. |
 | Kempyang       | LIVE — 26333a5f                               | Two retained strikes; next only after Kethuk production gate.                                           |
 | Kenong         | LIVE — ef37d9c9                               | 11 retained strikes; organize by recorded laras, no invented notes.                                     |
-| Demung         | Local qualification PASS; publication pending | Twelve retained strikes; large-bank extra-cache replacement preserves core21 and32MiB.                  |
+| Demung         | LIVE - 5897419c | Twelve retained strikes; large-bank extra-cache replacement preserves core21 and32MiB.                  |
 | Saron barung   | LIVE - 83bd28a4                               | Source tails up to 17.3 s; no arbitrary blanket 2 s crop.                                               |
 | Peking         | LIVE - 84f81c1d                               | Source tails 2.8–14.5 s; tail/onset review required.                                                    |
 | Slenthem       | Pending                                       | Source tails up to 45 s; bounded sustain contract required.                                             |
 | Bonang barung  | LIVE - cb6cb772                               | Eight curated strikes; four source-quality holds, not a complete12-note bank.                           |
 | Bonang panerus | LIVE - d1805943                               | Long tails; note/laras and retrigger policy required.                                                   |
-| Kempul         | Pending                                       | Long resonance; voice/tail review required.                                                             |
+| Kempul         | Local qualification PASS; publication pending | Eleven retained strikes; existing exclusive cache policy, Studio unchanged. |
 | Gong ageng     | Pending                                       | 20 s retained source; do not repeat former overlap behavior.                                            |
 | Suling         | Assess after curated strikes                  | Retained demo is not a curated tuned note bank. No fake bank.                                           |
 | Vocal loops    | Assess last                                   | Audition only if sensible without adding a transport.                                                   |
@@ -612,3 +612,82 @@ and quiet tails affect the ratio. Existing compression remains explicit.
 Evidence: qa-artifacts/pad-demung-2026-10-23. Publication pending.
 Physical phone/listening/Safari, higher device rates, long sessions and
 historical timing/Stop/loading observations remain unqualified.
+
+## Demung publication closure
+
+Live commit: 5897419c3eed061b86d40ed8633b085bf5e35b92. Cloudflare Pages:
+1b3eb870-5bfe-4cb8-ae98-2afc0df87aa7. Four production profiles, all twelve
+strikes, controls, compiled-cache held-native/fresh-intent gate, Studio 21 pads /
+21 decodes / no new assets, three kit WAV oracles <= 1 LSB, and Beatbox repeat/reset
+passed. All 267 artifact identities and 18 routes were checked. Fifty-nine
+unchanged ZIPs carry exact previous GET hashes plus current HEAD status, MIME and
+length; other content uses current GET. The serial attempt reached its 300-second
+QA cap after 225 records, then 21 more passed before a NOTICE timeout. One isolated
+234 ms transfer proves exact newline-only text; twenty remaining reads completed
+the gate. Negative records remain; no network root-cause fix is claimed.
+Receipt: qa-artifacts/pad-demung-2026-10-23/publication/RECEIPT.json.
+
+## Kempul qualification - 2026-10-23
+
+Six Pelog strikes (1, 2, 3, 5, 6, 7) and five Slendro strikes (1, 2, 3, 5, 6)
+retain their source labels, full stereo image and 6.158-17.682 second tails.
+Original FLACs/source ZIPs, CC BY 3.0 recordings, Artistic 2.0 package notices,
+creator/source links and modifications remain available. No crop, denoise,
+mono fold, retune or destructive original edit was justified. No full-scale
+frames were found; mean DC is about -0.000012 and late 50 ms RMS is recorded
+per channel rather than labelled calibrated noise/SNR.
+
+Measured uniform runtime gain x1.235062 raises strongest short-hit K400 energy
+from -20.446 to -18.613 and individual output peak from 0.5263 to approximately
+0.6500. It remains 1.55 dB below the nylon energy reference to preserve transient
+headroom. This is not perceived-loudness equality. Within-bank dynamics remain.
+The existing envelope, maximum four not-yet-releasing voices and eight total
+owned voices, short same-pitch fades and overload refusal remain unchanged.
+
+The existing exclusive additional-cache policy is reused. Core plus all Pelog
+retained decoded PCM is 33,166,088 bytes at 48 kHz (388,344 bytes below the unchanged
+32 MiB ceiling); Slendro plus core is 23,360,976 bytes. These figures exclude
+native in-flight decode/active voice buffers, browser heap and process memory.
+Other additional banks reload on demand. Source-instrumented and final compiled
+gates prove core retention, clearing before admission, same-selection no-op,
+fresh intent while an old native promise remains held, no stale voice, and real
+native ownership until settlement. No memory ceiling was increased.
+
+613 unit tests, focused tests, lint and official build
+74a7d266-a398-4468-8120-b299f13fc936 passed. The first sandbox unit attempt had
+loopback/temp EACCES/EPERM errors; it is preserved separately. The complete suite
+passed with the access required by its existing tests, without product changes.
+An executor interruption occurred after build initiation; durable build, graph,
+audio and headroom results were recovered and not rerun. All four CSP desktop /
+mobile viewport ID/EN profiles passed all eleven mappings, touch/keyboard/input
+guards, natural longest-tail retirement and cache reloads. The candidate mobile
+screenshot was inspected. Five cancellation/retry/native gates, burst/Stop,
+selector, seven Station and ten Studio/Beatbox regressions passed. Three independent
+kit WAV comparisons are <= 1 LSB. All 118 old audio files and 62 Studio binaries
+remain exact; normalized active audio/Studio/Beatbox/project source blobs are
+unchanged. Compiled alias differences are recorded, not normalized into a claim
+of semantic equivalence.
+
+The two-note 31.08 second native repeat has stable 13,320,944 decoded bytes and
+162 created/ended sources. Matched core workloads each have 255 created/ended,
+4,293,128 retained decoded bytes and zero voice/intervals after Stop. Core final
+JS heap is 3,895,016 before / 4,041,752 after; owned-browser private committed sums
+are 294,453,248 / 292,777,984. These are one-pair, GC-sensitive, coarse observations,
+not an improvement claim or isolated audio-thread measurement. The combined
+30.99 second workload has 621 created/ended, 27 decodes / 33,166,088 bytes stable,
+zero voice/intervals and a closed context after disposal. Private committed sums
+are 342,466,560 combined / 341,630,976 disposed; immediate OS reclamation is not
+promised. Separate controlled-GC blocks restore 51 listeners and 1,102 DOM nodes,
+with 33 listeners disposed. Heap is not claimed flat or leak-free.
+
+Thirty-two default/max-master full-tail renders at 44.1/48 kHz use the actual
+default kit and one selected scale at a time. Maximum output peak is about
+0.881606 through the inherited limiter. At 48 kHz/max master, all-pad knee
+occupancy is approximately 0.374% Pelog / 0.536% Slendro; double stress is
+0.852% / 1.056%. Stress exceeds the live steady polyphony and quiet tails affect
+the fraction. Existing compression is explicit; the limiter was not changed.
+
+Evidence: qa-artifacts/pad-kempul-2026-10-23. Local qualification complete;
+publication pending. Physical phone/listening/Safari, higher device rates and
+long sessions remain unqualified. Historical timing, Kenong Stop observer and
+production loading/network observations are retained without a fix claim.
