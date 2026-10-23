@@ -749,7 +749,28 @@ export class AudioEngine {
       operation = this.operation;
     // A cached pad on a running clock can schedule in this gesture. A no-op
     // native resume promise can otherwise consume a short upcoming-step window.
-    if (context.state !== "running") await context.resume();
+    if (context.state !== "running") {
+      try {
+        await context.resume();
+      } catch (error) {
+        if (
+          this.disposed ||
+          operation !== this.operation ||
+          context !== this.context
+        )
+          return;
+        throw error;
+      }
+    }
+    // Resume may outlive Stop, project replacement or context disposal. Fence
+    // before admitting a load, not only before starting its resulting voice.
+    if (
+      this.disposed ||
+      operation !== this.operation ||
+      context !== this.context ||
+      context.state !== "running"
+    )
+      return;
     if (!this.playableEntry(id))
       await this.variants
         .get(id)
@@ -758,6 +779,7 @@ export class AudioEngine {
     if (
       this.disposed ||
       operation !== this.operation ||
+      context !== this.context ||
       context.state !== "running"
     )
       return;

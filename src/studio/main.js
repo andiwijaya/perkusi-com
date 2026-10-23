@@ -1,14 +1,10 @@
 import "../project/mode-transfer.css";
 import "./style.css";
-import { AudioEngine } from "../audio/engine.js";
+import { createStudioPlayback } from "./playback.js";
 import { StudioWavExporter } from "../audio/studio-exporter.js";
 import { createBeatboxOutputStage } from "../beatbox/output-stage.js";
-import { createProgrammeOutputStage } from "../audio/programme-output.js";
 import { originalGroovePack } from "../beatbox/pack.js";
-import {
-  CompositionPlayback,
-  compositionExportExtras,
-} from "../audio/composition.js";
+import { compositionExportExtras } from "../audio/composition.js";
 import {
   newComposition,
   compositionDemo,
@@ -72,21 +68,8 @@ export function initStudio() {
     );
     root.querySelector(".st-intro").append(retiredNotice);
   }
-  const engine = new AudioEngine(studioPack(1), {
-    variantPacks: [studioPack(2), studioPack(3)],
-    sequenceCatalog: studioCatalog,
-    outputStageFactory: (context, input) =>
-      createProgrammeOutputStage(context, input, createBeatboxOutputStage),
-  });
-  engine.arrangement = true;
+  const { engine, playback } = createStudioPlayback();
   $("chain-mode").checked = true;
-  const playback = new CompositionPlayback(engine, {
-    loopPack: originalGroovePack,
-    instrumentPack,
-    kendhangPack,
-    bassPack,
-    guitarPack,
-  });
   const history = new ProjectHistory(
     withGuitar(withBass(withKendhang(withPatternLoops(newComposition())))),
     (p) => validateProject(p, studioCatalog),

@@ -107,7 +107,7 @@ export default defineConfig(({ mode }) => {
             )
               return html;
             const match = html.match(
-              /<!-- perkusi-page:(home|beatbox|studio|privacy|notFound):(id|en) -->/,
+              /<!-- perkusi-page:(home|beatbox|studio|pads|privacy|notFound):(id|en) -->/,
             );
             return match ? renderDocument(match[1], match[2]) : html;
           },

@@ -1,5 +1,20 @@
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  "common.pads": ["Buka Pad Station", "Open Pad Station"],
+  "home.pads.meta": ["03 / MAIN LANGSUNG", "03 / LIVE PLAY"],
+  "home.pads.title": ["Pad Station", "Pad Station"],
+  "home.pads.copy": [
+    "21 pad drum, Bilah, kendhang, bass dan gitar. Ketuk langsung di HP atau keyboard—tanpa menyusun pola.",
+    "21 drum, Bilah, kendhang, bass and guitar pads. Play directly on your phone or keyboard—no pattern editing.",
+  ],
+  "meta.pads.title": [
+    "Pad Station — Mainkan 21 Pad | Perkusi.com",
+    "Pad Station — Play 21 Live Pads | Perkusi.com",
+  ],
+  "meta.pads.description": [
+    "Mainkan drum, Bilah, Kendhang Ciblon, bass dan gitar langsung. Tanpa pola, rekaman atau akun.",
+    "Play drums, Bilah, Kendhang Ciblon, bass and guitar live. No patterns, recording or account.",
+  ],
   "common.gamelan": ["Gamelan", "Gamelan"],
   "common.instrumentStatus": ["Instrumen", "Instrument"],
   "home.gamelanCopy": [
@@ -18,12 +33,12 @@ const pairs = {
     "Perkusi.com - Make Rhythm. Build Loops. Play.",
   ],
   "meta.home.description": [
-    "Mainkan Beatbox Playground dan susun beat di Rhythm Studio langsung di browser. Tanpa akun atau instalasi.",
-    "Play Beatbox Playground and build beats in Rhythm Studio, right in your browser. No account or installation.",
+    "Mainkan Pad Station, Beatbox Playground dan Rhythm Studio langsung di browser. Tanpa akun atau instalasi.",
+    "Play Pad Station, Beatbox Playground and Rhythm Studio right in your browser. No account or installation.",
   ],
   "meta.home.social": [
-    "Dua alat ritme di browser: Rhythm Studio dan Beatbox Playground. Mulai bermain tanpa instalasi.",
-    "Two rhythm tools in your browser: Rhythm Studio and Beatbox Playground. Start playing without installation.",
+    "Tiga alat musik di browser: Rhythm Studio, Beatbox Playground dan Pad Station. Mulai bermain tanpa instalasi.",
+    "Three music tools in your browser: Rhythm Studio, Beatbox Playground and Pad Station. Start playing without installation.",
   ],
   "meta.privacy.title": ["Privasi — Perkusi.com", "Privacy - Perkusi.com"],
   "meta.privacy.description": [

@@ -36,13 +36,13 @@ test("source publication rejects missing originals, duplicate/traversal archives
     assert.throws(() => validateSourceForms(bad, credits));
   }
 });
-test("Homepage compatibility leaves only the two retained tools", () => {
+test("Homepage compatibility leaves the retained tools plus Pad Station", () => {
   for (const locale of ["id", "en"]) {
     const original = renderDocument("home", locale),
       decorated = publicCandidateHTML(original, { page: "home", locale });
     assert.ok(!original.includes("data-gamelan-link"));
     assert.equal(decorated, original);
-    assert.equal((decorated.match(/class="tool-card"/g) ?? []).length, 2);
+    assert.equal((decorated.match(/class="tool-card"/g) ?? []).length, 3);
     assert.ok(!decorated.includes("data-gamelan-link"));
   }
 });

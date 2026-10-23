@@ -99,11 +99,12 @@ class Button {
     this.attributes.delete(k);
   }
 }
-function harness() {
+function harness(options = {}) {
   const buttons = [
       new Button("drum", "kick"),
       new Button("kendhang", "tak"),
       new Button("kendhang", "thung"),
+      new Button("bilah", "d4"),
     ],
     panel = new EventTarget(),
     doc = new EventTarget(),
@@ -125,6 +126,7 @@ function harness() {
       playInstrument: (f, p) => calls.push([f, p]),
       locked: () => locked,
       onError: (e) => errors.push(e),
+      ...options,
     });
   return {
     buttons,
@@ -159,6 +161,25 @@ test("multitouch is single-trigger per pointer, synthesized clicks do not duplic
   send(h.win, "blur", null);
   assert(!h.buttons[2].classes.has("st-pressed"));
   h.controller.dispose();
+});
+test("Bilah outside the pad panel is opt-in for standalone; Studio and typing guards stay unchanged", () => {
+  const outside = { closest: () => null };
+  const studio = harness();
+  send(studio.doc, "keydown", outside, { key: "z", code: "KeyZ" });
+  assert.equal(studio.calls.length, 0);
+  studio.controller.dispose();
+  const standalone = harness({ bilahAnywhere: true });
+  send(standalone.doc, "keydown", outside, { key: "z", code: "KeyZ" });
+  send(standalone.doc, "keyup", outside, { key: "z", code: "KeyZ" });
+  assert.deepEqual(standalone.calls, [["bilah", "d4"]]);
+  send(
+    standalone.doc,
+    "keydown",
+    { closest: () => ({}) },
+    { key: "z", code: "KeyZ" },
+  );
+  assert.equal(standalone.calls.length, 1);
+  standalone.controller.dispose();
 });
 test("key ownership rejects repeated downs; Enter/Space activation suppresses native duplicate and modifiers", () => {
   const h = harness(),

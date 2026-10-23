@@ -1,8 +1,16 @@
-export const pages = ["home", "beatbox", "studio", "privacy", "notFound"];
+export const pages = [
+  "home",
+  "beatbox",
+  "studio",
+  "pads",
+  "privacy",
+  "notFound",
+];
 const basePaths = {
   home: "/",
   beatbox: "/beatbox/",
   studio: "/studio/",
+  pads: "/pad-station/",
   privacy: "/privacy.html",
   notFound: "/404.html",
 };
@@ -28,6 +36,7 @@ export function pageFromPath(pathname) {
   if (base === "/") return "home";
   if (base === "/beatbox" || base === "/beatbox/") return "beatbox";
   if (base === "/studio" || base === "/studio/") return "studio";
+  if (base === "/pad-station" || base === "/pad-station/") return "pads";
   if (base === "/privacy" || base === "/privacy.html") return "privacy";
   return "notFound";
 }

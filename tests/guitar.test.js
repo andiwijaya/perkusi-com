@@ -403,7 +403,7 @@ test("Stop/replace operation fences a cold guitar pad whose decode resolves late
       entry.buffer = { duration: 1.8 };
     },
   };
-  e.ensureContext = () => c;
+  e.ensureContext = () => (e.context = c);
   e.operation = 0;
   e.disposed = false;
   const pending = b.pad("b2", "guitar");

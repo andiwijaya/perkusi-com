@@ -1,3 +1,5 @@
+@import "./live-pads.css";
+
 .studio-page {
   width: min(1520px, calc(100% - 64px));
   padding-block: 42px 80px;
@@ -375,57 +377,6 @@
   background: #e2d485;
   border-color: #e2d485;
 }
-.st-pads {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 8px;
-}
-.studio-page .st-pad {
-  min-width: 44px;
-  touch-action: none;
-  min-height: 82px;
-  padding: 12px 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 9px;
-  background: #222c1e;
-}
-.st-pad b {
-  font: 500 1.25rem var(--font-display);
-  color: var(--st-accent);
-}
-.st-pad span {
-  font-size: 0.7rem;
-  text-wrap: balance;
-}
-.studio-page .st-pad.st-hit,
-.studio-page .st-pad.st-pressed {
-  background: #647842;
-  box-shadow: inset 0 -4px var(--st-accent);
-}
-.st-quantize {
-  margin-top: 18px;
-}
-.st-instrument-pads {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-.st-live-group {
-  min-width: 0;
-}
-.st-live-group h3 {
-  margin: 0 0 12px;
-}
-.st-instrument-pads .st-pads {
-  grid-template-columns: repeat(var(--pad-columns), minmax(44px, 1fr));
-}
-.st-pad[aria-busy="true"] {
-  outline: 1px dashed var(--st-accent);
-}
 .st-mixer {
   background: #1c2319;
 }
@@ -656,12 +607,7 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  .st-pads {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .st-live-group[data-live-group="bilah"] .st-pads {
-    grid-template-columns: repeat(3, minmax(44px, 1fr));
-  }
+
   .st-mixer-rows {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;

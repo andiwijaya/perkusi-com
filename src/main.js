@@ -23,4 +23,21 @@ else {
     });
     import("./studio/main.js").then(({ initStudio }) => initStudio());
   }
+  if (document.body.dataset.page === "pads") {
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) location.reload();
+    });
+    import("./pads/main.js")
+      .then(({ initPadStation }) => initPadStation())
+      .catch(() => {
+        const status = document.querySelector("#ps-status");
+        if (status) {
+          status.setAttribute("role", "alert");
+          status.textContent =
+            document.documentElement.lang === "en"
+              ? "Could not prepare sounds. Reload the page to try again."
+              : "Suara belum dapat disiapkan. Muat ulang halaman untuk mencoba lagi.";
+        }
+      });
+  }
 }

@@ -3,6 +3,7 @@ import { KENDHANG_STROKES } from "../project/kendhang.js";
 import { BASS_PITCHES } from "../project/bass.js";
 import { GUITAR_PITCHES } from "../project/guitar.js";
 import { PITCHES } from "../project/composition-model.js";
+import { studioRoleNames } from "./messages.js";
 
 export const LIVE_PAD_GROUPS = [
   {
@@ -35,7 +36,15 @@ export const LIVE_PAD_GROUPS = [
   },
 ];
 export function renderInstrumentPads(locale) {
-  return `<div class="st-instrument-pads">${LIVE_PAD_GROUPS.map((g) => `<section class="st-live-group" data-live-group="${g.family}" style="--pad-columns:${g.pitches.length}" aria-label="${g[locale]}"><h3>${g[locale]}</h3><div class="st-pads">${g.pitches.map((pitch, i) => `<button type="button" class="st-pad" data-live-pad="${g.family}:${pitch}" aria-label="${g[locale]} ${pitch.toUpperCase()}" aria-keyshortcuts="${g.keys[i].toUpperCase()}"><b aria-hidden="true">${g.keys[i].toUpperCase()}</b><span>${pitch.toUpperCase()}</span></button>`).join("")}</div></section>`).join("")}</div>`;
+  return `<div class="st-instrument-pads">${LIVE_PAD_GROUPS.map((g) => `<section class="st-live-group" data-live-group="${g.family}" aria-label="${g[locale]}"><h3>${g[locale]}</h3><div class="st-pads">${g.pitches.map((pitch, i) => `<button type="button" class="st-pad" data-live-pad="${g.family}:${pitch}" aria-label="${g[locale]} ${pitch.toUpperCase()}" aria-keyshortcuts="${g.keys[i].toUpperCase()}"><b aria-hidden="true">${g.keys[i].toUpperCase()}</b><span>${pitch.toUpperCase()}</span></button>`).join("")}</div></section>`).join("")}</div>`;
+}
+export function renderPadGroups(locale, { disabled = false } = {}) {
+  const drums = STUDIO_ROLES.map(
+    (role, i) =>
+      `<button type="button" class="st-pad" data-st-pad="${role}" aria-keyshortcuts="${i + 1}"><b aria-hidden="true">${i + 1}</b><span data-st-role="${i}">${studioRoleNames[locale][i]}</span></button>`,
+  ).join("");
+  const html = `<h3>Drum</h3><div class="st-pads">${drums}</div>${renderInstrumentPads(locale)}`;
+  return disabled ? html.replace(/<button\b/g, "<button disabled") : html;
 }
 export function shortcutAction(
   event,
@@ -72,6 +81,7 @@ export function initLivePads({
   playInstrument,
   locked,
   onError,
+  bilahAnywhere = false,
 }) {
   const panel = root.querySelector(".st-live-pads"),
     doc = root.ownerDocument,
@@ -198,7 +208,10 @@ export function initLivePads({
         fire(b);
         return;
       }
-      const a = shortcutAction(e, { locked: blocked(), insidePads: !!b });
+      const a = shortcutAction(e, {
+        locked: blocked(),
+        insidePads: !!b || bilahAnywhere,
+      });
       if (!a) return;
       e.preventDefault();
       if (keys.has(name)) return;

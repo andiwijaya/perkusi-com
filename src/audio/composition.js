@@ -631,7 +631,23 @@ export class CompositionPlayback {
     if (e.disposed) return;
     const context = e.ensureContext(),
       operation = e.operation;
-    if (context.state !== "running") await context.resume();
+    if (context.state !== "running") {
+      try {
+        await context.resume();
+      } catch (error) {
+        if (e.disposed || operation !== e.operation || context !== e.context)
+          return;
+        throw error;
+      }
+    }
+    // An obsolete resume must not allocate a mixer or start a new bank load.
+    if (
+      e.disposed ||
+      operation !== e.operation ||
+      context !== e.context ||
+      context.state !== "running"
+    )
+      return;
     if (!this.mixer || this.context !== context) {
       this.mixer?.dispose();
       this.context = context;
@@ -648,7 +664,12 @@ export class CompositionPlayback {
             : this.banks.kendhang;
     const entry = bank.get(pitch);
     if (!entry.buffer) await bank.load(pitch, context);
-    if (e.disposed || operation !== e.operation || context.state !== "running")
+    if (
+      e.disposed ||
+      operation !== e.operation ||
+      context !== e.context ||
+      context.state !== "running"
+    )
       return;
     if (!entry.buffer) {
       e.error = "asset-failed";
