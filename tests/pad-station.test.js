@@ -64,7 +64,7 @@ function setup() {
     jobs,
   };
 }
-test("standalone has 21 guarded pads, localized copy and attribution without score/recording UI", () => {
+test("standalone retains 21 core pads plus two isolated Kethuk strikes without score/recording UI", () => {
   assert.deepEqual(Object.keys(padMessages.id), Object.keys(padMessages.en));
   for (const locale of ["id", "en"]) {
     const html = renderPadStation(locale);
@@ -74,6 +74,8 @@ test("standalone has 21 guarded pads, localized copy and attribution without sco
     );
     assert.equal((html.match(/class="st-pad"/g) || []).length, 21);
     assert.equal((html.match(/<button disabled/g) || []).length, 21);
+    assert.equal((html.match(/class="st-pad ps-extra-pad"/g) || []).length, 2);
+    assert(html.includes("KETHUK_KtPL6.wav") && html.includes("Artistic 2.0"));
     assert(html.includes("CC BY") && html.includes("CC0"));
     assert(
       !/st-play|st-pattern|st-file|st-render|st-quantize|sequencer|data-st-step/.test(
@@ -84,6 +86,7 @@ test("standalone has 21 guarded pads, localized copy and attribution without sco
       (renderPadGroups(locale).match(/data-st-pad=/g) || []).length,
       8,
     );
+    assert(!renderPadGroups(locale).includes("extra:"));
   }
 });
 test("homepage and navigation expose a new localized Pad Station card and retain the two existing tools", () => {

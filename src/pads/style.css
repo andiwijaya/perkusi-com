@@ -115,6 +115,40 @@
   color: var(--st-accent);
   text-decoration: underline;
 }
+.ps-extra-group {
+  border-top: 1px solid #3d4738;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.ps-extra-group label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.ps-extra-group select {
+  min-height: 44px;
+  padding: 8px;
+  font: inherit;
+  color: var(--color-text);
+  background: #242d21;
+  border-radius: 8px;
+  border: 1px solid #59644d;
+}
+.ps-extra-group p {
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 65ch;
+}
+.pad-station .ps-extra-pads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 600px;
+}
+.ps-extra-pad strong {
+  display: block;
+}
 @media (max-width: 600px) {
   .pad-station {
     padding-top: 24px;

@@ -6,7 +6,12 @@ import { withKendhang } from "../project/kendhang.js";
 import { withBass } from "../project/bass.js";
 import { withGuitar } from "../project/guitar.js";
 
-export function createPadOwner({ engine, playback, onStatus = () => {} }) {
+export function createPadOwner({
+  engine,
+  playback,
+  extra = null,
+  onStatus = () => {},
+}) {
   const config = withGuitar(
     withBass(withKendhang(withPatternLoops(newComposition("Pad Station")))),
   );
@@ -41,6 +46,7 @@ export function createPadOwner({ engine, playback, onStatus = () => {} }) {
   }
   function changed() {
     if (disposed || observed?.state === "running") return;
+    extra?.stop();
     resetView(observed?.state === "closed" ? "error" : "stopped");
   }
   return {
@@ -54,7 +60,9 @@ export function createPadOwner({ engine, playback, onStatus = () => {} }) {
         const job =
           family === "drum"
             ? engine.triggerPad(pitch)
-            : playback.pad(pitch, family);
+            : family === "extra" && extra
+              ? extra.play(pitch)
+              : playback.pad(pitch, family);
         observe();
         await job;
         if (intent === generation && !disposed && engine.error) status("error");
@@ -69,6 +77,7 @@ export function createPadOwner({ engine, playback, onStatus = () => {} }) {
     },
     stop() {
       if (disposed) return;
+      extra?.stop();
       engine.rewind();
       resetView("stopped");
     },
@@ -91,6 +100,7 @@ export function createPadOwner({ engine, playback, onStatus = () => {} }) {
       pending = 0;
       life.abort();
       observed = null;
+      extra?.dispose();
       disposal = engine.dispose({ immediate: true });
       return disposal;
     },

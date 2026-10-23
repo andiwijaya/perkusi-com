@@ -7,11 +7,19 @@ import { bassNotices } from "../studio/bass-pack.js";
 import { guitarNotices } from "../studio/guitar-pack.js";
 import { createPadOwner } from "./owner.js";
 import { padMessages } from "./page.js";
+import { createExtraSampler } from "./extra-sampler.js";
+import {
+  kethukPack,
+  kethukLevel,
+  kethukNotices,
+} from "./instruments/kethuk.js";
+import { extraPadCopy } from "./extra-page.js";
 
 export function initPadStation() {
   const root = document.querySelector(".pad-station"),
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
+  const extra = createExtraSampler(engine, kethukPack, kethukLevel);
   let disposed = false,
     state = "ready",
     locale;
@@ -21,7 +29,7 @@ export function initPadStation() {
     p.textContent = padMessages[locale || "id"][next];
     p.setAttribute("role", next === "error" ? "alert" : "status");
   };
-  const owner = createPadOwner({ engine, playback, onStatus: status });
+  const owner = createPadOwner({ engine, playback, extra, onStatus: status });
   const pads = initLivePads({
     root,
     playDrum: (pitch) => owner.play("drum", pitch),
@@ -36,6 +44,8 @@ export function initPadStation() {
     locale = document.documentElement.lang === "en" ? "en" : "id";
     for (const el of root.querySelectorAll("[data-pad-copy]"))
       el.textContent = padMessages[locale][el.dataset.padCopy];
+    for (const el of root.querySelectorAll("[data-extra-copy]"))
+      el.textContent = extraPadCopy[locale][el.dataset.extraCopy];
     for (const el of root.querySelectorAll("[data-st-role]"))
       el.textContent = studioRoleNames[locale][Number(el.dataset.stRole)];
     for (const g of LIVE_PAD_GROUPS) {
@@ -53,6 +63,8 @@ export function initPadStation() {
     const names = {
       takSource: "TAK — " + padMessages[locale].source,
       thungSource: "THUNG — " + padMessages[locale].source,
+      pelogSource: "Kethuk Pelog 6 - " + padMessages[locale].source,
+      slendroSource: "Kethuk Slendro 2 - " + padMessages[locale].source,
       recordingLicense: "CC BY 3.0",
       packageLicense: "Artistic 2.0",
       notice: "NOTICE",
@@ -61,13 +73,19 @@ export function initPadStation() {
       source: "FreePats — " + padMessages[locale].source,
     };
     for (const a of root.querySelectorAll("[data-pad-credit-key]"))
-      a.textContent = names[a.dataset.padCreditKey];
+      if (names[a.dataset.padCreditKey])
+        a.textContent = names[a.dataset.padCreditKey];
     status(state);
   }
   for (const [family, notices] of Object.entries({
     kendhang: kendhangNotices,
     bass: bassNotices,
     guitar: guitarNotices,
+    kethuk: {
+      ...kethukNotices,
+      pelogPage: "https://freesound.org/people/Digitopia_CdM/sounds/261691/",
+      slendroPage: "https://freesound.org/people/Digitopia_CdM/sounds/261685/",
+    },
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
     for (const [name, href] of Object.entries(notices)) {
@@ -75,6 +93,12 @@ export function initPadStation() {
         a = document.createElement("a");
       a.href = href;
       a.dataset.padCreditKey = name;
+      a.textContent =
+        name === "pelogPage"
+          ? "Freesound 261691"
+          : name === "slendroPage"
+            ? "Freesound 261685"
+            : name;
       li.append(a);
       list.append(li);
     }
@@ -101,9 +125,11 @@ export function initPadStation() {
   }
   listen(window, "pagehide", dispose);
   localize();
-  for (const el of root.querySelectorAll("button,input")) el.disabled = false;
+  for (const el of root.querySelectorAll("button,input,select"))
+    el.disabled = false;
   pads.update();
   root.dataset.ready = "true";
-  if (import.meta.env.DEV) window.perkusiPads = { engine, owner, dispose };
+  if (import.meta.env.DEV)
+    window.perkusiPads = { engine, owner, extra, dispose };
   return dispose;
 }
