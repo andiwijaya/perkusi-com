@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPadOwner } from "../src/pads/owner.js";
 import { renderPadStation, padMessages } from "../src/pads/page.js";
 import { renderPadGroups } from "../src/studio/live-pads.js";
-import { renderExtraButtons } from "../src/pads/extra-page.js";
+import { renderExtraButtons, extraPadNotes } from "../src/pads/extra-page.js";
 import { renderDocument } from "../src/app/document.js";
 import { pagePath, pageFromPath } from "../src/app/routes.js";
 const deferred = () => {
@@ -214,4 +214,18 @@ test("current failure is visible; interruption resets view; disposal detaches co
   f.context.state = "closed";
   f.context.dispatchEvent(new Event("statechange"));
   assert.equal(f.statuses.length, n);
+});
+
+test("standalone Peking offers source-labelled seven Pelog and five Slendro strikes", () => {
+  assert.equal(extraPadNotes["peking-pelog"].notes.length, 7);
+  assert.equal(extraPadNotes["peking-slendro"].notes.length, 5);
+  for (const l of ["id", "en"]) {
+    const page = renderPadStation(l);
+    assert(page.includes("peking-pelog"));
+    assert(page.includes("peking-slendro"));
+    assert(page.includes('data-pad-credits="peking"'));
+    assert(page.includes("SARON_SPPL1.wav"));
+    assert(page.includes("SARON_SPSL6.wav"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });

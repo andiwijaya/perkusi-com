@@ -133,3 +133,45 @@ export function renderExtraPads(locale) {
       "",
     )}</select></label><p data-extra-copy="hint">${t.hint}</p><p id="ps-bank-info" hidden></p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
 }
+
+Object.assign(extraPadNotes, {
+  "peking-pelog": {
+    name: "Peking",
+    option: "Peking - Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-4", "Pelog 4"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan; retrigger pad meredam voice lama secara halus. Tidak mengubah pola Rhythm Studio.",
+      en: "Full recorded tails are retained; pad retriggers smoothly damp older voices. Does not change Rhythm Studio patterns.",
+    },
+  },
+  "peking-slendro": {
+    name: "Peking",
+    option: "Peking - Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan; retrigger pad meredam voice lama secara halus. Tidak mengubah pola Rhythm Studio.",
+      en: "Full recorded tails are retained; pad retriggers smoothly damp older voices. Does not change Rhythm Studio patterns.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].pekingCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Peking: SARON_SPPL1.wav, SARON_SPPL2.wav, SARON_SPPL3.wav, SARON_SPPL4.wav, SARON_SPPL5.wav, SARON_SPPL6.wav, SARON_SPPL7.wav, SARON_SPSL1.wav, SARON_SPSL2.wav, SARON_SPSL3.wav, SARON_SPSL5.wav, SARON_SPSL6.wav",
+  );

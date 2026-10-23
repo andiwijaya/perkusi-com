@@ -1,3 +1,9 @@
+import {
+  pekingPelogPack,
+  pekingSlendroPack,
+  pekingLevel,
+  pekingNotices,
+} from "./instruments/peking.js";
 import "./style.css";
 import { createStudioPlayback } from "../studio/playback.js";
 import { initLivePads, LIVE_PAD_GROUPS } from "../studio/live-pads.js";
@@ -41,6 +47,16 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "peking-pelog": createExtraSampler(engine, pekingPelogPack, pekingLevel, {
+      releaseBudget: 4,
+      maxOneShotSeconds: 15,
+    }),
+    "peking-slendro": createExtraSampler(
+      engine,
+      pekingSlendroPack,
+      pekingLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 15 },
+    ),
     "bonang-panerus-pelog": createExtraSampler(
       engine,
       bonangPanerusPelogPack,
@@ -66,7 +82,12 @@ export function initPadStation() {
     ),
   };
   let selected = "kethuk";
-  const sustained = new Set(["bonang-panerus-pelog", "bonang-panerus-slendro"]);
+  const sustained = new Set([
+    "bonang-panerus-pelog",
+    "bonang-panerus-slendro",
+    "peking-pelog",
+    "peking-slendro",
+  ]);
   const extra = {
     play: (pitch) => samplers[selected].play(pitch),
     stop: () => Object.values(samplers).forEach((s) => s.stop()),
@@ -151,6 +172,7 @@ export function initPadStation() {
       page261760: "https://freesound.org/people/Digitopia_CdM/sounds/261760/",
     },
     kenong: kenongNotices,
+    peking: pekingNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
