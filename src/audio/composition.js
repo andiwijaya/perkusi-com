@@ -1,4 +1,5 @@
 import { SampleBank } from "./sample-bank.js";
+import { INSTRUMENT_BASE_GAIN } from "./instrument-levels.js";
 import { prepareBumiBuffer } from "../beatbox/bumi-presence.js";
 import {
   createLoopVoice,
@@ -104,7 +105,10 @@ export function createCompositionMixer(context, master, project) {
           immediate
             ? (param.value = value)
             : param.setTargetAtTime(value, when, 0.004);
-        set(n.gain.gain, trackGain(t, tracks));
+        set(
+          n.gain.gain,
+          trackGain(t, tracks) * (INSTRUMENT_BASE_GAIN[t.role] ?? 1),
+        );
         if (n.pan) set(n.pan.pan, t.pan);
         else {
           // Center is exactly dual mono (legacy loudness), with constant-energy

@@ -1,5 +1,6 @@
 import { secondsPerBeat } from "./transport.js";
 import { createOneShotVoice, fadeOutVoice } from "./voice.js";
+import { INSTRUMENT_BASE_GAIN } from "./instrument-levels.js";
 
 export function stepBeat(index, swing) {
   return index / 4 + (index % 2 ? swing / 4 : 0);
@@ -52,7 +53,7 @@ export function createTrackMixer(context, output, tracks) {
     update(next, when = context.currentTime, immediate = false) {
       for (const t of next) {
         const n = nodes.get(t.role),
-          value = trackGain(t, next);
+          value = trackGain(t, next) * INSTRUMENT_BASE_GAIN.drum;
         if (immediate) {
           n.gain.gain.value = value;
           n.pan.pan.value = t.pan;
