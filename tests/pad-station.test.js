@@ -229,3 +229,17 @@ test("standalone Peking offers source-labelled seven Pelog and five Slendro stri
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Saron barung preserves source-labelled scale banks and attribution", () => {
+  assert.equal(extraPadNotes["saron-barung-pelog"].notes.length, 7);
+  assert.equal(extraPadNotes["saron-barung-slendro"].notes.length, 5);
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="saron-barung"'));
+    assert(html.includes("SARON_SBPL1.wav"));
+    assert(html.includes("SARON_SBSL6.wav"));
+    assert(html.includes("saron-barung-pelog"));
+    assert(html.includes("saron-barung-slendro"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});

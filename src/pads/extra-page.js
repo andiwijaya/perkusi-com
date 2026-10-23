@@ -175,3 +175,47 @@ for (const locale of ["id", "en"])
       " KETHUK_KtSL2.wav",
     "Peking: SARON_SPPL1.wav, SARON_SPPL2.wav, SARON_SPPL3.wav, SARON_SPPL4.wav, SARON_SPPL5.wav, SARON_SPPL6.wav, SARON_SPPL7.wav, SARON_SPSL1.wav, SARON_SPSL2.wav, SARON_SPSL3.wav, SARON_SPSL5.wav, SARON_SPSL6.wav",
   );
+
+Object.assign(extraPadNotes, {
+  "saron-barung-pelog": {
+    name: "Saron barung",
+    option: "Saron barung - Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-4", "Pelog 4"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan; retrigger pad meredam voice lama secara halus. Tidak mengubah pola Rhythm Studio.",
+      en: "Full recorded tails are retained; pad retriggers smoothly damp older voices. Does not change Rhythm Studio patterns.",
+    },
+  },
+  "saron-barung-slendro": {
+    name: "Saron barung",
+    option: "Saron barung - Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Tail rekaman penuh dipertahankan; retrigger pad meredam voice lama secara halus. Tidak mengubah pola Rhythm Studio.",
+      en: "Full recorded tails are retained; pad retriggers smoothly damp older voices. Does not change Rhythm Studio patterns.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].saronBarungCredits = extraPadCopy[
+    locale
+  ].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Saron barung: SARON_SBPL1.wav, SARON_SBPL2.wav, SARON_SBPL3.wav, SARON_SBPL4.wav, SARON_SBPL5.wav, SARON_SBPL6.wav, SARON_SBPL7.wav, SARON_SBSL1.wav, SARON_SBSL2.wav, SARON_SBSL3.wav, SARON_SBSL5.wav, SARON_SBSL6.wav",
+  );
