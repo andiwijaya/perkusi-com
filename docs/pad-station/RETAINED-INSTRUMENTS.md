@@ -17,8 +17,8 @@ No retired V5/V6 runtime, mic, loop transport, new downloads or tuning claims.
 | Slenthem       | Pending                                       | Source tails up to 45 s; bounded sustain contract required.                                             |
 | Bonang barung  | LIVE - cb6cb772                               | Eight curated strikes; four source-quality holds, not a complete12-note bank.                           |
 | Bonang panerus | LIVE - d1805943                               | Long tails; note/laras and retrigger policy required.                                                   |
-| Kempul         | Local qualification PASS; publication pending | Eleven retained strikes; existing exclusive cache policy, Studio unchanged. |
-| Gong ageng     | Pending                                       | 20 s retained source; do not repeat former overlap behavior.                                            |
+| Kempul | LIVE - 65708351; bounded review accepted | Eleven strikes; original observer event remains UNKNOWN. |
+| Gong ageng | Local qualification PASS; publication pending | One retained strike; same-pitch damping, full natural tail and no tuned-bank claim. |
 | Suling         | Assess after curated strikes                  | Retained demo is not a curated tuned note bank. No fake bank.                                           |
 | Vocal loops    | Assess last                                   | Audition only if sensible without adding a transport.                                                   |
 
@@ -691,3 +691,89 @@ Evidence: qa-artifacts/pad-kempul-2026-10-23. Local qualification complete;
 publication pending. Physical phone/listening/Safari, higher device rates and
 long sessions remain unqualified. Historical timing, Kenong Stop observer and
 production loading/network observations are retained without a fix claim.
+
+## Kempul bounded review closure
+
+Receipt: qa-artifacts/pad-kempul-2026-10-23/publication/RECEIPT.json. Independent reviewer task 01a169a1-6827-742b-b005-5b6e8d9a0028 and parent accepted bounded lifecycle qualification. Original production callback-counter FAIL and UNKNOWN cause remain. Corrected trace has 20 bursts / 120 gestures, maximum 4 non-releasing and 8 callback-pending sources, 82 zero-fade/stop endpoints, and zero after Stop. Release overlap can reach 8 render-active sources: never a strict four-audible-voice claim. Dedicated burst trace is desktop Pelog at 48 kHz; reviewer synthetic offline PCM is two localhost cases, not all devices or physical listening. No engine change, rebuild or redeploy was made for this qualification.
+
+## Gong ageng implementation in progress
+
+One retained source, fs-261893 / GONG_GAf.wav, not a tuned degree bank. Full stereo 20.049 s source and original/license packets retained. Uniform runtime gain x2.831644 follows measured short-hit energy. Same-pitch retrigger uses the existing fade policy; one non-releasing strike is expected after retrigger, with bounded release overlap up to eight. Full natural tail remains; Stop controls all local pads. Existing 32 MiB retained-PCM and 4 MiB encoded-file limits stay unchanged. No Studio catalog or engine change. Gates pending.
+
+## Gong ageng qualification - 2026-10-24 WIB
+
+One source-labelled strike, fs-261893 / GONG_GAf.wav. Full 20.048708 second stereo
+recording, originals, source forms and CC BY 3.0 / Artistic 2.0 notices remain.
+No destructive crop, mono fold, denoise or retune was justified. Mean DC is about
+-0.000012; no full-scale frames were found. Tail RMS and onset are recorded as
+technical observations, not calibrated noise or physical-listening acceptance.
+Uniform runtime gain x2.831644 raises strongest K400 from -26.099 to -17.058 and
+output peak from 0.10966 to 0.31052. Relative within-recording dynamics remain.
+
+Existing same-pitch fading keeps one non-releasing strike; release overlap can
+reach eight rendering sources. Retrigger fades and replaces the prior strike,
+not an absolute one-audible-voice guarantee. No automatic blanket sustain cut or
+new engine policy was added. The UI states the long natural tail and Stop action;
+the one pad spans the available grid width. ID/EN mobile and desktop screenshots
+were inspected through the candidate's CSP-compatible external CSS.
+
+614 unit cases, lint, focused tests and official build
+350c641c-661c-4aaa-b30e-025d0a65ee74 passed. All four compiled ID/EN desktop/mobile
+profiles pass mapping, native multitouch/keyboard, master/mute, cache/no-op/reload,
+natural retirement, project-storage protection and navigation/disposal. Five
+native cancellation/resume/retry gates pass. A 31.01 second same-pitch repeat has
+one decode / 7,698,704 bytes stable and 101 created/ended sources. The 240-gesture
+burst admits 141, checks 140 native zero-fade/stop endpoints, stays within eight
+callback-pending sources, and settles to one non-releasing pitch. New tracing
+handles later stop requests rather than blindly taking a minimum deadline;
+the accepted workload has no later fade rescheduling. This is scheduling/API
+evidence, not independent per-source native PCM or physical hearing.
+
+Core plus short banks plus Gong retains 18,445,056 decoded PCM bytes. Leaving Gong
+unloads its cache, preserves short banks and core, and a later exclusive large
+bank still clears additional caches. Core plus Gong alone is 11,991,832 bytes.
+Held native decode ownership survives selection away; a fresh gesture works,
+and stale completion does not create sound. Retained entries are zero on disposal;
+this does not prove total native-buffer or process-memory reclamation.
+
+The first master-zero measurement failed because it sampled a trailing FFT window
+before the existing 5 ms exponential master target had settled. The diagnostic
+records an early peak about 0.0000269 followed by zero. Its restore step then
+stopped on malformed QA range text .65; the remaining restore/active-zero checks
+passed with 0.65. Both failed records remain. The final silence threshold stays
+1e-6; its measurement begins after 20 existing time constants, a full FFT window
+and 10 ms margin in audio-clock time. No master or engine gain code changed.
+
+The first Studio warm-up Stop observation failed with a running AudioContext whose
+clock remained zero at the 180 ms read. The original record remains unclassified;
+no historical or driver-clock fix is claimed. One cold cancellation trace each
+on unchanged published Kempul and Gong artifacts showed native stop/disconnect,
+eventual advancing clocks and zero output through one second. Warm-up now waits
+for a positive rendering clock before the unchanged 180 ms steady-state Stop
+assertion. Nine Studio cases passed before a QA logger used lang outside its
+scope. That failure is retained; only the tenth case ran after the logger scope
+was corrected. The combined ten-case result is an explicit 9+1 cohort, not one
+uninterrupted full-run. Seven Station cases and three independent kit WAV oracles
+passed. All 129 prior audio files and 62 Studio binary assets remain exact; active
+audio/Studio/project/Beatbox source blobs remain unchanged. Generated aliases are
+not treated as semantic equivalence by normalization.
+
+Matched core workloads each create/retire 255 sources with 4,293,128 decoded bytes
+and zero voice/intervals after Stop. Final JS heaps are 4,042,684 / 4,045,692 bytes;
+private committed browser sums are 291,196,928 / 296,652,800 bytes. These are one-pair
+coarse/GC-sensitive observations, not an overhead improvement claim. The combined
+31.09 second workload creates/retires 616 sources, holds 22 decodes / 11,991,832 bytes
+stable, and closes its context with zero voice/intervals. Private committed sums
+are 303,964,160 combined / 303,374,336 disposed; immediate OS reclamation is not
+promised. Separate controlled-GC blocks restore 51 listeners and 1,083 DOM nodes,
+with 33 listeners disposed; heap is not claimed flat or leak-free.
+
+Sixteen full-tail default/max-master renders at 44.1/48 kHz use the actual default
+kit and single Gong. Maximum output peak is about 0.881606 through the unchanged
+limiter. At 48 kHz / maximum master, all-pad knee occupancy is approximately
+0.319%; double stress is 0.967%. Quiet tails and conservative simultaneous hits
+affect those fractions. Compression and burst refusal remain explicit tradeoffs.
+
+Evidence: qa-artifacts/pad-gong-ageng-2026-10-24. Publication pending. Physical
+hearing/phones/Safari, higher sample rates, total native memory and long sessions
+remain unqualified. No Rhythm Studio instrument, pad count or schema was added.

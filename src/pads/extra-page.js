@@ -345,3 +345,20 @@ for (const locale of ["id", "en"])
       " KETHUK_KtSL2.wav",
     "Kempul: GONG_GKPL1f.wav, GONG_GKPL2f.wav, GONG_GKPL3f.wav, GONG_GKPL5f.wav, GONG_GKPL6f.wav, GONG_GKPL7f.wav, GONG_GKSL1f.wav, GONG_GKSL2f.wav, GONG_GKSL3f.wav, GONG_GKSL5f.wav, GONG_GKSL6f.wav",
   );
+
+extraPadNotes["gong-ageng"] = {
+  name: "Gong",
+  option: "Gong ageng",
+  notes: [["ageng", "Ageng"]],
+  info: {
+    id: "Satu pukulan rekaman, bukan bank nada. Sustain alami sekitar 20 detik dipertahankan. Ketukan ulang memudarkan pukulan sebelumnya; Hentikan suara menghentikan semua pad.",
+    en: "One recorded strike, not a tuned note bank. The natural tail lasts about 20 seconds. Retrigger fades the previous strike; Stop sounds stops all pads.",
+  },
+};
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].gongCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Gong ageng: GONG_GAf.wav",
+  );

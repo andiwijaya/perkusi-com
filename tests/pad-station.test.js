@@ -295,3 +295,14 @@ test("standalone Kempul preserves source-labelled six Pelog/five Slendro notes w
   }
   assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
 });
+
+test("standalone Gong is one source-labelled strike, not a note bank or Studio expansion", () => {
+  assert.deepEqual(extraPadNotes["gong-ageng"].notes, [["ageng", "Ageng"]]);
+  for (const l of ["id", "en"]) {
+    const html = renderPadStation(l);
+    assert(html.includes('data-pad-credits="gong-ageng"'));
+    assert(html.includes("GONG_GAf.wav"));
+    assert(extraPadNotes["gong-ageng"].info[l].includes("20"));
+  }
+  assert.equal((renderPadGroups("id").match(/<button\b/g) || []).length, 21);
+});

@@ -1,3 +1,4 @@
+import { gongPack, gongLevel, gongNotices } from "./instruments/gong-ageng.js";
 import {
   kempulPelogPack,
   kempulSlendroPack,
@@ -71,6 +72,10 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "gong-ageng": createExtraSampler(engine, gongPack, gongLevel, {
+      releaseBudget: 4,
+      maxOneShotSeconds: 25,
+    }),
     "kempul-pelog": createExtraSampler(engine, kempulPelogPack, kempulLevel, {
       releaseBudget: 4,
       maxOneShotSeconds: 20,
@@ -151,6 +156,7 @@ export function initPadStation() {
   };
   let selected = "kethuk";
   const sustained = new Set([
+    "gong-ageng",
     "kempul-pelog",
     "kempul-slendro",
     "bonang-panerus-pelog",
@@ -259,6 +265,7 @@ export function initPadStation() {
     "bonang-barung": bonangBarungNotices,
     demung: demungNotices,
     kempul: kempulNotices,
+    "gong-ageng": gongNotices,
     "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);

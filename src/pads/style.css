@@ -165,3 +165,7 @@
     padding: 16px;
   }
 }
+
+.pad-station .ps-extra-pad:only-child {
+  grid-column: 1 / -1;
+}
