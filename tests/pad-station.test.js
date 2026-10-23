@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createPadOwner } from "../src/pads/owner.js";
 import { renderPadStation, padMessages } from "../src/pads/page.js";
 import { renderPadGroups } from "../src/studio/live-pads.js";
+import { renderExtraButtons } from "../src/pads/extra-page.js";
 import { renderDocument } from "../src/app/document.js";
 import { pagePath, pageFromPath } from "../src/app/routes.js";
 const deferred = () => {
@@ -76,6 +77,12 @@ test("standalone retains 21 core pads plus two isolated Kethuk strikes without s
     assert.equal((html.match(/<button disabled/g) || []).length, 21);
     assert.equal((html.match(/class="st-pad ps-extra-pad"/g) || []).length, 2);
     assert(html.includes("KETHUK_KtPL6.wav") && html.includes("Artistic 2.0"));
+    assert(
+      html.includes('value="kempyang"') && html.includes("KEMPYANG_KpSL1.wav"),
+    );
+    const kempyang = renderExtraButtons("kempyang");
+    assert(kempyang.includes("Slendro 1") && !kempyang.includes("Slendro 2"));
+    assert.throws(() => renderExtraButtons("unknown"));
     assert(html.includes("CC BY") && html.includes("CC0"));
     assert(
       !/st-play|st-pattern|st-file|st-render|st-quantize|sequencer|data-st-step/.test(

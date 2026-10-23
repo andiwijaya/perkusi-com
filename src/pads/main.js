@@ -13,13 +13,27 @@ import {
   kethukLevel,
   kethukNotices,
 } from "./instruments/kethuk.js";
-import { extraPadCopy } from "./extra-page.js";
+import {
+  kempyangPack,
+  kempyangLevel,
+  kempyangNotices,
+} from "./instruments/kempyang.js";
+import { extraPadCopy, renderExtraButtons } from "./extra-page.js";
 
 export function initPadStation() {
   const root = document.querySelector(".pad-station"),
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
-  const extra = createExtraSampler(engine, kethukPack, kethukLevel);
+  const samplers = {
+    kethuk: createExtraSampler(engine, kethukPack, kethukLevel),
+    kempyang: createExtraSampler(engine, kempyangPack, kempyangLevel),
+  };
+  let selected = "kethuk";
+  const extra = {
+    play: (pitch) => samplers[selected].play(pitch),
+    stop: () => Object.values(samplers).forEach((s) => s.stop()),
+    dispose: () => Object.values(samplers).forEach((s) => s.dispose()),
+  };
   let disposed = false,
     state = "ready",
     locale;
@@ -73,7 +87,9 @@ export function initPadStation() {
       source: "FreePats — " + padMessages[locale].source,
     };
     for (const a of root.querySelectorAll("[data-pad-credit-key]"))
-      if (names[a.dataset.padCreditKey])
+      if (["pelogSource", "slendroSource"].includes(a.dataset.padCreditKey))
+        a.textContent = `${a.closest("ul").dataset.padCredits} ${a.dataset.padCreditKey === "pelogSource" ? "Pelog 6" : a.closest("ul").dataset.padCredits === "kempyang" ? "Slendro 1" : "Slendro 2"} - ${padMessages[locale].source}`;
+      else if (names[a.dataset.padCreditKey])
         a.textContent = names[a.dataset.padCreditKey];
     status(state);
   }
@@ -85,6 +101,11 @@ export function initPadStation() {
       ...kethukNotices,
       pelogPage: "https://freesound.org/people/Digitopia_CdM/sounds/261691/",
       slendroPage: "https://freesound.org/people/Digitopia_CdM/sounds/261685/",
+    },
+    kempyang: {
+      ...kempyangNotices,
+      page261984: "https://freesound.org/people/Digitopia_CdM/sounds/261984/",
+      page261760: "https://freesound.org/people/Digitopia_CdM/sounds/261760/",
     },
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
@@ -98,12 +119,22 @@ export function initPadStation() {
           ? "Freesound 261691"
           : name === "slendroPage"
             ? "Freesound 261685"
-            : name;
+            : name.startsWith("page")
+              ? "Freesound " + name.slice(4)
+              : name;
       li.append(a);
       list.append(li);
     }
   }
   listen(root.querySelector("#ps-stop"), "click", () => owner.stop());
+  listen(root.querySelector("#ps-extra-instrument"), "change", (e) => {
+    if (!Object.hasOwn(samplers, e.target.value)) return;
+    owner.stop();
+    selected = e.target.value;
+    root.querySelector(".ps-extra-pads").innerHTML =
+      renderExtraButtons(selected);
+    pads.update();
+  });
   listen(root.querySelector("#ps-master"), "input", (e) => {
     owner.setMaster(Number(e.target.value));
     root.querySelector("#ps-volume").value =

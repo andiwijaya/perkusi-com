@@ -8,7 +8,7 @@ No retired V5/V6 runtime, mic, loop transport, new downloads or tuning claims.
 
 | Increment      | Status                                             | Media / gate                                                                                            |
 | -------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Kethuk         | Local qualification PASS; publication gate pending | Two retained strikes: Pelog 6 and Slendro 2; full 1.425/1.935 s tails fit existing short-shot contract. |
+| Kethuk         | LIVE — 8c301596 | Two retained strikes: Pelog 6 and Slendro 2; full 1.425/1.935 s tails fit existing short-shot contract. |
 | Kempyang       | Pending                                            | Two retained strikes; next only after Kethuk production gate.                                           |
 | Kenong         | Pending                                            | 11 retained strikes; organize by recorded laras, no invented notes.                                     |
 | Demung         | Pending                                            | Source tails 5.9–12.2 s; measure sustain and budgets before admission.                                  |
@@ -85,3 +85,53 @@ not a claim every simultaneous mix remains linear or sounds balanced to listener
 
 Next: verify exact commit/deployment/production before Kempyang. No other retained
 instrument or demo has been integrated by this increment.
+
+## Kethuk production closure
+
+Commit: 8c3015965a52d6e1a20b33f03c853a8122d07792.
+Pages deployment: ebbeef0f-4dad-493b-8313-6ccb4d3fc172, success.
+All 133 artifact bodies verified; binary bytes exact and text normalization limited
+to line endings and explicit manifest references. Four production ID/EN desktop/
+mobile viewport profiles passed, plus audio/multitouch/Stop, Studio isolation,
+three independent kit WAV oracles and Beatbox repeat/reset. No physical-device or
+listening claim. Receipt: qa-artifacts/pad-kethuk-2026-10-23/publication/RECEIPT.json.
+
+## Kempyang increment — local qualification
+
+Retained fs-261984 Pelog 6 and fs-261760 Slendro 1, full stereo durations
+0.9943 / 1.0438 s. Source work IDs, hashes, original titles, CC BY 3.0 recordings
+and Artistic 2.0 package notices verified. No full-scale frames, DC about
+-0.000012; onset 0–2 frames. Full lossless tails retained; no destructive trim,
+denoise, retune or original edits. Gain ×5.691921 raises strongest short-hit K400
+from -34.728 to -19.623 and peak 0.1142 to 0.6500. It remains 2.56 dB below the
+nylon energy reference because transient headroom takes priority over forcing
+an equal energy reading. No perceived-loudness guarantee.
+
+The existing additional-instrument selector now switches Kethuk / Kempyang.
+It stops prior intents/voices before rendering the new two-button bank. Only
+23 pads are visible at once: 21 core plus two selected strikes, 25 available.
+No new keyboard shortcut or persistence/schema change. No auto-loaded samples.
+
+600 unit cases, lint and official build passed. Four bilingual CSP viewport
+profiles and ten warm bank switches passed; four samples decode only once,
+2,073,040 bytes total when both banks are warm. Switch during pending fetch or
+resume produced no old voice/request, while the new bank played correctly.
+Kempyang alone: 31 s repeat plus 20 Stop/restarts, 782,648 decoded bytes stable,
+162 sources started/ended, zero after Stop and closed context at disposal.
+Native two-touch, Enter/Space, actual output/mute/master-zero checks passed.
+Studio remains 21 pads / 21 decodes with no Kempyang request; 51 previously
+published audio files and 62 Studio binaries remain exact. Independent Studio
+WAV for three kits stays within 1 LSB. JS heap/listener metrics remain GC-sensitive;
+these are bounded automated checks, not total-memory/audio-thread guarantees.
+No physical listening, phone, Safari or long-session qualification.
+
+Evidence: qa-artifacts/pad-kempyang-2026-10-23. Publication and final matched
+performance / Studio regression closure must be recorded before Kenong.
+
+Matched 30 s core workload against published Kethuk: 4,293,128 decoded bytes and
+255 started / 255 ended in both runs; no active voices or intervals after Stop.
+Final JS heap snapshots: 3,751,304 / 3,786,980 bytes, with no forced GC; not total
+native memory or a statistically precise overhead result. The inherited limiter
+still bounds all-23 coincident output at about 0.881606; default active-frame knee
+occupancy 2.16%, double-hit stress 4.97%. Zero-master renders are silent at both
+sample rates. No new limiter or global attenuation was introduced.

@@ -16,7 +16,38 @@ export const extraPadCopy = {
       "Kethuk: KETHUK_KtPL6.wav and KETHUK_KtSL2.wav — Digitopia_CdM / Digitopia Casa da Música. Recorded by Pedro Augusto and Rui Penha; edited by Pedro Augusto; support by Jorge Queijo and Maria Mónica. Recordings CC BY 3.0; package Artistic 2.0. Changes: 48 kHz delivery, source gain 0.8, lossless FLAC; runtime gain calibration and short edge envelope. Full duration retained; no retuning/denoising. No endorsement or cultural/listening verification implied.",
   },
 };
+export const extraPadNotes = {
+  kethuk: {
+    name: "Kethuk",
+    notes: [
+      ["pelog-6", "Pelog 6"],
+      ["slendro-2", "Slendro 2"],
+    ],
+  },
+  kempyang: {
+    name: "Kempyang",
+    notes: [
+      ["pelog-6", "Pelog 6"],
+      ["slendro-1", "Slendro 1"],
+    ],
+  },
+};
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].kempyangCredits = extraPadCopy[locale].credits
+    .replaceAll("Kethuk", "Kempyang")
+    .replaceAll("KETHUK_KtPL6.wav", "KEMPYANG_KpPL6.wav")
+    .replaceAll("KETHUK_KtSL2.wav", "KEMPYANG_KpSL1.wav");
+export function renderExtraButtons(instrument = "kethuk", disabled = false) {
+  const g = extraPadNotes[instrument];
+  if (!g) throw new Error("Unknown extra instrument");
+  return g.notes
+    .map(
+      ([id, label]) =>
+        `<button type="button" ${disabled ? "disabled " : ""}class="st-pad ps-extra-pad" data-live-pad="extra:${id}" aria-label="${g.name} ${label}"><span>${g.name}</span><strong>${label}</strong></button>`,
+    )
+    .join("");
+}
 export function renderExtraPads(locale) {
   const t = extraPadCopy[locale];
-  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled><option value="kethuk">Kethuk</option></select></label><p data-extra-copy="hint">${t.hint}</p><div class="st-pads ps-extra-pads">${["pelog-6", "slendro-2"].map((id, i) => `<button type="button" disabled class="st-pad ps-extra-pad" data-live-pad="extra:${id}" aria-label="Kethuk ${t.notes[i]}"><span>Kethuk</span><strong>${t.notes[i]}</strong></button>`).join("")}</div></section>`;
+  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled><option value="kethuk">Kethuk</option><option value="kempyang">Kempyang</option></select></label><p data-extra-copy="hint">${t.hint}</p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
 }
