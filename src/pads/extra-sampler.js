@@ -10,6 +10,7 @@ export function createExtraSampler(
   {
     bankFactory = (p, options) => new SampleBank(p, options),
     releaseBudget = 0,
+    maxOneShotSeconds = 2,
   } = {},
 ) {
   if (!Number.isFinite(level) || level <= 0 || level > 6)
@@ -17,6 +18,7 @@ export function createExtraSampler(
   if (![0, 4].includes(releaseBudget))
     throw new RangeError("Invalid release budget");
   const bank = bankFactory(pack, {
+    maxOneShotSeconds,
     validateCandidate: (entry, metrics) =>
       engine.admitCandidate(entry, metrics),
   });
@@ -112,6 +114,10 @@ export function createExtraSampler(
       return v;
     },
     stop,
+    unload() {
+      stop();
+      bank.evictCache();
+    },
     dispose() {
       if (disposed) return;
       disposed = true;

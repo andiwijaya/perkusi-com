@@ -1,7 +1,15 @@
 import { secondsPerBeat } from "./transport.js";
 import { contextLoadQueue } from "./load-queue.js";
 
-export function validatePack(pack) {
+export function validatePack(pack, { maxOneShotSeconds = 2 } = {}) {
+  // Explicit delivery profile, never inferred from project data. Existing
+  // Studio/Beatbox callers keep the original two-second one-shot contract.
+  if (
+    !Number.isInteger(maxOneShotSeconds) ||
+    maxOneShotSeconds < 2 ||
+    maxOneShotSeconds > 30
+  )
+    throw new Error("Invalid one-shot duration profile");
   if (pack.schemaVersion !== 1 || !/^[a-z0-9-]+$/.test(pack.id))
     throw new Error("Invalid pack identity");
   secondsPerBeat(pack.bpm);
@@ -20,7 +28,7 @@ export function validatePack(pack) {
       pack.kind === "one-shot" &&
       (!Number.isFinite(stem.durationSeconds) ||
         stem.durationSeconds <= 0 ||
-        stem.durationSeconds > 2)
+        stem.durationSeconds > maxOneShotSeconds)
     )
       throw new Error("Invalid one-shot geometry");
     if (
@@ -80,12 +88,13 @@ export class SampleBank {
       now = () => performance.now(),
       validateCandidate = () => {},
       prepareBuffer = null,
+      maxOneShotSeconds = 2,
       timers = {
         setTimeout: (...args) => globalThis.setTimeout(...args),
         clearTimeout: (...args) => globalThis.clearTimeout(...args),
       },
     } = options;
-    this.pack = validatePack(pack);
+    this.pack = validatePack(pack, { maxOneShotSeconds });
     this.fetcher = fetcher;
     this.timeoutMs = totalTimeoutMs;
     this.legacyDeadline =
@@ -396,6 +405,19 @@ export class SampleBank {
   }
   cancelLoading() {
     for (const entry of this.entries.values()) entry.request?.finish("idle");
+  }
+  evictCache() {
+    // Caller must first stop/disconnect its voices. This drops retained cache
+    // references only; native decode leases remain owned until real settlement.
+    this.cancelLoading();
+    for (const entry of this.entries.values())
+      Object.assign(entry, {
+        buffer: null,
+        metrics: null,
+        state: this.disposed ? "disposed" : "idle",
+        progress: null,
+        error: null,
+      });
   }
   dispose() {
     this.disposed = true;

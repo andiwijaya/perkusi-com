@@ -18,7 +18,17 @@ import {
   kempyangLevel,
   kempyangNotices,
 } from "./instruments/kempyang.js";
-import { extraPadCopy, renderExtraButtons } from "./extra-page.js";
+import {
+  extraPadCopy,
+  extraPadNotes,
+  renderExtraButtons,
+} from "./extra-page.js";
+import {
+  bonangPanerusPelogPack,
+  bonangPanerusSlendroPack,
+  bonangPanerusLevel,
+  bonangPanerusNotices,
+} from "./instruments/bonang-panerus.js";
 import {
   kenongPelogPack,
   kenongSlendroPack,
@@ -31,6 +41,18 @@ export function initPadStation() {
     life = new AbortController();
   const { engine, playback } = createStudioPlayback({ arrangement: false });
   const samplers = {
+    "bonang-panerus-pelog": createExtraSampler(
+      engine,
+      bonangPanerusPelogPack,
+      bonangPanerusLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 8 },
+    ),
+    "bonang-panerus-slendro": createExtraSampler(
+      engine,
+      bonangPanerusSlendroPack,
+      bonangPanerusLevel,
+      { releaseBudget: 4, maxOneShotSeconds: 8 },
+    ),
     kethuk: createExtraSampler(engine, kethukPack, kethukLevel),
     kempyang: createExtraSampler(engine, kempyangPack, kempyangLevel),
     "kenong-pelog": createExtraSampler(engine, kenongPelogPack, kenongLevel, {
@@ -44,6 +66,7 @@ export function initPadStation() {
     ),
   };
   let selected = "kethuk";
+  const sustained = new Set(["bonang-panerus-pelog", "bonang-panerus-slendro"]);
   const extra = {
     play: (pitch) => samplers[selected].play(pitch),
     stop: () => Object.values(samplers).forEach((s) => s.stop()),
@@ -75,6 +98,9 @@ export function initPadStation() {
       el.textContent = padMessages[locale][el.dataset.padCopy];
     for (const el of root.querySelectorAll("[data-extra-copy]"))
       el.textContent = extraPadCopy[locale][el.dataset.extraCopy];
+    const info = root.querySelector("#ps-bank-info");
+    info.textContent = extraPadNotes[selected].info?.[locale] || "";
+    info.hidden = !info.textContent;
     for (const el of root.querySelectorAll("[data-st-role]"))
       el.textContent = studioRoleNames[locale][Number(el.dataset.stRole)];
     for (const g of LIVE_PAD_GROUPS) {
@@ -125,6 +151,7 @@ export function initPadStation() {
       page261760: "https://freesound.org/people/Digitopia_CdM/sounds/261760/",
     },
     kenong: kenongNotices,
+    "bonang-panerus": bonangPanerusNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
     for (const [name, href] of Object.entries(notices)) {
@@ -148,12 +175,15 @@ export function initPadStation() {
   }
   listen(root.querySelector("#ps-stop"), "click", () => owner.stop());
   listen(root.querySelector("#ps-extra-instrument"), "change", (e) => {
-    if (!Object.hasOwn(samplers, e.target.value)) return;
+    if (!Object.hasOwn(samplers, e.target.value) || e.target.value === selected)
+      return;
     owner.stop();
+    if (sustained.has(selected)) samplers[selected].unload();
     selected = e.target.value;
     root.querySelector(".ps-extra-pads").innerHTML =
       renderExtraButtons(selected);
     pads.update();
+    localize();
   });
   listen(root.querySelector("#ps-master"), "input", (e) => {
     owner.setMaster(Number(e.target.value));

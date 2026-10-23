@@ -227,3 +227,26 @@ test("Kenong smooth stealing retains release ownership and bounds bursts without
   assert.equal(f.engine.voices.size, 0);
   assert.equal(f.engine.stats.created, f.engine.stats.disposed);
 });
+
+test("standalone unloading disconnects owned voices before dropping cache and admits a fresh gesture", async () => {
+  const f = setup();
+  const bank = [...f.engine.banks][0];
+  let evictions = 0;
+  bank.evictCache = () => {
+    assert.equal(f.engine.voices.size, 0);
+    for (const e of f.entries.values()) e.buffer = null;
+    evictions++;
+  };
+  const v = await f.extra.play("a");
+  assert.equal(f.engine.voices.size, 1);
+  f.extra.unload();
+  assert.equal(v.source.onended, null);
+  assert.equal(evictions, 1);
+  assert.equal(f.engine.voices.size, 0);
+  f.load.resolve();
+  await f.extra.play("a");
+  assert.equal(f.counts.load, 1);
+  assert.equal(f.engine.voices.size, 1);
+  f.extra.stop();
+  assert.equal(f.engine.stats.created, f.engine.stats.disposed);
+});

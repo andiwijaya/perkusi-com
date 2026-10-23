@@ -93,6 +93,14 @@ test("standalone retains 21 core pads plus two isolated Kethuk strikes without s
       html.includes("KENONG_KPL1h.wav") &&
         html.includes('value="kenong-slendro"'),
     );
+    const bp = renderExtraButtons("bonang-panerus-pelog"),
+      bs = renderExtraButtons("bonang-panerus-slendro");
+    assert.equal((bp.match(/data-live-pad=/g) || []).length, 6);
+    assert.equal((bs.match(/data-live-pad=/g) || []).length, 4);
+    assert(!bp.includes("Pelog 1") && !bs.includes("Slendro 1"));
+    assert(
+      html.includes("BONANG_BPPL2.wav") && html.includes('id="ps-bank-info"'),
+    );
     assert(html.includes("CC BY") && html.includes("CC0"));
     assert(
       !/st-play|st-pattern|st-file|st-render|st-quantize|sequencer|data-st-step/.test(

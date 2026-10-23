@@ -57,6 +57,50 @@ Object.assign(extraPadNotes, {
     ],
   },
 });
+Object.assign(extraPadNotes, {
+  "bonang-panerus-pelog": {
+    name: "Bonang panerus",
+    option: "Bonang panerus — Pelog",
+    notes: [
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-4", "Pelog 4"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+    info: {
+      id: "Pilihan strike Pelog. Derajat 1 belum disertakan karena masih memerlukan kurasi audio. Tail rekaman penuh dipertahankan.",
+      en: "Selected Pelog strikes. Degree 1 is not included pending audio curation. Full recorded tails are retained.",
+    },
+  },
+  "bonang-panerus-slendro": {
+    name: "Bonang panerus",
+    option: "Bonang panerus — Slendro",
+    notes: [
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+    info: {
+      id: "Pilihan strike Slendro. Derajat 1 belum disertakan karena masih memerlukan kurasi audio. Tail rekaman penuh dipertahankan.",
+      en: "Selected Slendro strikes. Degree 1 is not included pending audio curation. Full recorded tails are retained.",
+    },
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].bonangPanerusCredits =
+    extraPadCopy[locale].credits.replace(
+      "Kethuk: KETHUK_KtPL6.wav " +
+        (locale === "id" ? "dan" : "and") +
+        " KETHUK_KtSL2.wav",
+      "Bonang panerus: BONANG_BPPL2.wav, BONANG_BPPL3.wav, BONANG_BPPL4.wav, BONANG_BPPL5.wav, BONANG_BPPL6.wav, BONANG_BPPL7.wav, BONANG_BPSL2.wav, BONANG_BPSL3.wav, BONANG_BPSL5.wav, BONANG_BPSL6.wav",
+    ) +
+    " " +
+    (locale === "id"
+      ? "Sumber Pelog 1 dan Slendro 1 masih ditahan untuk kurasi; gain bukan perbaikan clipping pada sumber."
+      : "Pelog 1 and Slendro 1 sources are held for curation; gain is not a source-clipping repair.");
 for (const locale of ["id", "en"])
   extraPadCopy[locale].kenongCredits = extraPadCopy[locale].credits.replace(
     "Kethuk: KETHUK_KtPL6.wav " +
@@ -87,5 +131,5 @@ export function renderExtraPads(locale) {
     .map(([id, g]) => `<option value="${id}">${g.option || g.name}</option>`)
     .join(
       "",
-    )}</select></label><p data-extra-copy="hint">${t.hint}</p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
+    )}</select></label><p data-extra-copy="hint">${t.hint}</p><p id="ps-bank-info" hidden></p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
 }
