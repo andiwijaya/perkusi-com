@@ -32,6 +32,38 @@ export const extraPadNotes = {
     ],
   },
 };
+Object.assign(extraPadNotes, {
+  "kenong-pelog": {
+    name: "Kenong",
+    option: "Kenong — Pelog",
+    notes: [
+      ["pelog-1", "Pelog 1"],
+      ["pelog-2", "Pelog 2"],
+      ["pelog-3", "Pelog 3"],
+      ["pelog-5", "Pelog 5"],
+      ["pelog-6", "Pelog 6"],
+      ["pelog-7", "Pelog 7"],
+    ],
+  },
+  "kenong-slendro": {
+    name: "Kenong",
+    option: "Kenong — Slendro",
+    notes: [
+      ["slendro-1", "Slendro 1"],
+      ["slendro-2", "Slendro 2"],
+      ["slendro-3", "Slendro 3"],
+      ["slendro-5", "Slendro 5"],
+      ["slendro-6", "Slendro 6"],
+    ],
+  },
+});
+for (const locale of ["id", "en"])
+  extraPadCopy[locale].kenongCredits = extraPadCopy[locale].credits.replace(
+    "Kethuk: KETHUK_KtPL6.wav " +
+      (locale === "id" ? "dan" : "and") +
+      " KETHUK_KtSL2.wav",
+    "Kenong: KENONG_KPL1h.wav, KENONG_KPL2.wav, KENONG_KPL3.wav, KENONG_KPL5.wav, KENONG_KPL6.wav, KENONG_KPL7.wav, KENONG_KSL1h.wav, KENONG_KSL2.wav, KENONG_KSL3.wav, KENONG_KSL5.wav, KENONG_KSL6.wav",
+  );
 for (const locale of ["id", "en"])
   extraPadCopy[locale].kempyangCredits = extraPadCopy[locale].credits
     .replaceAll("Kethuk", "Kempyang")
@@ -49,5 +81,11 @@ export function renderExtraButtons(instrument = "kethuk", disabled = false) {
 }
 export function renderExtraPads(locale) {
   const t = extraPadCopy[locale];
-  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled><option value="kethuk">Kethuk</option><option value="kempyang">Kempyang</option></select></label><p data-extra-copy="hint">${t.hint}</p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
+  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled>${Object.entries(
+    extraPadNotes,
+  )
+    .map(([id, g]) => `<option value="${id}">${g.option || g.name}</option>`)
+    .join(
+      "",
+    )}</select></label><p data-extra-copy="hint">${t.hint}</p><div class="st-pads ps-extra-pads">${renderExtraButtons("kethuk", true)}</div></section>`;
 }

@@ -7,10 +7,15 @@ export function createExtraSampler(
   engine,
   pack,
   level,
-  { bankFactory = (p, options) => new SampleBank(p, options) } = {},
+  {
+    bankFactory = (p, options) => new SampleBank(p, options),
+    releaseBudget = 0,
+  } = {},
 ) {
   if (!Number.isFinite(level) || level <= 0 || level > 6)
     throw new RangeError("Invalid extra level");
+  if (![0, 4].includes(releaseBudget))
+    throw new RangeError("Invalid release budget");
   const bank = bankFactory(pack, {
     validateCandidate: (entry, metrics) =>
       engine.admitCandidate(entry, metrics),
@@ -60,9 +65,18 @@ export function createExtraSampler(
         gain.gain.value = 0.65 * level;
         gain.connect(engine.master);
       }
-      // Two articulations can sound together; same-note retrigger fades, and
-      // at most four bank voices (including release tails) may be retained.
+      // The published two-strike banks keep their four-voice policy. Kenong
+      // opts into four sounding voices plus four bounded smooth release tails.
       for (const v of voices) if (!engine.voices.has(v)) voices.delete(v);
+      if (releaseBudget && voices.size >= 4 + releaseBudget) {
+        // Refuse an overloaded gesture rather than cutting a sounding release
+        // or queuing a phantom hit. Natural settlement admits the next gesture.
+        engine.record("extra-pad-skipped", {
+          id: pack.id,
+          reason: "release-budget",
+        });
+        return;
+      }
       const when = ctx.currentTime + 0.005;
       for (const v of voices)
         if (v.pitch === id && !v.extraReleasing) {
@@ -70,11 +84,20 @@ export function createExtraSampler(
           fadeOutVoice(v, when, 0.012);
           v.source.stop(v.endTime);
         }
-      while (voices.size >= 4) {
-        const old = voices.values().next().value;
-        engine.removeVoice(old);
-        voices.delete(old);
-      }
+      if (releaseBudget) {
+        const active = [...voices].filter((v) => !v.extraReleasing);
+        if (active.length >= 4) {
+          const old = active[0];
+          old.extraReleasing = true;
+          fadeOutVoice(old, when, 0.012);
+          old.source.stop(old.endTime);
+        }
+      } else
+        while (voices.size >= 4) {
+          const old = voices.values().next().value;
+          engine.removeVoice(old);
+          voices.delete(old);
+        }
       const v = createOneShotVoice(ctx, gain, entry, when, 1);
       v.pitch = id;
       v.id = "extra-" + pack.id + "-" + id;

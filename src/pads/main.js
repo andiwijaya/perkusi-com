@@ -19,6 +19,12 @@ import {
   kempyangNotices,
 } from "./instruments/kempyang.js";
 import { extraPadCopy, renderExtraButtons } from "./extra-page.js";
+import {
+  kenongPelogPack,
+  kenongSlendroPack,
+  kenongLevel,
+  kenongNotices,
+} from "./instruments/kenong.js";
 
 export function initPadStation() {
   const root = document.querySelector(".pad-station"),
@@ -27,6 +33,15 @@ export function initPadStation() {
   const samplers = {
     kethuk: createExtraSampler(engine, kethukPack, kethukLevel),
     kempyang: createExtraSampler(engine, kempyangPack, kempyangLevel),
+    "kenong-pelog": createExtraSampler(engine, kenongPelogPack, kenongLevel, {
+      releaseBudget: 4,
+    }),
+    "kenong-slendro": createExtraSampler(
+      engine,
+      kenongSlendroPack,
+      kenongLevel,
+      { releaseBudget: 4 },
+    ),
   };
   let selected = "kethuk";
   const extra = {
@@ -89,6 +104,8 @@ export function initPadStation() {
     for (const a of root.querySelectorAll("[data-pad-credit-key]"))
       if (["pelogSource", "slendroSource"].includes(a.dataset.padCreditKey))
         a.textContent = `${a.closest("ul").dataset.padCredits} ${a.dataset.padCreditKey === "pelogSource" ? "Pelog 6" : a.closest("ul").dataset.padCredits === "kempyang" ? "Slendro 1" : "Slendro 2"} - ${padMessages[locale].source}`;
+      else if (/^source\d+$/.test(a.dataset.padCreditKey))
+        a.textContent = `${padMessages[locale].source} ${a.dataset.padCreditKey.slice(6)}`;
       else if (names[a.dataset.padCreditKey])
         a.textContent = names[a.dataset.padCreditKey];
     status(state);
@@ -107,6 +124,7 @@ export function initPadStation() {
       page261984: "https://freesound.org/people/Digitopia_CdM/sounds/261984/",
       page261760: "https://freesound.org/people/Digitopia_CdM/sounds/261760/",
     },
+    kenong: kenongNotices,
   })) {
     const list = root.querySelector(`[data-pad-credits="${family}"]`);
     for (const [name, href] of Object.entries(notices)) {
@@ -121,7 +139,9 @@ export function initPadStation() {
             ? "Freesound 261685"
             : name.startsWith("page")
               ? "Freesound " + name.slice(4)
-              : name;
+              : name.startsWith("source")
+                ? "Source " + name.slice(6)
+                : name;
       li.append(a);
       list.append(li);
     }

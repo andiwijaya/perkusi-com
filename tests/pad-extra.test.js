@@ -10,7 +10,7 @@ const deferred = () => {
   });
   return { promise, resolve, reject };
 };
-function setup(warm = true) {
+function setup(warm = true, releaseBudget = 0) {
   const counts = { load: 0, mix: 0, cancel: 0, dispose: 0 },
     resume = deferred(),
     load = deferred();
@@ -98,6 +98,7 @@ function setup(warm = true) {
   };
   const extra = createExtraSampler(engine, { id: "test" }, 2, {
     bankFactory: () => bank,
+    releaseBudget,
   });
   return { engine, ctx, counts, resume, load, extra, entries };
 }
@@ -140,7 +141,11 @@ test("shared bank, master route, same-note release, bounded overlap, natural end
     await f.extra.play(i % 2 ? "a" : "b");
     assert(f.engine.voices.size <= 4);
   }
-  assert.equal(f.counts.mix, 26, "one shared bus and one envelope gain per voice");
+  assert.equal(
+    f.counts.mix,
+    26,
+    "one shared bus and one envelope gain per voice",
+  );
   assert([...f.engine.voices].some((v) => v.extraReleasing));
   for (const v of [...f.engine.voices]) v.source.onended();
   assert.equal(f.engine.voices.size, 0);
@@ -183,4 +188,42 @@ test("extra owner interruption and Stop/dispose fence only standalone work; no a
   f.ctx.dispatchEvent(new Event("statechange"));
   await owner.dispose();
   assert.deepEqual(calls, ["a", "stop", "stop", "dispose"]);
+});
+
+test("Kenong smooth stealing retains release ownership and bounds bursts without abrupt removal", async () => {
+  const f = setup(true, 4);
+  for (const id of ["c", "d", "e", "f"])
+    f.entries.set(id, {
+      stem: { id, gainTrim: 0.55 },
+      buffer: { duration: 1.5 },
+    });
+  for (const id of ["a", "b", "c", "d"]) await f.extra.play(id);
+  f.ctx.currentTime = 2;
+  await f.extra.play("e");
+  await f.extra.play("f");
+  assert.equal(
+    f.engine.stats.disposed,
+    0,
+    "stealing must not disconnect nonzero voices immediately",
+  );
+  assert.equal(f.engine.voices.size, 6);
+  const release = [...f.engine.voices].filter((v) => v.extraReleasing);
+  assert.equal(release.length, 2);
+  for (const v of release) {
+    assert.equal(v.envelope.at(-1).value, 0);
+    assert(v.endTime > f.ctx.currentTime + 0.01);
+    assert.equal(typeof v.source.onended, "function");
+  }
+  for (let i = 0; i < 30; i++)
+    await f.extra.play(["a", "b", "c", "d", "e", "f"][i % 6]);
+  assert(f.engine.voices.size <= 8);
+  assert([...f.engine.voices].filter((v) => !v.extraReleasing).length <= 4);
+  assert.equal(f.engine.stats.disposed, 0);
+  for (const v of [...f.engine.voices]) v.source.onended();
+  assert.equal(f.engine.voices.size, 0);
+  await f.extra.play("a");
+  assert.equal(f.engine.voices.size, 1);
+  f.extra.stop();
+  assert.equal(f.engine.voices.size, 0);
+  assert.equal(f.engine.stats.created, f.engine.stats.disposed);
 });

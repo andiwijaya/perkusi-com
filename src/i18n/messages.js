@@ -4,16 +4,16 @@ const pairs = {
   "home.pads.meta": ["03 / MAIN LANGSUNG", "03 / LIVE PLAY"],
   "home.pads.title": ["Pad Station", "Pad Station"],
   "home.pads.copy": [
-    "21 pad drum, Bilah, kendhang, bass dan gitar. Ketuk langsung di HP atau keyboard—tanpa menyusun pola.",
-    "21 drum, Bilah, kendhang, bass and guitar pads. Play directly on your phone or keyboard—no pattern editing.",
+    "Pad drum dan instrumen dengan pilihan bank tambahan. Ketuk langsung di HP atau keyboard tanpa menyusun pola.",
+    "Drum and instrument pads with additional sound banks. Play directly on your phone or keyboard without pattern editing.",
   ],
   "meta.pads.title": [
-    "Pad Station — Mainkan 21 Pad | Perkusi.com",
-    "Pad Station — Play 21 Live Pads | Perkusi.com",
+    "Pad Station - Mainkan Instrumen Langsung | Perkusi.com",
+    "Pad Station - Live Instrument Pads | Perkusi.com",
   ],
   "meta.pads.description": [
-    "Mainkan drum, Bilah, Kendhang Ciblon, bass dan gitar langsung. Tanpa pola, rekaman atau akun.",
-    "Play drums, Bilah, Kendhang Ciblon, bass and guitar live. No patterns, recording or account.",
+    "Mainkan drum, Bilah, kendhang, bass, gitar dan pilihan instrumen tambahan. Tanpa pola, rekaman atau akun.",
+    "Play drums, Bilah, kendhang, bass, guitar and additional instrument banks live. No patterns, recording or account.",
   ],
   "common.gamelan": ["Gamelan", "Gamelan"],
   "common.instrumentStatus": ["Instrumen", "Instrument"],

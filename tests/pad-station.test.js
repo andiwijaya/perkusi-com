@@ -83,6 +83,16 @@ test("standalone retains 21 core pads plus two isolated Kethuk strikes without s
     const kempyang = renderExtraButtons("kempyang");
     assert(kempyang.includes("Slendro 1") && !kempyang.includes("Slendro 2"));
     assert.throws(() => renderExtraButtons("unknown"));
+    const pelog = renderExtraButtons("kenong-pelog"),
+      slendro = renderExtraButtons("kenong-slendro");
+    assert.equal((pelog.match(/data-live-pad=/g) || []).length, 6);
+    assert.equal((slendro.match(/data-live-pad=/g) || []).length, 5);
+    assert(pelog.includes("Pelog 7") && !pelog.includes("Pelog 4"));
+    assert(slendro.includes("Slendro 6") && !slendro.includes("Slendro 4"));
+    assert(
+      html.includes("KENONG_KPL1h.wav") &&
+        html.includes('value="kenong-slendro"'),
+    );
     assert(html.includes("CC BY") && html.includes("CC0"));
     assert(
       !/st-play|st-pattern|st-file|st-render|st-quantize|sequencer|data-st-step/.test(
