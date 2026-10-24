@@ -1,14 +1,16 @@
 import {
   slenthemPelogPack,
   slenthemSlendroPack,
-  slenthemLevel,
+  slenthemPelogLevel,
+  slenthemSlendroLevel,
   slenthemNotices,
 } from "./instruments/slenthem.js";
 import { gongPack, gongLevel, gongNotices } from "./instruments/gong-ageng.js";
 import {
   kempulPelogPack,
   kempulSlendroPack,
-  kempulLevel,
+  kempulPelogLevel,
+  kempulSlendroLevel,
   kempulNotices,
 } from "./instruments/kempul.js";
 import {
@@ -81,27 +83,32 @@ export function initPadStation() {
     "slenthem-pelog": createExtraSampler(
       engine,
       slenthemPelogPack,
-      slenthemLevel,
+      slenthemPelogLevel,
       { releaseBudget: 4, maxOneShotSeconds: 25 },
     ),
     "slenthem-slendro": createExtraSampler(
       engine,
       slenthemSlendroPack,
-      slenthemLevel,
+      slenthemSlendroLevel,
       { releaseBudget: 4, maxOneShotSeconds: 25 },
     ),
     "gong-ageng": createExtraSampler(engine, gongPack, gongLevel, {
       releaseBudget: 4,
       maxOneShotSeconds: 25,
     }),
-    "kempul-pelog": createExtraSampler(engine, kempulPelogPack, kempulLevel, {
-      releaseBudget: 4,
-      maxOneShotSeconds: 20,
-    }),
+    "kempul-pelog": createExtraSampler(
+      engine,
+      kempulPelogPack,
+      kempulPelogLevel,
+      {
+        releaseBudget: 4,
+        maxOneShotSeconds: 20,
+      },
+    ),
     "kempul-slendro": createExtraSampler(
       engine,
       kempulSlendroPack,
-      kempulLevel,
+      kempulSlendroLevel,
       { releaseBudget: 4, maxOneShotSeconds: 20 },
     ),
     "demung-pelog": createExtraSampler(engine, demungPelogPack, demungLevel, {

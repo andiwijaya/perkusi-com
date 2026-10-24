@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { createExtraSampler } from "../src/pads/extra-sampler.js";
 import { createPadOwner } from "../src/pads/owner.js";
 const deferred = () => {
@@ -10,10 +11,11 @@ const deferred = () => {
   });
   return { promise, resolve, reject };
 };
-function setup(warm = true, releaseBudget = 0) {
+function setup(warm = true, releaseBudget = 0, level = 2) {
   const counts = { load: 0, mix: 0, cancel: 0, dispose: 0 },
     resume = deferred(),
-    load = deferred();
+    load = deferred(),
+    gains = [];
   const param = () => ({
     value: 0,
     setValueAtTime() {},
@@ -26,7 +28,9 @@ function setup(warm = true, releaseBudget = 0) {
     resume: () => resume.promise,
     createGain() {
       counts.mix++;
-      return { gain: param(), connect() {}, disconnect() {} };
+      const node = { gain: param(), connect() {}, disconnect() {} };
+      gains.push(node);
+      return node;
     },
     createBufferSource() {
       return {
@@ -96,12 +100,98 @@ function setup(warm = true, releaseBudget = 0) {
       return Promise.resolve();
     },
   };
-  const extra = createExtraSampler(engine, { id: "test" }, 2, {
+  const extra = createExtraSampler(engine, { id: "test" }, level, {
     bankFactory: () => bank,
     releaseBudget,
   });
-  return { engine, ctx, counts, resume, load, extra, entries };
+  return { engine, ctx, counts, resume, load, extra, entries, gains };
 }
+
+for (const [file, group, pack, binding, prior, db] of [
+  [
+    "kempul",
+    "kempul-pelog",
+    "kempulPelogPack",
+    "kempulPelogLevel",
+    1.2350620578119,
+    2,
+  ],
+  [
+    "kempul",
+    "kempul-slendro",
+    "kempulSlendroPack",
+    "kempulSlendroLevel",
+    1.2350620578119,
+    6,
+  ],
+  ["gong-ageng", "gong-ageng", "gongPack", "gongLevel", 2.831643815413104, 2],
+  [
+    "slenthem",
+    "slenthem-pelog",
+    "slenthemPelogPack",
+    "slenthemPelogLevel",
+    2.1928469760513,
+    3,
+  ],
+  [
+    "slenthem",
+    "slenthem-slendro",
+    "slenthemSlendroPack",
+    "slenthemSlendroLevel",
+    2.1928469760513,
+    4,
+  ],
+])
+  test(`${group} calibrated bus uses its own level and preserves bounded Stop/dispose`, async () => {
+    const source = await readFile(
+      new URL(`../src/pads/instruments/${file}.js`, import.meta.url),
+      "utf8",
+    );
+    const dataOnly = source.replace(
+      /import\s+(\w+)\s+from\s+"([^"]+)"\s*;/g,
+      (_, name, asset) => {
+        assert(asset.includes("?url"));
+        return `const ${name}=${JSON.stringify(asset)};`;
+      },
+    );
+    const exports = await import(
+      `data:text/javascript;base64,${Buffer.from(dataOnly).toString("base64")}`
+    );
+    const level = exports[binding];
+    assert(Math.abs(level / prior - 10 ** (db / 20)) < 1e-12);
+    assert(level > 0 && level <= 6);
+    assert(exports[pack].stems.every((s) => s.gainTrim === 0.55));
+    const main = await readFile(
+      new URL("../src/pads/main.js", import.meta.url),
+      "utf8",
+    );
+    const start = main.indexOf(`"${group}": createExtraSampler(`);
+    assert(start >= 0);
+    let at = main.indexOf("(", start),
+      depth = 1;
+    const first = at++;
+    while (depth && at < main.length) {
+      if (main[at] === "(") depth++;
+      if (main[at] === ")") depth--;
+      at++;
+    }
+    const registration = main.slice(first, at);
+    assert(registration.includes(`${pack},`));
+    assert(new RegExp(`\\b${binding}\\b`).test(registration));
+    const f = setup(true, 4, level);
+    const voice = await f.extra.play("a");
+    assert.equal(f.gains[0].gain.value, 0.65 * level);
+    assert.equal(voice.trim, 0.55);
+    for (let i = 0; i < 20; i++) await f.extra.play(i % 2 ? "a" : "b");
+    assert(f.engine.voices.size <= 8);
+    assert([...f.engine.voices].filter((v) => !v.extraReleasing).length <= 4);
+    f.extra.stop();
+    assert.equal(f.engine.voices.size, 0);
+    assert.equal(f.engine.stats.created, f.engine.stats.disposed);
+    assert.equal(f.counts.load, 0);
+    f.extra.dispose();
+    assert.equal(f.counts.dispose, 1);
+  });
 for (const warm of [false, true])
   for (const action of ["Stop", "replace", "dispose", "context replacement"])
     for (const reject of [false, true])

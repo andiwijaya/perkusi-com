@@ -23,7 +23,10 @@ import source261980 from "../../../internal/gamelan-source-forms/archives/work-2
 import recordingLicense from "../../../internal/gamelan-delivery/LICENSE_CC_BY_3.0.txt?url";
 import packageLicense from "../../../internal/gamelan-delivery/LICENSE_ARTISTIC_2.0.txt?url";
 import notice from "../../../internal/gamelan-delivery/NOTICE.txt?url&no-inline";
-export const kempulLevel = 1.2350620578119;
+// Standalone-only, uniform gain per recorded bank; source PCM/tails unchanged.
+// Independent laras levels avoid letting a high-crest Pelog strike cap Slendro.
+export const kempulPelogLevel = 1.554851009722198;
+export const kempulSlendroLevel = 2.4642727806;
 export const kempulNotices = {
   recordingLicense,
   packageLicense,

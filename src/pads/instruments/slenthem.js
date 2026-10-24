@@ -17,7 +17,10 @@ import source261895 from "../../../internal/gamelan-source-forms/archives/work-2
 import recordingLicense from "../../../internal/gamelan-delivery/LICENSE_CC_BY_3.0.txt?url";
 import packageLicense from "../../../internal/gamelan-delivery/LICENSE_ARTISTIC_2.0.txt?url";
 import notice from "../../../internal/gamelan-delivery/NOTICE.txt?url&no-inline";
-export const slenthemLevel = 2.1928469760513;
+// Standalone-only, uniform gain per recorded bank; source PCM/tails unchanged.
+// Separate laras levels follow their different measured hit-energy distributions.
+export const slenthemPelogLevel = 3.0974786832849355;
+export const slenthemSlendroLevel = 3.4754282444526443;
 export const slenthemNotices = {
   recordingLicense,
   packageLicense,

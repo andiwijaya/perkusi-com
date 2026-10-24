@@ -3,7 +3,8 @@ import source from "../../../internal/gamelan-source-forms/archives/work-261893-
 import recordingLicense from "../../../internal/gamelan-delivery/LICENSE_CC_BY_3.0.txt?url";
 import packageLicense from "../../../internal/gamelan-delivery/LICENSE_ARTISTIC_2.0.txt?url";
 import notice from "../../../internal/gamelan-delivery/NOTICE.txt?url&no-inline";
-export const gongLevel = 2.831643815413104;
+// Modest +2 dB audition gain; this cannot restore bass absent on a phone speaker.
+export const gongLevel = 3.564828356373349;
 export const gongNotices = {
   source,
   recordingLicense,
