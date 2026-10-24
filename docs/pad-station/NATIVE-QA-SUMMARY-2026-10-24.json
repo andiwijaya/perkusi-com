@@ -1,0 +1,90 @@
+{
+  "utc": "2026-10-24T12:47:32.1143163Z",
+  "status": "SOFTWARE_VERIFIED_PARENT_REVIEW_AND_AUDITION_PENDING",
+  "applicationCheckpoint": "321835ec1481ab9b12a76f840114d240638f986f",
+  "applicationTree": "ee44a3f20ef1a2fe5bbe792df74b6fba399b1578",
+  "originalSixPinsMatch": true,
+  "nativeRate": 48000,
+  "sourceGates": 13,
+  "sourceResult": "PASS",
+  "isolatedCases": 40,
+  "nativeModelMaxSampleError": 1.788139343261719E-07,
+  "unitPassed": 620,
+  "lintExit": 0,
+  "productionGates": 4,
+  "productionResult": "PASS",
+  "productionStarts": 130,
+  "productionEnded": 130,
+  "productionActive": 0,
+  "maximumSupportedNativeSources": 64,
+  "maximumMeasuredStereoPeak": 0.8816059827804565,
+  "maximumObservedRetainedCacheBytes": 33166088,
+  "retainedCacheLimitBytes": 33554432,
+  "wavKits": [
+    {
+      "kit": "ruang",
+      "status": "PASS",
+      "frames": 96000,
+      "maxLSB": 1,
+      "differentPCM16": 8,
+      "metadataBytes": 2044
+    },
+    {
+      "kit": "arus",
+      "status": "PASS",
+      "frames": 96000,
+      "maxLSB": 0,
+      "differentPCM16": 0,
+      "metadataBytes": 2044
+    },
+    {
+      "kit": "fusion",
+      "status": "PASS",
+      "frames": 96000,
+      "maxLSB": 1,
+      "differentPCM16": 2,
+      "metadataBytes": 2044
+    }
+  ],
+  "responsiveCases": 20,
+  "responsiveOverflowCases": 0,
+  "officialBuild": {
+    "status": "SUCCESS",
+    "id": "7f09fa74-db82-429a-b836-a315ba9b264f",
+    "sourceSHA256": "c5c157fc338f511f63b2d812fb1e1dc9cbcaef9f7ab8a6324b4dd93f919bf7c9",
+    "originalCompilationReceipt": "7244b076-0ffb-4f8b-9fc3-c74afce15227",
+    "files": 307,
+    "bytes": 444319264,
+    "postTestArtifactHashMismatches": 0,
+    "path": "qa-artifacts/pad-low-bank-balance-2026-10-24/dist",
+    "compiledOnce": true
+  },
+  "limiter": {
+    "stress": "56 phase-aligned kick +8extra",
+    "sampledMonoInputClampFraction": 0.4605028760302198,
+    "sampledMonoKneeFraction": 0.516853751717033,
+    "monoPrePeak": 27.21225070953369,
+    "interpretation": "Finite bounded stereo output with strong nonlinear limiting; no no-distortion or audible-quality claim"
+  },
+  "retainedProbeFailures": [
+    "64voice late snapshot",
+    "WAV URL-vs-render Blob observer",
+    "PCM hash included metadata trailer",
+    "WAV iframe readiness/import race"
+  ],
+  "unexplainedObservation": "Earlier source-fixture MutationObserver error; final production warnings/errors empty",
+  "physicalPhone": false,
+  "humanAudition": false,
+  "Safari": false,
+  "eqOrMasterChanged": false,
+  "rhythmStudioBanksAdded": false,
+  "ownBrowserTabsClosed": true,
+  "ownServersClosed": true,
+  "viewportReset": true,
+  "PropertiTouched": false,
+  "parallelSpeedupClaim": false,
+  "pendingApprovals": [],
+  "push": false,
+  "deploy": false,
+  "report": "docs/pad-station/LOW-BANK-BROWSER-QA-2026-10-24.md"
+}
