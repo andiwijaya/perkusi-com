@@ -209,11 +209,11 @@ test("playable Studio has honest localized metadata and initialization-guarded c
     assert(!html.includes("<audio") && !html.includes("AudioContext"));
   }
 });
-test("homepage promotes only localized playable Beatbox and ordinary Studio", () => {
+test("homepage links all three playable tools with concise bilingual guidance", () => {
   for (const locale of ["id", "en"]) {
     const html = renderDocument("home", locale);
     assert(html.includes(messages[locale]["home.explore"]));
-    assert.equal([...html.matchAll(/data-route="beatbox"/g)].length, 3);
+    assert.equal([...html.matchAll(/data-route="beatbox"/g)].length, 2);
     assert.equal([...html.matchAll(/data-i18n="common.upcoming"/g)].length, 0);
     assert.equal([...html.matchAll(/data-route="studio"/g)].length, 2);
     assert(html.includes('data-i18n="common.playable"'));

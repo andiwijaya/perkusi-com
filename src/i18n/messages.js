@@ -1,5 +1,24 @@
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  "home.chooseTool": ["Pilih alat musik", "Choose a music tool"],
+  "home.guideTitle": ["Sebelum bermain", "Before you play"],
+  "home.guide.audio.title": [
+    "Mulai dengan volume rendah",
+    "Start with low volume",
+  ],
+  "home.guide.audio.copy": [
+    "Suara aktif setelah kamu mengetuk kontrol di alat yang dipilih. Sesuaikan volume perangkat sebelum bermain.",
+    "Audio starts after you tap a control in your chosen tool. Adjust your device volume before playing.",
+  ],
+  "home.guide.live.title": [
+    "Pad Station untuk main langsung",
+    "Pad Station is for live play",
+  ],
+  "home.guide.live.copy": [
+    "Pad Station tidak merekam permainanmu. Pilih Rhythm Studio untuk menyusun pola dan mengekspor beat.",
+    "Pad Station does not record your performance. Choose Rhythm Studio to arrange patterns and export beats.",
+  ],
+
   "common.pads": ["Buka Pad Station", "Open Pad Station"],
   "home.pads.meta": ["03 / MAIN LANGSUNG", "03 / LIVE PLAY"],
   "home.pads.title": ["Pad Station", "Pad Station"],
@@ -29,8 +48,8 @@ const pairs = {
   "home.loopPreviewAction": ["Buka Loop Station", "Open Loop Station"],
 
   "meta.home.title": [
-    "Perkusi.com — Mainkan Irama. Ciptakan Musikmu.",
-    "Perkusi.com - Make Rhythm. Build Loops. Play.",
+    "Perkusi.com - Alat Musik di Browser",
+    "Perkusi.com - Music Tools in Your Browser",
   ],
   "meta.home.description": [
     "Mainkan Pad Station, Beatbox Playground dan Rhythm Studio langsung di browser. Tanpa akun atau instalasi.",
@@ -80,7 +99,7 @@ const pairs = {
   "common.upcoming": ["Segera Hadir", "Upcoming"],
   "common.comingSoon": ["Segera Hadir", "Coming Soon"],
   "common.tools": ["Alat Musik", "Music tools"],
-  "common.approach": ["Pendekatan Kami", "Our approach"],
+  "common.approach": ["Panduan Bermain", "Playing guide"],
   "common.find": ["Main Sekarang", "Play Now"],
   "common.studio": ["Buka Studio", "Open Studio"],
   "common.playable": ["Bisa Dimainkan", "Playable"],
@@ -90,47 +109,31 @@ const pairs = {
   ],
   "common.privacy": ["Privasi", "Privacy"],
   "common.back": ["Kembali ke Perkusi.com", "Back to Perkusi.com"],
-  "home.eyebrow": ["RUANG BARU UNTUK IRAMA", "A NEW SPACE FOR RHYTHM"],
+  "home.eyebrow": ["PERKUSI.COM", "PERKUSI.COM"],
   "home.hero1": ["Mainkan irama.", "Make rhythm."],
-  "home.hero2": ["Ciptakan loop.", "Build loops."],
-  "home.hero3": ["Bermain.", "Play."],
-  "home.intro": [
-    "Musik yang seru dimulai dari rasa ingin tahu.",
-    "Good music starts with a little curiosity.",
-  ],
+  "home.hero2": ["Di browser.", "In your browser."],
   "home.description": [
-    "Mainkan enam karakter Beatbox atau susun pola dan rantai beat di Rhythm Studio.",
-    "Play six Beatbox characters or arrange patterns and beat chains in Rhythm Studio.",
+    "Susun beat di Rhythm Studio, gabungkan suara di Beatbox Playground, atau mainkan instrumen langsung di Pad Station.",
+    "Build beats in Rhythm Studio, combine voices in Beatbox Playground, or play instruments live in Pad Station.",
   ],
-  "home.explore": ["Main Sekarang", "Play Now"],
-  "home.note": [
-    "Tanpa akun atau instalasi. Suara dimulai setelah kamu mengetuk.",
-    "No account or installation. Audio starts after you tap.",
-  ],
+  "home.explore": ["Buka Beatbox", "Open Beatbox"],
+  "home.note": ["Tanpa akun atau instalasi.", "No account or installation."],
   "home.artLabel": [
     "Ilustrasi irama abstrak: lingkaran loop mengelilingi kisi pad perkusi empat kali empat. Ini adalah konsep visual, bukan alat yang dapat dimainkan.",
     "Abstract rhythm illustration: concentric circles surrounding a four-by-four percussion pad grid. Illustration only, not an audio control.",
   ],
-  "home.artTop": ["BENTUK SEBUAH GROOVE", "THE SHAPE OF A GROOVE"],
-  "home.artBottom": ["SETIAP KETUKAN ADALAH AWAL", "EVERY BEAT IS A BEGINNING"],
+  "home.artTop": ["PERKUSI", "PERCUSSION"],
+  "home.artBottom": ["IRAMA DI BROWSER", "RHYTHM IN YOUR BROWSER"],
   "home.artCaption": [
     "Ilustrasi ritme - bukan kontrol audio",
     "Rhythm illustration - not an audio control",
   ],
-  "home.strip1": ["LEBIH SEDIKIT PERSIAPAN.", "LESS SETUP."],
-  "home.strip2": ["LEBIH BANYAK BERMAIN.", "MORE PLAY."],
-  "home.strip3": ["LANGSUNG DI BROWSER.", "ALL IN YOUR BROWSER."],
-  "home.toolsEyebrow": ["SESI BERIKUTNYA", "THE NEXT SESSION"],
-  "home.toolsTitle": ["Alat untuk iramamu.", "A toolkit for your groove."],
-  "home.toolsIntro": [
-    "Mainkan Beatbox atau susun ketukan rinci di Rhythm Studio.",
-    "Play Beatbox or build detailed beats in Rhythm Studio.",
-  ],
+  "home.toolsTitle": ["Pilih alat musikmu.", "Choose your music tool."],
   "home.card1.meta": ["01 / PERKUSI", "01 / PERCUSSION"],
   "home.card1.title": ["Rhythm Studio", "Rhythm Studio"],
   "home.card1.copy": [
-    "Buat pola ritme, susun rantai, dan simpan atau ekspor beat ke WAV.",
-    "Build rhythm patterns, arrange a chain, and save or export your beat as WAV.",
+    "Susun pola ritme dan rantai beat, lalu ekspor ke WAV.",
+    "Build rhythm patterns and beat chains, then export to WAV.",
   ],
   "home.card1.foot": ["TEMUKAN GROOVE", "FIND THE POCKET"],
   "home.card2.meta": ["02 / LAPISAN SUARA", "02 / LAYERING"],
@@ -157,58 +160,6 @@ const pairs = {
     "Make time for better timing. Simple tools to help you keep growing.",
   ],
   "home.card4.foot": ["RASAKAN KETUKAN", "FEEL THE TIME"],
-  "home.toolsNote": [
-    "Pilih alatmu, mulai bermain, dan simpan idemu secara lokal.",
-    "Choose a tool, start playing, and save your ideas locally.",
-  ],
-  "home.why": ["MENGAPA PERKUSI?", "WHY PERKUSI?"],
-  "home.approach1": ["Idemu.", "Your idea."],
-  "home.approach2": ["Lebih sedikit hambatan.", "Fewer obstacles."],
-  "home.approachCopy": [
-    "Dari ketukan di sofa hingga suara di panggung. Kami merancang untuk saat inspirasi datang.",
-    "From a beat on the sofa to a sound on stage. We're designing for the moments when inspiration shows up.",
-  ],
-  "home.principle1.title": [
-    "Browser adalah titik awalmu.",
-    "A browser is your starting point.",
-  ],
-  "home.principle1.copy": [
-    "Buka Beatbox dan mulai dengan satu ketukan. Langsung di browser.",
-    "Open Beatbox and start with one beat. Right in your browser.",
-  ],
-  "home.principle2.title": [
-    "Lebih sedikit instalasi. Lebih banyak inspirasi.",
-    "Less installation. More inspiration.",
-  ],
-  "home.principle2.copy": [
-    "Kami membuat persiapan tetap ringan agar kamu punya lebih banyak ruang untuk bermusik.",
-    "We're keeping the setup light, leaving more room for making music.",
-  ],
-  "home.principle3.title": [
-    "Layar kecil. Banyak kemungkinan.",
-    "Small screen. Big possibilities.",
-  ],
-  "home.principle3.copy": [
-    "Dirancang untuk ponsel dan laptop, di mana pun idemu datang.",
-    "Designed with phone and desktop in mind, wherever your next idea finds you.",
-  ],
-  "home.principle4.title": [
-    "Untuk bermain. Dengan tujuan.",
-    "Made for play. Built with purpose.",
-  ],
-  "home.principle4.copy": [
-    "Dari eksperimen singkat menuju alat yang andal untuk penampilan musik sungguhan.",
-    "A path from quick experiments toward dependable tools for real musical performance.",
-  ],
-  "home.closingEyebrow": ["AWAL DARI SESUATU", "THE BEGINNING OF SOMETHING"],
-  "home.closing1": ["Setiap groove hebat", "Every great groove"],
-  "home.closing2": ["dimulai dari", "starts with"],
-  "home.closing3": ["satu ketukan.", "one beat."],
-  "home.closingCopy": [
-    "Mulai dengan satu ketukan di Beatbox Playground atau susun pola di Rhythm Studio.",
-    "Start with one beat in Beatbox Playground or arrange patterns in Rhythm Studio.",
-  ],
-  "home.backTop": ["Kembali ke ketukan pertama", "Back to the first beat"],
   "privacy.heading": ["Privasi", "Privacy"],
   "common.gamelanPreview": ["Gamelan Preview", "Gamelan Preview"],
   "common.previewStatus": ["Pratinjau", "Preview"],

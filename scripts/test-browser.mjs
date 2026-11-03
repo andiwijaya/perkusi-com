@@ -69,9 +69,7 @@ try {
     assert.equal(await page.locator("html").getAttribute("lang"), "id");
     assert.equal(
       await page.locator("h1").textContent(),
-      messages.id["home.hero1"] +
-        messages.id["home.hero2"] +
-        messages.id["home.hero3"],
+      messages.id["home.hero1"] + messages.id["home.hero2"],
     );
     assert.equal(await page.title(), messages.id["meta.home.title"]);
   });
