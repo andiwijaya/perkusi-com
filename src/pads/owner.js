@@ -11,6 +11,8 @@ export function createPadOwner({
   playback,
   extra = null,
   onStatus = () => {},
+  canPlay = () => true,
+  stopSounds = null,
 }) {
   const config = withGuitar(
     withBass(withKendhang(withPatternLoops(newComposition("Pad Station")))),
@@ -51,7 +53,7 @@ export function createPadOwner({
   }
   return {
     async play(family, pitch) {
-      if (disposed) return;
+      if (disposed || !canPlay(family)) return;
       const intent = generation;
       pending++;
       status("loading");
@@ -77,8 +79,11 @@ export function createPadOwner({
     },
     stop() {
       if (disposed) return;
-      extra?.stop();
-      engine.rewind();
+      if (stopSounds) stopSounds();
+      else {
+        extra?.stop();
+        engine.rewind();
+      }
       resetView("stopped");
     },
     setMaster(value) {

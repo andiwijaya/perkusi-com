@@ -25,17 +25,22 @@ export function createExtraSampler(
   engine.banks.add(bank);
   const voices = new Set();
   let generation = 0,
+    voiceGeneration = 0,
     disposed = false,
     preparedContext,
     gain,
     context;
   const ids = pack.stems?.map((stem) => stem.id) || [];
   const readyCount = () => ids.filter((id) => bank.verifyRetained(id)).length;
+  function silence() {
+    voiceGeneration++;
+    for (const v of voices) engine.removeVoice(v);
+    voices.clear();
+  }
   function stop() {
     generation++;
     bank.cancelLoading();
-    for (const v of voices) engine.removeVoice(v);
-    voices.clear();
+    silence();
   }
   return {
     // Decoding does not require a running context. Never wait for resume here:
@@ -79,12 +84,12 @@ export function createExtraSampler(
     async play(id) {
       if (disposed || engine.disposed) return;
       const ctx = engine.ensureContext(),
-        intent = generation,
+        intent = voiceGeneration,
         operation = engine.operation;
       const live = () =>
         !disposed &&
         !engine.disposed &&
-        generation === intent &&
+        voiceGeneration === intent &&
         engine.operation === operation &&
         engine.context === ctx;
       if (ctx.state !== "running") {
@@ -155,6 +160,7 @@ export function createExtraSampler(
       return v;
     },
     stop,
+    silence,
     unload() {
       stop();
       bank.evictCache();

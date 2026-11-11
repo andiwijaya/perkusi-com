@@ -48,6 +48,8 @@ import { createPadOwner } from "./owner.js";
 import { padMessages } from "./page.js";
 import { createExtraSampler } from "./extra-sampler.js";
 import { createExtraLoading } from "./extra-loading.js";
+import { createCoreLoading } from "./core-loading.js";
+import { CORE_GROUPS, coreCopy, coreStatusText } from "./core-page.js";
 import {
   kethukPack,
   kethukLevel,
@@ -181,7 +183,7 @@ export function initPadStation() {
     ),
   };
   let selected = "kethuk";
-  let loading;
+  let loading, core;
   const sustained = new Set([
     "slenthem-pelog",
     "slenthem-slendro",
@@ -222,7 +224,7 @@ export function initPadStation() {
     dispose: () => Object.values(samplers).forEach((s) => s.dispose()),
   };
   let disposed = false,
-    state = "ready",
+    state = "preparing",
     locale;
   const status = (next) => {
     state = next;
@@ -230,13 +232,30 @@ export function initPadStation() {
     p.textContent = padMessages[locale || "id"][next];
     p.setAttribute("role", next === "error" ? "alert" : "status");
   };
-  const owner = createPadOwner({ engine, playback, extra, onStatus: status });
+  const canPlay = (family) =>
+    family === "extra"
+      ? core?.allReady() && loading?.isReady()
+      : core?.isReady(family);
+  const owner = createPadOwner({
+    engine,
+    playback,
+    extra,
+    onStatus: status,
+    canPlay,
+    stopSounds: () => {
+      // Fence pending gestures and silence voices, leaving asset preparation
+      // and its cancellation generations untouched. No transport runs here.
+      ++engine.operation;
+      Object.values(samplers).forEach((s) => s.silence());
+      engine.clearVoices(true);
+    },
+  });
   const pads = initLivePads({
     root,
     playDrum: (pitch) => owner.play("drum", pitch),
     playInstrument: (family, pitch) => owner.play(family, pitch),
     locked: () => disposed,
-    padLocked: ({ family }) => family === "extra" && !loading?.isReady(),
+    padLocked: ({ family }) => !canPlay(family),
     onError: () => status("error"),
     bilahAnywhere: true,
   });
@@ -257,15 +276,70 @@ export function initPadStation() {
       .replace("{total}", view.total || extraPadNotes[selected].notes.length);
     retry.hidden = !["error", "paused"].includes(view.state);
     retry.textContent = view.state === "paused" ? t.continue : t.retry;
+    if (!core?.allReady()) {
+      area.dataset.state = "waiting";
+      root.querySelector("#ps-extra-status").textContent =
+        coreCopy[locale || "id"][
+          core?.snapshot().failed.length ? "extraBlocked" : "extraWaiting"
+        ];
+      retry.hidden = true;
+    }
     root
       .querySelector(".ps-extra-pads")
-      .setAttribute("aria-busy", String(view.state === "loading"));
+      .setAttribute("aria-busy", String(area.dataset.state === "loading"));
     pads.update();
   }
   loading = createExtraLoading(samplers, renderLoading);
+  function renderCoreLoading() {
+    const snapshot = core.snapshot(),
+      language = locale || "id";
+    for (const { family } of CORE_GROUPS) {
+      const view = snapshot.groups[family],
+        area = root.querySelector(`[data-core-loading="${family}"]`),
+        retry = area.querySelector("button");
+      area.dataset.state = view.state;
+      area.querySelector("[data-core-status]").textContent = coreStatusText(
+        language,
+        family,
+        view,
+      );
+      retry.hidden = !(
+        view.state === "error" ||
+        (snapshot.phase === "paused" &&
+          !snapshot.failed.length &&
+          family === "drum")
+      );
+      retry.textContent =
+        coreCopy[language][view.state === "error" ? "retry" : "continue"];
+    }
+    root.dataset.coreReady = String(core.allReady());
+    renderLoading();
+  }
+  core = createCoreLoading(
+    {
+      drum: engine.bank,
+      bilah: playback.banks.instrument,
+      kendhang: playback.banks.kendhang,
+      bass: playback.banks.bass,
+      guitar: playback.banks.guitar,
+    },
+    {
+      ensureContext: () => engine.ensureContext(),
+      currentContext: () => engine.context,
+      onChange: renderCoreLoading,
+      onReady: () => {
+        if (state === "preparing") status("ready");
+        prepareSelected();
+      },
+      onBlocked: () => loading.pause(),
+    },
+  );
   let observedContext;
   function contextChanged() {
-    if (observedContext.state !== "running") loading.invalidate();
+    if (observedContext.state !== "running") {
+      loading.invalidate();
+      core.invalidate();
+    }
   }
   function observeContext() {
     if (engine.context === observedContext) return;
@@ -276,6 +350,10 @@ export function initPadStation() {
     });
   }
   function prepareSelected() {
+    if (!core.allReady()) {
+      renderLoading();
+      return;
+    }
     const job = loading.prepare(selected);
     observeContext();
     void job;
@@ -323,7 +401,7 @@ export function initPadStation() {
       else if (names[a.dataset.padCreditKey])
         a.textContent = names[a.dataset.padCreditKey];
     status(state);
-    renderLoading();
+    renderCoreLoading();
   }
   for (const [family, notices] of Object.entries({
     kendhang: kendhangNotices,
@@ -370,10 +448,16 @@ export function initPadStation() {
     }
   }
   listen(root.querySelector("#ps-stop"), "click", () => owner.stop());
+  for (const retry of root.querySelectorAll("[data-core-retry]"))
+    listen(retry, "click", () => {
+      core.retry(retry.dataset.coreRetry);
+      observeContext();
+    });
   listen(root.querySelector("#ps-extra-instrument"), "change", (e) => {
     if (!Object.hasOwn(samplers, e.target.value) || e.target.value === selected)
       return;
     owner.stop();
+    loading.pause();
     // Large banks replace extra caches; core banks are owned separately.
     if (exclusive.has(e.target.value))
       for (const sampler of Object.values(samplers)) sampler.unload();
@@ -403,6 +487,9 @@ export function initPadStation() {
     if (disposed) return;
     disposed = true;
     loading.dispose();
+    core.dispose();
+    cancelAnimationFrame(firstFrame);
+    cancelAnimationFrame(secondFrame);
     life.abort();
     pads.dispose();
     void owner.dispose().catch(() => {});
@@ -411,9 +498,19 @@ export function initPadStation() {
   localize();
   for (const el of root.querySelectorAll("button,input,select"))
     el.disabled = false;
-  prepareSelected();
+  // Controls become usable immediately; pads must remain disabled during the
+  // two-frame opportunity to paint before any audio request is admitted.
+  pads.update();
+  let secondFrame;
+  const firstFrame = requestAnimationFrame(() => {
+    secondFrame = requestAnimationFrame(() => {
+      if (disposed) return;
+      core.start();
+      observeContext();
+    });
+  });
   root.dataset.ready = "true";
   if (import.meta.env.DEV)
-    window.perkusiPads = { engine, owner, extra, dispose };
+    window.perkusiPads = { engine, owner, extra, core, dispose };
   return dispose;
 }

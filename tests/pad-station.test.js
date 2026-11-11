@@ -74,7 +74,12 @@ test("standalone retains 21 core pads plus two isolated Kethuk strikes without s
       "Pad layout must work under production style-src self",
     );
     assert.equal((html.match(/class="st-pad"/g) || []).length, 21);
-    assert.equal((html.match(/<button disabled/g) || []).length, 21);
+    assert.equal(
+      (html.match(/<button disabled type="button" class="st-pad"/g) || [])
+        .length,
+      21,
+    );
+    assert.equal((html.match(/data-core-loading=/g) || []).length, 5);
     assert.equal((html.match(/class="st-pad ps-extra-pad"/g) || []).length, 2);
     assert(html.includes("KETHUK_KtPL6.wav") && html.includes("Artistic 2.0"));
     assert(

@@ -2,6 +2,7 @@ export const extraPadCopy = {
   id: {
     title: "Instrumen tambahan",
     instrument: "Pilih instrumen",
+    waiting: "Menunggu lima grup utama siap…",
     loading: "Memuat suara {name}… {ready}/{total} file siap",
     ready: "{name} siap dimainkan · {ready}/{total} file",
     error: "Suara {name} belum lengkap. {ready}/{total} file siap.",
@@ -16,6 +17,7 @@ export const extraPadCopy = {
   en: {
     title: "Additional instruments",
     instrument: "Choose instrument",
+    waiting: "Waiting for all five main groups to be ready…",
     loading: "Loading {name} sounds… {ready}/{total} files ready",
     ready: "{name} ready to play · {ready}/{total} files",
     error: "{name} sounds are incomplete. {ready}/{total} files ready.",
@@ -135,9 +137,9 @@ export function renderExtraButtons(instrument = "kethuk", disabled = false) {
     )
     .join("");
 }
-export function renderExtraPads(locale) {
+export function renderExtraPads(locale, { waiting = false } = {}) {
   const t = extraPadCopy[locale];
-  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><div id="ps-extra-loading" data-state="loading"><p role="status" aria-live="polite" aria-atomic="true"><span class="ps-loading-spinner" aria-hidden="true"></span><span id="ps-extra-status">${t.loading.replace("{name}", "Kethuk").replace("{ready}", "0").replace("{total}", "2")}</span></p><button type="button" id="ps-extra-retry" hidden>${t.retry}</button></div><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled>${Object.entries(
+  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><div id="ps-extra-loading" data-state="${waiting ? "waiting" : "loading"}"><p role="status" aria-live="polite" aria-atomic="true"><span class="ps-loading-spinner" aria-hidden="true"></span><span id="ps-extra-status">${waiting ? t.waiting : t.loading.replace("{name}", "Kethuk").replace("{ready}", "0").replace("{total}", "2")}</span></p><button type="button" id="ps-extra-retry" hidden>${t.retry}</button></div><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled>${Object.entries(
     extraPadNotes,
   )
     .map(([id, g]) => `<option value="${id}">${g.option || g.name}</option>`)

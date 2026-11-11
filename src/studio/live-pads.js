@@ -35,15 +35,18 @@ export const LIVE_PAD_GROUPS = [
     keys: ["h", "j", "k"],
   },
 ];
-export function renderInstrumentPads(locale) {
-  return `<div class="st-instrument-pads">${LIVE_PAD_GROUPS.map((g) => `<section class="st-live-group" data-live-group="${g.family}" aria-label="${g[locale]}"><h3>${g[locale]}</h3><div class="st-pads">${g.pitches.map((pitch, i) => `<button type="button" class="st-pad" data-live-pad="${g.family}:${pitch}" aria-label="${g[locale]} ${pitch.toUpperCase()}" aria-keyshortcuts="${g.keys[i].toUpperCase()}"><b aria-hidden="true">${g.keys[i].toUpperCase()}</b><span>${pitch.toUpperCase()}</span></button>`).join("")}</div></section>`).join("")}</div>`;
+export function renderInstrumentPads(locale, groupStatus = () => "") {
+  return `<div class="st-instrument-pads">${LIVE_PAD_GROUPS.map((g) => `<section class="st-live-group" data-live-group="${g.family}" aria-label="${g[locale]}"><h3>${g[locale]}</h3>${groupStatus(g.family)}<div class="st-pads">${g.pitches.map((pitch, i) => `<button type="button" class="st-pad" data-live-pad="${g.family}:${pitch}" aria-label="${g[locale]} ${pitch.toUpperCase()}" aria-keyshortcuts="${g.keys[i].toUpperCase()}"><b aria-hidden="true">${g.keys[i].toUpperCase()}</b><span>${pitch.toUpperCase()}</span></button>`).join("")}</div></section>`).join("")}</div>`;
 }
-export function renderPadGroups(locale, { disabled = false } = {}) {
+export function renderPadGroups(
+  locale,
+  { disabled = false, groupStatus = () => "" } = {},
+) {
   const drums = STUDIO_ROLES.map(
     (role, i) =>
       `<button type="button" class="st-pad" data-st-pad="${role}" aria-keyshortcuts="${i + 1}"><b aria-hidden="true">${i + 1}</b><span data-st-role="${i}">${studioRoleNames[locale][i]}</span></button>`,
   ).join("");
-  const html = `<h3>Drum</h3><div class="st-pads">${drums}</div>${renderInstrumentPads(locale)}`;
+  const html = `<h3>Drum</h3>${groupStatus("drum")}<div class="st-pads">${drums}</div>${renderInstrumentPads(locale, groupStatus)}`;
   return disabled ? html.replace(/<button\b/g, "<button disabled") : html;
 }
 export function shortcutAction(

@@ -149,10 +149,12 @@
 .ps-extra-pad strong {
   display: block;
 }
-#ps-extra-loading {
+#ps-extra-loading,
+.ps-core-loading {
   margin-block: 0 16px;
 }
-#ps-extra-loading p {
+#ps-extra-loading p,
+.ps-core-loading p {
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -160,7 +162,8 @@
   color: #c6d8b6;
   overflow-wrap: anywhere;
 }
-#ps-extra-loading[data-state="error"] p {
+#ps-extra-loading[data-state="error"] p,
+.ps-core-loading[data-state="error"] p {
   color: #ffce88;
 }
 .ps-loading-spinner {

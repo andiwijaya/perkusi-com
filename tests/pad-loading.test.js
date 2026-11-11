@@ -105,6 +105,20 @@ test("preparation waits for final native decode, reports valid buffers, creates 
   f.sampler.dispose();
 });
 
+test("silencing extra voices does not cancel its pending bank preparation", async () => {
+  const held = deferred(),
+    f = setup({ decode: (n) => (n === 2 ? held.promise : pcm()) });
+  const job = f.sampler.prepare();
+  await flush();
+  f.sampler.silence();
+  assert.equal(f.bank.get("b").state, "loading");
+  held.resolve(pcm());
+  await job;
+  assert(f.sampler.isReady());
+  assert.equal(f.counts.fetch, 2);
+  f.sampler.dispose();
+});
+
 for (const failure of ["HTTP", "decode", "validation", "timeout"])
   test(`partial ${failure} failure cannot mark bank ready; retry reuses valid sample`, async () => {
     let fail = true;
