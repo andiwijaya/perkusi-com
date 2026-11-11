@@ -1,6 +1,6 @@
 # Verifikasi Loading Lima Grup Utama Pad Station
 
-Tanggal: 12 November 2026, WIB. Baseline: `8bf3e06`. Status: implementasi dan verifikasi lokal selesai; publikasi dilanjutkan melalui GitHub main ke Cloudflare Pages sesuai otorisasi pengguna.
+Tanggal: 12 November 2026, WIB. Baseline: `8bf3e06`. Status: implementasi, verifikasi lokal, deploy, dan pemeriksaan live selesai sesuai otorisasi pengguna.
 
 ## Perilaku sesuai hasil interview
 
@@ -57,4 +57,12 @@ Pemeriksaan ini membuktikan perilaku software dan sinyal audio native pada brows
 
 ## Publikasi
 
-Menunggu commit implementasi dan pemeriksaan versi, manifest runtime, serta perilaku live pada `https://perkusi.com/pad-station/?lang=id`. Jalur publikasi tetap GitHub `main` ke Cloudflare Pages; tidak ada manual upload deployment.
+Commit aplikasi `567e6eb0ec5fb8bfbe91ce8306749ede0929752a` berhasil dipush ke GitHub main dan terbit di Cloudflare Pages. version.json menunjukkan SHA tersebut dan branch main. Commit dokumentasi penutup menyusul melalui jalur yang sama, dengan pemeriksaan ulang SHA akhir.
+
+Perjalanan live dari beranda menunjukkan lima indikator waiting, 0 pad enabled, coreReady false, serta instrumen tambahan menunggu. Kelima grup kemudian ready: Drum 8/8, Bilah 5/5, Kendhang Ciblon 2/2, Bass elektrik 3/3, Gitar nylon 3/3. Satu ketukan dari setiap grup kembali ke status siap tanpa error. Stop live diamati setelah semua grup siap; perilaku Stop selama loading dibuktikan oleh stream tertahan pada suite native lokal dan compiled. Console live tanpa warning/error pada pemeriksaan tersebut.
+
+Demung Pelog tambahan mencapai 7/7 dengan seluruh core tetap aktif; Kethuk kembali siap 2/2. Bukti DOM: `live-ui.json`.
+
+Pemeriksaan deployment membandingkan 31 HTML/JS/CSS: 17 file identik byte demi byte, 14 identik setelah pemetaan referensi nama aset dari manifest. Satu perbedaan aset telah dibatasi dan diverifikasi: NOTICE Windows 2.622 bytes memakai CRLF, NOTICE produksi 2.611 bytes memakai LF, dengan teks yang identik setelah konversi CRLF ke LF. Hash NOTICE dan bundle yang merujuknya ikut berbeda. Pemeriksaan menolak perbedaan kode lain; tidak ada klaim bahwa seluruh hash raw lokal dan produksi sama. Bukti: `deployment-567e6eb.json`.
+
+URL hasil: `https://perkusi.com/pad-station/?lang=id`. Jalur publikasi tetap GitHub main ke Cloudflare Pages; tidak ada manual upload deployment.
