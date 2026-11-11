@@ -1,6 +1,6 @@
 # Laporan Preload Audio Rhythm Studio
 
-Tanggal: 12 November 2026 WIB. Baseline aplikasi: `c89e5749caa12025b4400754add35593c89d3826`. Status: implementasi dan QA lokal selesai; publikasi dan verifikasi live menyusul pada bagian deployment.
+Tanggal: 12 November 2026 WIB. Baseline aplikasi: `c89e5749caa12025b4400754add35593c89d3826`. Status: implementasi, QA lokal, deployment fitur, dan UI live terverifikasi. Dokumentasi penutup dipublikasikan melalui jalur yang sama.
 
 ## Hasil yang diterapkan
 
@@ -53,7 +53,7 @@ Angka tersebut adalah accounting buffer aplikasi, bukan jaminan total RAM proses
 | Failure | HTTP 503 pertama menjeda antrean; retry gagal lalu berhasil; pilihan editor tidak direset |
 | Context | Suspend, close, context pengganti, cache, dan status pesan pulih tanpa pesan error usang |
 | ID/EN | Status dan kesiapan bertahan saat bahasa berubah |
-| Tata letak lokal | Desktop aktual 1280 px; indikator berada di antara `.st-intro` dan `#st-desktop`; viewport live menyusul |
+| Tata letak lokal | Desktop lokal 1280 px; live 390 dan 1440 px, ID/EN; tidak ada overflow horizontal; indikator berada di antara `.st-intro` dan `#st-desktop` |
 | Regresi Pad Station | Lima grup 21/21 dan Kethuk 2/2 siap; Kick, Bilah D4, Stop; tanpa console error |
 | Regresi Beatbox | Coba groove, Jeda, Putar, Mulai ulang, Jeda; status normal dan tanpa console error |
 
@@ -65,6 +65,16 @@ Pengujian menggunakan audio native di browser internal Windows. Ini membuktikan 
 
 ## Deployment
 
-Jalur yang diotorisasi: GitHub main ke Cloudflare Pages, tanpa upload manual. Commit fitur, commit dokumentasi penutup, pencocokan SHA live, perbandingan runtime, dan bukti responsive live akan dicatat setelah publikasi terverifikasi.
+Commit fitur `1c11f65f4fec4a7861f37d47e4a68273f748ece3` dipush ke GitHub main dan terbit otomatis di Cloudflare Pages. `version.json` menunjukkan commit tersebut dan branch main. Pemeriksaan membandingkan 31 HTML/JS/CSS: 17 identik byte demi byte; 14 identik setelah referensi nama aset dipetakan melalui manifest. Perbedaan yang dibatasi adalah NOTICE Windows 2.622 bytes CRLF versus produksi 2.611 bytes LF, dengan teks identik setelah konversi. Hash NOTICE dan bundle yang merujuknya ikut berubah. Tidak ada perbedaan kode lain; seluruh hash raw tidak diklaim identik. Bukti: `deployment-1c11f65.json`.
+
+Alur beranda → Buka Studio live pada viewport 390 menunjukkan waiting 0/49 dan seluruh 21 pad, Putar, serta Buat WAV disabled. Saat 24/49, editor kit aktif sementara kontrol audio tetap terkunci. Pemuatan pertama kemudian masuk error 28/49; retry pertama belum menyelesaikan kegagalan, retry kedua berhasil 49/49. Seluruh 21 pad, Putar, dan Buat WAV kemudian aktif, tanpa mereset kit/proyek. Penyebab spesifik kegagalan awal tidak tersedia dari UI produksi dan tidak diklaim sebagai masalah jaringan tertentu. Audit terpisah seluruh 47 WAV dan dua FLAC menunjukkan HTTP 200 serta isi identik dengan aset lokal (49/49; `live-audio-audit.json`). Error awal, freeze, dan keberhasilan pemulihan dicatat sebagai hasil observasi, bukan dihapus dari laporan.
+
+Live diuji pada lebar 390 dan 1440, ID serta EN: status 49/49, posisi indikator benar, tidak ada overflow halaman. Satu pad Kick dan Kembali ke awal berjalan normal; tidak dilakukan perubahan pola/demo atau transfer file pada draft produksi pengguna. Console tidak menunjukkan error/warning saat pemeriksaan. Bukti: `live-startup.json`, `live-mobile-{id,en}.json`, `live-desktop-id.json`, screenshot loading/error/ready mobile dan ready desktop ID/EN.
+
+Pembukaan ulang live dari awal kemudian selesai 49/49 tanpa retry dan tanpa gesture tambahan; Putar, Buat WAV, serta seluruh 21 pad aktif, console tanpa warning/error (`live-reopen.json`).
+
+Preload tanpa gesture juga diperiksa terpisah pada source: context tetap suspended 48 kHz, seluruh 49 sampel berhasil didekode dan daftar error kosong, tanpa menekan tombol Jalankan QA yang melakukan resume context.
+
+Commit dokumentasi penutup menyusul melalui jalur GitHub main ke Cloudflare Pages; SHA akhir dicatat dalam receipt `completion.json` dan laporan percakapan setelah HEAD, GitHub main, serta live cocok. Tidak ada upload manual deployment.
 
 URL hasil: https://perkusi.com/studio/?lang=id

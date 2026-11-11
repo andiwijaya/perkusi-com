@@ -1,6 +1,6 @@
 # Tracker Preload Audio Rhythm Studio
 
-Tanggal: 12 November 2026 WIB. Baseline: `c89e574`. Status: implementasi dan QA lokal selesai; deployment sedang disiapkan.
+Tanggal: 12 November 2026 WIB. Baseline: `c89e574`. Status: SELESAI; 15/15 langkah terverifikasi. Dokumentasi penutup mengikuti deployment fitur yang telah diverifikasi.
 
 ## Kontrak hasil interview
 
@@ -23,11 +23,11 @@ Deploy melalui GitHub main ke Cloudflare Pages telah diotorisasi. Pengujian tida
 - [x] 09 Uji scheduler, registry 49 sampel, kegagalan sebagian/berulang, cache, pause/configure, dan batas memori.
 - [x] 10 Uji browser dari beranda dengan stream tertahan, freeze 48/49, editor/kit/demo, Stop/Jeda, kegagalan/retry, dan ketukan sesudah ready.
 - [x] 11 Periksa seluruh kit, nada pad, loop, kalibrasi playback, dan render WAV dalam memori serta kebutuhan buffer aktual.
-- [ ] 12 Periksa desktop/mobile, ID/EN, aksesibilitas status, dan regresi Pad Station serta Beatbox.
+- [x] 12 Periksa desktop/mobile, ID/EN, aksesibilitas status, dan regresi Pad Station serta Beatbox.
 - [x] 13 Jalankan unit suite, lint, build, dan QA compiled; simpan bukti serta batas verifikasi.
-- [ ] 14 Tinjau diff, commit hanya perubahan tugas, dan push main untuk deploy.
-- [ ] 15 Cocokkan HEAD/GitHub/live dan runtime, periksa UI live, tutup tracker, dan tulis laporan lengkap.
+- [x] 14 Tinjau diff, commit hanya perubahan tugas, dan push main untuk deploy.
+- [x] 15 Cocokkan HEAD/GitHub/live dan runtime, periksa UI live, tutup tracker, dan tulis laporan lengkap.
 
 ## Pekerjaan aktif dan bukti
 
-651/651 unit test, lint, build, 16 pemeriksaan browser source dan 16 compiled lulus. Pad Station serta Beatbox lulus smoke regression. Pemeriksaan viewport mobile/desktop live dan pencocokan deployment masih menunggu publikasi. Bukti: `qa-artifacts/studio-preload-2026-11-12/`. Laporan: `docs/features/STUDIO-PRELOAD-REPORT.md`.
+651/651 unit test, lint, build, 16 pemeriksaan browser source dan 16 compiled lulus. Pad Station serta Beatbox lulus smoke regression. Live 390/1440 ID/EN siap 49/49; pemulihan kegagalan live dan seluruh 49 aset diverifikasi. Commit fitur `1c11f65` terbit di produksi; 31 HTML/JS/CSS cocok dengan pemetaan referensi NOTICE CRLF/LF yang dijelaskan dalam laporan. SHA dokumentasi akhir dicatat pada receipt completion sesudah publikasi. Bukti: `qa-artifacts/studio-preload-2026-11-12/`. Laporan: `docs/features/STUDIO-PRELOAD-REPORT.md`.
