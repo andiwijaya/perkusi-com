@@ -219,3 +219,36 @@ test("busy/dispose release visuals and abort all input listeners without touchin
   assert.equal(h.calls.length, 1);
   assert.equal(h.errors.length, 0);
 });
+
+test("per-family loading lock survives update and guards touch, accessible click, and keyboard while drums remain usable", () => {
+  let loading = true;
+  const h = harness({
+    padLocked: ({ family }) => loading && family === "kendhang",
+  });
+  h.controller.update();
+  const b = h.buttons[1];
+  assert(b.disabled);
+  assert.equal(h.buttons[0].disabled, false);
+  h.controller.update();
+  assert(b.disabled);
+  // Even a stale enabled DOM property cannot bypass the per-family guard.
+  b.disabled = false;
+  send(h.panel, "pointerdown", b, {
+    button: 0,
+    pointerId: 1,
+    pointerType: "touch",
+  });
+  send(h.panel, "click", b, { detail: 0 });
+  send(h.doc, "keydown", b, { key: "Enter", code: "Enter" });
+  send(h.doc, "keydown", { closest: () => null }, { key: "a", code: "KeyA" });
+  assert.equal(h.calls.length, 0);
+  send(h.panel, "click", h.buttons[0], { detail: 0 });
+  assert.deepEqual(h.calls, [["drum", "kick"]]);
+  loading = false;
+  h.controller.update();
+  assert.equal(b.disabled, false);
+  assert.equal(h.calls.length, 1, "unlock never replays a held hit");
+  send(h.panel, "click", b, { detail: 0 });
+  assert.deepEqual(h.calls.at(-1), ["kendhang", "tak"]);
+  h.controller.dispose();
+});

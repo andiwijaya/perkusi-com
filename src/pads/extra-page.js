@@ -2,6 +2,12 @@ export const extraPadCopy = {
   id: {
     title: "Instrumen tambahan",
     instrument: "Pilih instrumen",
+    loading: "Memuat suara {name}… {ready}/{total} file siap",
+    ready: "{name} siap dimainkan · {ready}/{total} file",
+    error: "Suara {name} belum lengkap. {ready}/{total} file siap.",
+    paused: "Pemuatan suara {name} dijeda. {ready}/{total} file siap.",
+    retry: "Coba lagi",
+    continue: "Lanjutkan pemuatan",
     hint: "Strike rekaman asli; tidak merekam atau mengubah pola. Nama laras mengikuti label sumber, bukan klaim penyeteman bersama Bilah.",
     notes: ["Pelog 6", "Slendro 2"],
     credits:
@@ -10,6 +16,12 @@ export const extraPadCopy = {
   en: {
     title: "Additional instruments",
     instrument: "Choose instrument",
+    loading: "Loading {name} sounds… {ready}/{total} files ready",
+    ready: "{name} ready to play · {ready}/{total} files",
+    error: "{name} sounds are incomplete. {ready}/{total} files ready.",
+    paused: "Loading {name} sounds is paused. {ready}/{total} files ready.",
+    retry: "Try again",
+    continue: "Continue loading",
     hint: "Original recorded strikes; no recording or pattern changes. Scale names follow source labels, not a claim of shared tuning with Bilah.",
     notes: ["Pelog 6", "Slendro 2"],
     credits:
@@ -125,7 +137,7 @@ export function renderExtraButtons(instrument = "kethuk", disabled = false) {
 }
 export function renderExtraPads(locale) {
   const t = extraPadCopy[locale];
-  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled>${Object.entries(
+  return `<section class="ps-extra-group" aria-labelledby="ps-extra-title"><h3 id="ps-extra-title" data-extra-copy="title">${t.title}</h3><div id="ps-extra-loading" data-state="loading"><p role="status" aria-live="polite" aria-atomic="true"><span class="ps-loading-spinner" aria-hidden="true"></span><span id="ps-extra-status">${t.loading.replace("{name}", "Kethuk").replace("{ready}", "0").replace("{total}", "2")}</span></p><button type="button" id="ps-extra-retry" hidden>${t.retry}</button></div><label><span data-extra-copy="instrument">${t.instrument}</span> <select id="ps-extra-instrument" disabled>${Object.entries(
     extraPadNotes,
   )
     .map(([id, g]) => `<option value="${id}">${g.option || g.name}</option>`)

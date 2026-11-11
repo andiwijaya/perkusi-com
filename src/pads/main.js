@@ -47,6 +47,7 @@ import { guitarNotices } from "../studio/guitar-pack.js";
 import { createPadOwner } from "./owner.js";
 import { padMessages } from "./page.js";
 import { createExtraSampler } from "./extra-sampler.js";
+import { createExtraLoading } from "./extra-loading.js";
 import {
   kethukPack,
   kethukLevel,
@@ -180,6 +181,7 @@ export function initPadStation() {
     ),
   };
   let selected = "kethuk";
+  let loading;
   const sustained = new Set([
     "slenthem-pelog",
     "slenthem-slendro",
@@ -206,8 +208,17 @@ export function initPadStation() {
     "demung-slendro",
   ]);
   const extra = {
-    play: (pitch) => samplers[selected].play(pitch),
-    stop: () => Object.values(samplers).forEach((s) => s.stop()),
+    play: (pitch) => {
+      if (!loading?.isReady()) {
+        loading?.invalidate();
+        return;
+      }
+      return samplers[selected].play(pitch);
+    },
+    stop: () => {
+      loading?.pause();
+      Object.values(samplers).forEach((s) => s.stop());
+    },
     dispose: () => Object.values(samplers).forEach((s) => s.dispose()),
   };
   let disposed = false,
@@ -225,11 +236,50 @@ export function initPadStation() {
     playDrum: (pitch) => owner.play("drum", pitch),
     playInstrument: (family, pitch) => owner.play(family, pitch),
     locked: () => disposed,
+    padLocked: ({ family }) => family === "extra" && !loading?.isReady(),
     onError: () => status("error"),
     bilahAnywhere: true,
   });
   const listen = (target, event, fn) =>
     target.addEventListener(event, fn, { signal: life.signal });
+  function renderLoading() {
+    const view = loading.snapshot(),
+      t = extraPadCopy[locale || "id"],
+      area = root.querySelector("#ps-extra-loading"),
+      retry = root.querySelector("#ps-extra-retry"),
+      name = extraPadNotes[selected].option || extraPadNotes[selected].name;
+    area.dataset.state = view.state;
+    root.querySelector("#ps-extra-status").textContent = (
+      t[view.state] || t.loading
+    )
+      .replace("{name}", name)
+      .replace("{ready}", view.ready)
+      .replace("{total}", view.total || extraPadNotes[selected].notes.length);
+    retry.hidden = !["error", "paused"].includes(view.state);
+    retry.textContent = view.state === "paused" ? t.continue : t.retry;
+    root
+      .querySelector(".ps-extra-pads")
+      .setAttribute("aria-busy", String(view.state === "loading"));
+    pads.update();
+  }
+  loading = createExtraLoading(samplers, renderLoading);
+  let observedContext;
+  function contextChanged() {
+    if (observedContext.state !== "running") loading.invalidate();
+  }
+  function observeContext() {
+    if (engine.context === observedContext) return;
+    observedContext?.removeEventListener("statechange", contextChanged);
+    observedContext = engine.context;
+    observedContext?.addEventListener("statechange", contextChanged, {
+      signal: life.signal,
+    });
+  }
+  function prepareSelected() {
+    const job = loading.prepare(selected);
+    observeContext();
+    void job;
+  }
   function localize() {
     locale = document.documentElement.lang === "en" ? "en" : "id";
     for (const el of root.querySelectorAll("[data-pad-copy]"))
@@ -273,6 +323,7 @@ export function initPadStation() {
       else if (names[a.dataset.padCreditKey])
         a.textContent = names[a.dataset.padCreditKey];
     status(state);
+    renderLoading();
   }
   for (const [family, notices] of Object.entries({
     kendhang: kendhangNotices,
@@ -328,11 +379,14 @@ export function initPadStation() {
       for (const sampler of Object.values(samplers)) sampler.unload();
     else if (sustained.has(selected)) samplers[selected].unload();
     selected = e.target.value;
-    root.querySelector(".ps-extra-pads").innerHTML =
-      renderExtraButtons(selected);
-    pads.update();
+    root.querySelector(".ps-extra-pads").innerHTML = renderExtraButtons(
+      selected,
+      true,
+    );
+    prepareSelected();
     localize();
   });
+  listen(root.querySelector("#ps-extra-retry"), "click", prepareSelected);
   listen(root.querySelector("#ps-master"), "input", (e) => {
     owner.setMaster(Number(e.target.value));
     root.querySelector("#ps-volume").value =
@@ -348,6 +402,7 @@ export function initPadStation() {
   function dispose() {
     if (disposed) return;
     disposed = true;
+    loading.dispose();
     life.abort();
     pads.dispose();
     void owner.dispose().catch(() => {});
@@ -356,7 +411,7 @@ export function initPadStation() {
   localize();
   for (const el of root.querySelectorAll("button,input,select"))
     el.disabled = false;
-  pads.update();
+  prepareSelected();
   root.dataset.ready = "true";
   if (import.meta.env.DEV)
     window.perkusiPads = { engine, owner, extra, dispose };

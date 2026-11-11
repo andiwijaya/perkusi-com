@@ -82,6 +82,7 @@ export function initLivePads({
   locked,
   onError,
   bilahAnywhere = false,
+  padLocked = () => false,
 }) {
   const panel = root.querySelector(".st-live-pads"),
     doc = root.ownerDocument,
@@ -108,6 +109,7 @@ export function initLivePads({
           family: b.dataset.livePad.split(":")[0],
           pitch: b.dataset.livePad.split(":")[1],
         };
+  const unavailable = (b) => b.disabled || padLocked(action(b));
   function refreshPressed(b) {
     b.classList.toggle(
       "st-pressed",
@@ -121,7 +123,7 @@ export function initLivePads({
     for (const b of held) b.classList.remove("st-pressed");
   }
   function fire(b) {
-    if (blocked() || b.disabled) return;
+    if (blocked() || unavailable(b)) return;
     const a = action(b);
     pending.set(b, (pending.get(b) || 0) + 1);
     b.setAttribute("aria-busy", "true");
@@ -154,7 +156,7 @@ export function initLivePads({
       !b ||
       e.button !== 0 ||
       blocked() ||
-      b.disabled ||
+      unavailable(b) ||
       pointers.has(e.pointerId)
     )
       return;
@@ -194,7 +196,7 @@ export function initLivePads({
         e.preventDefault();
         if (
           blocked() ||
-          b.disabled ||
+          unavailable(b) ||
           e.repeat ||
           e.ctrlKey ||
           e.metaKey ||
@@ -219,7 +221,7 @@ export function initLivePads({
         a.family === "drum"
           ? panel.querySelector(`[data-st-pad="${a.pitch}"]`)
           : panel.querySelector(`[data-live-pad="${a.family}:${a.pitch}"]`);
-      if (!button || button.disabled) return;
+      if (!button || unavailable(button)) return;
       keys.set(name, button);
       refreshPressed(button);
       fire(button);
@@ -247,7 +249,7 @@ export function initLivePads({
   return {
     update() {
       for (const b of panel.querySelectorAll("button.st-pad"))
-        b.disabled = blocked();
+        b.disabled = blocked() || padLocked(action(b));
       if (blocked()) clearPressed();
     },
     dispose() {

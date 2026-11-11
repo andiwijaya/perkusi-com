@@ -149,6 +149,43 @@
 .ps-extra-pad strong {
   display: block;
 }
+#ps-extra-loading {
+  margin-block: 0 16px;
+}
+#ps-extra-loading p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-block: 0 8px;
+  color: #c6d8b6;
+  overflow-wrap: anywhere;
+}
+#ps-extra-loading[data-state="error"] p {
+  color: #ffce88;
+}
+.ps-loading-spinner {
+  display: none;
+  flex: 0 0 16px;
+  height: 16px;
+  margin-top: 5px;
+  border: 2px solid #59644d;
+  border-top-color: var(--st-accent);
+  border-radius: 50%;
+}
+[data-state="loading"] .ps-loading-spinner {
+  display: inline-block;
+  animation: ps-loading-spin 0.8s linear infinite;
+}
+@keyframes ps-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-state="loading"] .ps-loading-spinner {
+    animation: none;
+  }
+}
 @media (max-width: 600px) {
   .pad-station {
     padding-top: 24px;

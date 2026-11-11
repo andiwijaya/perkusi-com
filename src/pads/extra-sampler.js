@@ -26,8 +26,11 @@ export function createExtraSampler(
   const voices = new Set();
   let generation = 0,
     disposed = false,
+    preparedContext,
     gain,
     context;
+  const ids = pack.stems?.map((stem) => stem.id) || [];
+  const readyCount = () => ids.filter((id) => bank.verifyRetained(id)).length;
   function stop() {
     generation++;
     bank.cancelLoading();
@@ -35,6 +38,44 @@ export function createExtraSampler(
     voices.clear();
   }
   return {
+    // Decoding does not require a running context. Never wait for resume here:
+    // initial page load may not yet have a user gesture to unlock audio.
+    async prepare(onProgress = () => {}) {
+      if (disposed || engine.disposed) return null;
+      const ctx = engine.ensureContext(),
+        intent = generation;
+      preparedContext = null;
+      const live = () =>
+        !disposed &&
+        !engine.disposed &&
+        generation === intent &&
+        engine.context === ctx;
+      const report = () => {
+        if (live()) onProgress({ ready: readyCount(), total: ids.length });
+      };
+      report();
+      await Promise.all(
+        ids.map(async (id) => {
+          if (!bank.verifyRetained(id)) await bank.load(id, ctx);
+          report();
+        }),
+      );
+      if (!live()) return null;
+      const ready = readyCount();
+      if (ready !== ids.length || !ids.length)
+        throw new Error("Extra bank incomplete");
+      preparedContext = ctx;
+      return { ready, total: ids.length };
+    },
+    isReady() {
+      return (
+        !disposed &&
+        !engine.disposed &&
+        preparedContext === engine.context &&
+        ids.length > 0 &&
+        readyCount() === ids.length
+      );
+    },
     async play(id) {
       if (disposed || engine.disposed) return;
       const ctx = engine.ensureContext(),
