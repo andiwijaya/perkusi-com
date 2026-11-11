@@ -4,7 +4,7 @@ Tanggal dibuat dan diperbarui: 12 November 2026, WIB.
 
 Tujuan: semua sampel instrumen tambahan yang dipilih harus siap dimainkan sebelum tombol nadanya aktif. Selama proses tersebut, tampilkan indikator loading tepat di bawah judul **Instrumen tambahan**, sebelum combo box.
 
-Status keseluruhan: **Implementasi dan verifikasi lokal selesai, menunggu deploy**. Deploy melalui GitHub main dan Cloudflare Pages telah diotorisasi pengguna pada 12 November 2026. Tidak ada pengujian upload atau izin mikrofon.
+Status keseluruhan: **Selesai dan sudah deployed**. Implementasi commit 6ddcd59ad99fd456f78f6c8a67dc707ced6fd1b7 telah terbit melalui GitHub main ke Cloudflare Pages dan diverifikasi live pada 12 November 2026. Tidak ada pengujian upload atau izin mikrofon.
 
 ## Aturan status
 
@@ -24,7 +24,7 @@ Catatan aset: rekaman sumber disebut WAV; aset delivery yang dirujuk bank tambah
 
 ## Pekerjaan aktif
 
-A sampai E selesai. Pekerjaan aktif: commit perubahan terpilih, push melalui jalur Git integration, lalu verifikasi versi dan perilaku live. Lihat AUDIO-LOADING-VERIFICATION.md untuk hasil dan batas pemeriksaan.
+A sampai F selesai. Seluruh 19 bank dan 89 nada mencapai ready pada situs live. Tracker dan laporan verifikasi ditutup melalui commit dokumentasi; sesudah push, versi live kembali dicocokkan dengan HEAD akhir. Lihat AUDIO-LOADING-VERIFICATION.md untuk hasil dan batas pemeriksaan.
 
 ## A Pemuatan seluruh sampel
 
@@ -68,7 +68,7 @@ A sampai E selesai. Pekerjaan aktif: commit perubahan terpilih, push melalui jal
 ## F Penyelesaian dan publikasi
 
 - [x] F1 Tinjau diff akhir, lengkapi bukti pengujian, dan perbarui tracker dengan hasil serta pekerjaan yang masih terbuka.
-- [ ] F2 Publikasikan melalui GitHub main dan Cloudflare Pages, lalu verifikasi perilaku live dan kecocokan versi. Pengguna sudah mengotorisasi deploy; langkah ini menunggu bukti live.
+- [x] F2 Publikasikan melalui GitHub main dan Cloudflare Pages, lalu verifikasi perilaku live dan kecocokan versi. Bukti live tersedia: version.json, pemeriksaan 31 file, dan pemeriksaan 19 bank di browser internal.
 
 ## Peta file implementasi
 
@@ -86,6 +86,7 @@ A sampai E selesai. Pekerjaan aktif: commit perubahan terpilih, push melalui jal
 
 | Tanggal WIB | Item | Pemeriksaan dan bukti | Hasil |
 | --- | --- | --- | --- |
+| 12 November 2026 | F2 | Commit implementasi 6ddcd59, version.json main, 31 file HTML/JS/CSS, dan live-ui-banks.json | PASS; 19 bank dan 89 nada ready |
 | 12 November 2026 | Pemeriksaan awal | Pembacaan kode lokal dan observasi halaman `https://perkusi.com/pad-station/?lang=id` di browser internal | Alur saat ini diperiksa; koneksi lambat belum direproduksi |
 
-Hasil lokal: 633/633 unit tests, lint, dan build lulus. Dua suite browser native masing-masing lulus 12 pemeriksaan, termasuk 19 bank / 89 nada. Langkah berikutnya: F2 deploy dan verifikasi live.
+Hasil lokal: 633/633 unit tests, lint, dan build lulus. Dua suite browser native masing-masing lulus 12 pemeriksaan, termasuk 19 bank / 89 nada. Verifikasi live selesai: 19 bank / 89 nada siap; ketukan Slenthem dan Stop tidak menghasilkan status error; console browser live tanpa warning/error pada pemeriksaan akhir.

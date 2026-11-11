@@ -1,6 +1,6 @@
 # Verifikasi Perbaikan Loading Audio Pad Station
 
-Tanggal: 12 November 2026, WIB. Status: implementasi dan verifikasi lokal selesai; publikasi serta verifikasi live sedang dilanjutkan sesuai otorisasi pengguna.
+Tanggal: 12 November 2026, WIB. Status: implementasi, verifikasi lokal, deploy, dan pemeriksaan live selesai sesuai otorisasi pengguna.
 
 ## Perilaku yang dihasilkan
 
@@ -48,4 +48,12 @@ Pemeriksaan ini membuktikan perilaku software dan keluaran audio native terukur 
 
 ## Publikasi
 
-Menunggu commit dan deploy melalui `andiwijaya/perkusi-com` main ke Cloudflare Pages project `perkusi-com`, kemudian pemeriksaan `version.json`, hash aset, dan UI live.
+Commit implementasi `6ddcd59ad99fd456f78f6c8a67dc707ced6fd1b7` berhasil dipush ke `andiwijaya/perkusi-com` main dan dipublikasikan oleh Cloudflare Pages. `https://perkusi.com/version.json` menunjukkan SHA tersebut dan branch main. Penyelesaian tracker disimpan pada commit dokumentasi berikutnya, yang juga melalui Git integration dan diperiksa versi akhirnya.
+
+Pemeriksaan live mencakup 19 pilihan instrumen / 89 nada yang seluruhnya mencapai status ready dengan semua tombol aktif. Ketukan Slenthem berhasil kembali ke status siap tanpa error, dan Stop bekerja. Console live tidak mencatat warning/error pada pemeriksaan akhir. Bukti: `live-ui-banks.json` dan `live-ready-id.png` pada direktori QA lokal.
+
+Perbandingan build memeriksa 31 file HTML/JS/CSS, termasuk halaman pemulihan. Sebanyak 17 file identik byte demi byte. Empat belas file lainnya identik setelah referensi nama aset dipetakan dari manifest. Penyebabnya telah dibatasi: `NOTICE.txt` lokal berukuran 2.622 bytes memakai CRLF, sedangkan produksi berukuran 2.611 bytes memakai LF; isinya sama persis setelah konversi CRLF ke LF. Nama hash NOTICE dan bundle yang merujuknya ikut berubah. Pemeriksaan menolak perbedaan kode lain; ini bukan klaim bahwa semua hash raw lokal dan produksi sama. Bukti lengkap: `deployment-6ddcd59.json`.
+
+Dua batas tunggu locator saat preload live sempat terlampaui untuk Bonang panerus dan Demung. Pembacaan status berikutnya menunjukkan bank telah ready tanpa error aplikasi. Penantian pemeriksaan diperpanjang untuk mengikuti progres nyata; timeout loader aplikasi tidak diubah. Kelambatan transfer ini tidak menyebabkan pad aktif sebelum siap.
+
+URL hasil: https://perkusi.com/pad-station/?lang=id . Tidak ada manual upload deployment atau pengujian upload.
