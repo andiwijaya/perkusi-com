@@ -33,9 +33,11 @@ export class AudioEngine {
       },
       lookahead = 0.12,
       tickMs = 25,
+      preserveLoadingOnPause = false,
     } = {},
   ) {
     this.pack = pack;
+    this.preserveLoadingOnPause = preserveLoadingOnPause;
     this.sequenceCatalog = sequenceCatalog;
     this.sequence = null;
     this.mixer = null;
@@ -744,7 +746,7 @@ export class AudioEngine {
     return voice;
   }
   async triggerPad(id) {
-    if (!this.sequence || this.disposed) return;
+    if (!this.sequence || this.disposed || this.padReadiness?.() === false) return;
     const context = this.ensureContext(),
       operation = this.operation;
     // A cached pad on a running clock can schedule in this gesture. A no-op
@@ -801,7 +803,8 @@ export class AudioEngine {
     this.composition?.cancelScheduled?.(this.context?.currentTime || 0);
     this.rememberSequencePosition(this.context?.currentTime || 0);
     ++this.operation;
-    for (const bank of this.banks) bank.cancelLoading();
+    if (!this.preserveLoadingOnPause)
+      for (const bank of this.banks) bank.cancelLoading();
     // Permit a new gesture while an aborted decode/resume is still settling.
     this.startPromise = null;
     if (this.transport.running) this.transport.pause(this.context.currentTime);

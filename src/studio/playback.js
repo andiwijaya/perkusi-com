@@ -10,10 +10,20 @@ import { guitarPack } from "./guitar-pack.js";
 
 // Shared construction, not a second engine. Each page owns its own context,
 // banks and disposal; constructing this factory does not load or play audio.
-export function createStudioPlayback({ arrangement = true } = {}) {
+export function createStudioPlayback({
+  arrangement = true,
+  preloadAll = false,
+} = {}) {
   const engine = new AudioEngine(studioPack(1), {
     variantPacks: [studioPack(2), studioPack(3)],
     sequenceCatalog: studioCatalog,
+    preserveLoadingOnPause: preloadAll,
+    ...(preloadAll
+      ? {
+          contextFactory: () =>
+            new AudioContext({ latencyHint: "interactive", sampleRate: 48000 }),
+        }
+      : {}),
     outputStageFactory: (context, input) =>
       createProgrammeOutputStage(context, input, createBeatboxOutputStage),
   });

@@ -25,6 +25,8 @@ import { bassPack, bassNotices } from "./bass-pack.js";
 import { guitarPack, guitarNotices } from "./guitar-pack.js";
 import { studioMessages, studioRoleNames } from "./messages.js";
 import { initLivePads } from "./live-pads.js";
+import { createStudioPreload, renderPreparedAudio } from "./preload.js";
+import { preloadCopy, preloadText } from "./preload-page.js";
 import {
   ProjectHistory,
   emptyPattern,
@@ -68,7 +70,7 @@ export function initStudio() {
     );
     root.querySelector(".st-intro").append(retiredNotice);
   }
-  const { engine, playback } = createStudioPlayback();
+  const { engine, playback } = createStudioPlayback({ preloadAll: true });
   $("chain-mode").checked = true;
   const history = new ProjectHistory(
     withGuitar(withBass(withKendhang(withPatternLoops(newComposition())))),
@@ -113,6 +115,7 @@ export function initStudio() {
     storeAvailable = true;
   const padTimers = new Set();
   let livePads = null;
+  let preload, observedContext, preloadFrame, preloadStartFrame;
   const importLocks = new Map();
   const life = new AbortController(),
     listen = (target, event, fn) =>
@@ -126,6 +129,43 @@ export function initStudio() {
   const text = (el, value) => {
     if (el && el.textContent !== String(value)) el.textContent = value;
   };
+  function renderPreload() {
+    if (!preload || disposed) return;
+    observeContext();
+    const view = preload.snapshot(),
+      t = preloadCopy[locale || "id"];
+    if (view.state === "ready" && engine.error === "context-closed")
+      engine.error = null;
+    $("preload").dataset.state = view.state;
+    $("preload").setAttribute("aria-label", t.label);
+    text($("preload-status"), preloadText(locale || "id", view));
+    $("preload-progress").max = view.total;
+    $("preload-progress").value = view.ready;
+    $("preload-progress").setAttribute("aria-label", t.label);
+    $("preload-retry").hidden = !["error", "paused"].includes(view.state);
+    $("preload-retry").disabled = busy || reading || receiving;
+    text($("preload-retry"), view.state === "paused" ? t.continue : t.retry);
+    root.dataset.audioReady = String(preload.isReady());
+    renderStatus();
+    livePads?.update();
+  }
+  function contextStateChanged() {
+    if (observedContext?.state !== "running") preload.invalidate();
+  }
+  function observeContext() {
+    if (observedContext === engine.context) return;
+    observedContext?.removeEventListener("statechange", contextStateChanged);
+    observedContext = engine.context;
+    observedContext?.addEventListener("statechange", contextStateChanged, {
+      signal: life.signal,
+    });
+  }
+  preload = createStudioPreload(engine, playback, renderPreload);
+  engine.padReadiness = () => preload.isReady();
+  function startPreload() {
+    void preload.start().catch(() => {});
+    observeContext();
+  }
   function message(key, error = false) {
     projectStatus = key;
     statusError = error;
@@ -305,6 +345,7 @@ export function initStudio() {
   }
   function renderStatus() {
     const s = engine.snapshot();
+    $("preload-retry").disabled = busy || reading || receiving;
     text(
       $("status"),
       calibrating
@@ -319,7 +360,13 @@ export function initStudio() {
                 ? c.paused
                 : c.idle,
     );
-    $("play").disabled = busy || s.status === "loading";
+    $("play").disabled =
+      busy ||
+      reading ||
+      receiving ||
+      !preload.isReady() ||
+      s.status === "loading";
+    $("render").disabled = busy || reading || receiving || !preload.isReady();
     $("pause").disabled =
       !calibrating && !["loading", "playing"].includes(s.status);
     text(
@@ -427,9 +474,11 @@ export function initStudio() {
       readyFile && delivery.canShare(readyFile) ? c.share : c.shareDownload,
     );
     sync();
+    renderPreload();
   }
   async function play() {
-    if (busy || disposed || engine.status === "playing") return;
+    if (busy || disposed || !preload.isReady() || engine.status === "playing")
+      return;
     const operation = engine.operation;
     const requested = project(),
       signature = JSON.stringify(requested);
@@ -450,10 +499,16 @@ export function initStudio() {
       const programme = engine.arrangement
         ? requested
         : { ...requested, chain: [requested.activePattern] };
-      const measured = await exporter.render(programme, () => {}, {
-        rate: 48000,
-        uncalibrated: true,
-      });
+      const measured = await renderPreparedAudio(
+        preload,
+        exporter,
+        programme,
+        () => {},
+        {
+          rate: 48000,
+          uncalibrated: true,
+        },
+      );
       if (
         disposed ||
         engine.operation !== operation ||
@@ -485,7 +540,7 @@ export function initStudio() {
     }
   }
   async function pad(role) {
-    if (busy || disposed) return;
+    if (busy || disposed || !preload.isReady()) return;
     const button = root.querySelector(`[data-st-pad="${role}"]`);
     button.classList.add("st-hit");
     try {
@@ -505,7 +560,7 @@ export function initStudio() {
     }
   }
   async function instrumentPad(family, pitch) {
-    if (busy || reading || receiving || disposed) return;
+    if (busy || reading || receiving || disposed || !preload.isReady()) return;
     if (engine.status !== "playing") engine.outputStage?.setProgrammeGain(1);
     try {
       await engine.composition.pad(pitch, family);
@@ -531,7 +586,7 @@ export function initStudio() {
       importLocks.clear();
     }
     busy = value;
-    $("render").disabled = busy || reading || receiving;
+    $("render").disabled = busy || reading || receiving || !preload.isReady();
     $("cancel").hidden = !busy;
     $("progress").hidden = !busy;
     for (const id of [
@@ -568,7 +623,7 @@ export function initStudio() {
       target.focus({ focusVisible: true });
   }
   async function renderWav() {
-    if (busy || reading || receiving) return;
+    if (busy || reading || receiving || !preload.isReady()) return;
     let p;
     try {
       p = project();
@@ -582,15 +637,20 @@ export function initStudio() {
     $("result").hidden = true;
     setBusy(true);
     try {
-      const result = await exporter.render(p, (progress) => {
-        if (!disposed) {
-          message(progress.phase);
-          const bar = $("progress");
-          progress.value === null
-            ? bar.removeAttribute("value")
-            : (bar.value = progress.value);
-        }
-      });
+      const result = await renderPreparedAudio(
+        preload,
+        exporter,
+        p,
+        (progress) => {
+          if (!disposed) {
+            message(progress.phase);
+            const bar = $("progress");
+            progress.value === null
+              ? bar.removeAttribute("value")
+              : (bar.value = progress.value);
+          }
+        },
+      );
       if (disposed) return;
       readyFile = new File(
         [result.blob],
@@ -721,6 +781,10 @@ export function initStudio() {
       switch (target.id) {
         case "st-play":
           await play();
+          break;
+        case "st-preload-retry":
+          void preload.retry();
+          observeContext();
           break;
         case "st-pause":
           if (calibrating) exporter.cancel();
@@ -974,6 +1038,9 @@ export function initStudio() {
     if (disposed) return;
     saveDraft();
     disposed = true;
+    preload.dispose();
+    cancelAnimationFrame(preloadFrame);
+    cancelAnimationFrame(preloadStartFrame);
     clearTimeout(draftTimer);
     for (const timer of padTimers) clearTimeout(timer);
     padTimers.clear();
@@ -1012,6 +1079,7 @@ export function initStudio() {
     playDrum: pad,
     playInstrument: instrumentPad,
     locked: () => busy || reading || receiving || disposed,
+    padLocked: () => !preload.isReady(),
     onError: () => {
       engine.error = "audio-start";
       renderStatus();
@@ -1060,6 +1128,12 @@ export function initStudio() {
     locked: () => busy || reading || receiving || disposed,
   });
   root.dataset.ready = "true";
+  renderPreload();
+  preloadFrame = requestAnimationFrame(() => {
+    preloadStartFrame = requestAnimationFrame(() => {
+      if (!disposed) startPreload();
+    });
+  });
   trackEvent("studio_open");
   frame = requestAnimationFrame(tick);
   // Only development/native QA can access the owner; production has no app hook.
@@ -1071,6 +1145,7 @@ export function initStudio() {
       project,
       store,
       dispose,
+      preload,
     };
   return dispose;
 }

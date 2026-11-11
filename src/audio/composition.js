@@ -632,7 +632,7 @@ export class CompositionPlayback {
     )
       throw new Error("Unknown pad");
     const e = this.engine;
-    if (e.disposed) return;
+    if (e.disposed || e.padReadiness?.() === false) return;
     const context = e.ensureContext(),
       operation = e.operation;
     if (context.state !== "running") {
