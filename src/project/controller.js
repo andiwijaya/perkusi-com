@@ -11,6 +11,7 @@ export function initProjectControls({
   exporter,
   onChange = () => {},
   trackEvent = () => {},
+  audioReady = () => true,
 }) {
   const panel = document.querySelector(".project-panel"),
     el = (id) => document.querySelector("#project-" + id),
@@ -101,7 +102,8 @@ export function initProjectControls({
     ])
       el(id).disabled = loading || receiving;
     for (const id of ["render", "bars"])
-      el(id).disabled = busy || loading || receiving;
+      el(id).disabled =
+        busy || loading || receiving || (id === "render" && !audioReady());
     el("load").disabled = loading || receiving || !el("list").value;
     el("delete").disabled = loading || receiving || !el("list").value;
     el("result").hidden = !file;
@@ -277,6 +279,7 @@ export function initProjectControls({
     "click",
     () =>
       void guarded(async () => {
+        if (!audioReady() || busy || loading || receiving) return;
         const project = current();
         busy = true;
         file = null;
@@ -374,6 +377,7 @@ export function initProjectControls({
     },
     apply: (project) => apply(project, "loaded"),
     update,
+    render,
     dispose,
     store,
     exporter,

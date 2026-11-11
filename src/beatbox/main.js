@@ -18,6 +18,11 @@ import "./style.css";
 import "../project/style.css";
 import { OfflineWavExporter } from "../audio/exporter.js";
 import { initProjectControls } from "../project/controller.js";
+import {
+  createBeatboxPreload,
+  beatboxPreloadCopy,
+  beatboxPreloadText,
+} from "./preload.js";
 
 export function initBeatbox() {
   trackEvent("playground_open");
@@ -25,6 +30,10 @@ export function initBeatbox() {
   let lastError = "";
   const engine = new AudioEngine(originalGroovePack(1), {
     variantPacks: [originalGroovePack(2)],
+    contextFactory: () =>
+      new AudioContext({ latencyHint: "interactive", sampleRate: 48000 }),
+    preserveLoadingOnPause: true,
+    preserveLoadingOnSelection: true,
     outputStageFactory: createBeatboxOutputStage,
     bankOptions: { prepareBuffer: prepareBumiBuffer },
   });
@@ -36,6 +45,7 @@ export function initBeatbox() {
     disposed = false,
     frame,
     lastRender = 0;
+  let preload, observedContext, preloadFrame, preloadStartFrame;
   const text = (el, value) => {
     if (el.textContent !== value) el.textContent = value;
   };
@@ -77,9 +87,46 @@ export function initBeatbox() {
     render();
   }
   let projects, canonicalOrigin;
+  function observeContext() {
+    if (observedContext === engine.context) return;
+    observedContext?.removeEventListener("statechange", contextStateChanged);
+    observedContext = engine.context;
+    observedContext?.addEventListener("statechange", contextStateChanged);
+  }
+  function contextStateChanged() {
+    if (observedContext?.state !== "running") preload.invalidate();
+  }
+  preload = createBeatboxPreload(engine, render);
+  engine.padReadiness = () => preload.isReady();
+  function renderPreload(blocked) {
+    observeContext();
+    const locale = document.documentElement.lang === "en" ? "en" : "id",
+      t = beatboxPreloadCopy[locale],
+      view = preload.snapshot(),
+      card = root.querySelector("#bb-preload");
+    if (preload.isReady() && engine.error === "context-closed")
+      engine.error = null;
+    card.dataset.state = view.state;
+    card.setAttribute("aria-label", t.label);
+    text(
+      root.querySelector("#bb-preload-status"),
+      beatboxPreloadText(locale, view),
+    );
+    const progress = root.querySelector("#bb-preload-progress");
+    progress.max = view.total;
+    progress.value = view.ready;
+    progress.setAttribute("aria-label", t.label);
+    const retry = root.querySelector("#bb-preload-retry");
+    retry.hidden = !["error", "paused"].includes(view.state);
+    retry.disabled = blocked || !!projects?.snapshot().busy;
+    text(retry, view.state === "paused" ? t.continue : t.retry);
+    root.dataset.audioReady = String(preload.isReady());
+  }
   function render() {
     if (disposed) return;
     projects?.update();
+    projects?.render();
+    renderPreload(!!projects?.snapshot().loading);
     const s = engine.snapshot(),
       blocked = !!projects?.snapshot().loading;
     for (const c of characterDefinitions) {
@@ -143,7 +190,7 @@ export function initBeatbox() {
         `${c.name} — ${copy.roles[c.role]}. ${label}`,
       );
       root.querySelector(`[data-retry="${c.role}"]`).hidden =
-        !state.enabled || state.state !== "error";
+        !preload.isReady() || !state.enabled || state.state !== "error";
       root
         .querySelectorAll(`[data-variant-role="${c.role}"]`)
         .forEach((button) =>
@@ -202,12 +249,18 @@ export function initBeatbox() {
       s.status === "idle" ? copy.start : copy.play,
     );
     document.querySelector("#bb-play").disabled =
-      blocked || s.status === "loading" || s.status === "playing";
+      blocked ||
+      !preload.isReady() ||
+      s.status === "loading" ||
+      s.status === "playing";
     root
       .querySelectorAll(
         ".bb-cast button,#bb-pause,#bb-reset,#bb-demo,#bb-volume",
       )
       .forEach((el) => (el.disabled = blocked));
+    root
+      .querySelectorAll("[data-role],#bb-demo")
+      .forEach((el) => (el.disabled = blocked || !preload.isReady()));
     text(
       document.querySelector("#bb-position"),
       `${copy.bar} ${Math.floor(s.beat / 4) + 1} · ${copy.beat} ${Math.floor(s.beat % 4) + 1}`,
@@ -238,6 +291,9 @@ export function initBeatbox() {
       render();
     }
   };
+  const runAudio = (action) => {
+    if (preload.isReady()) run(action);
+  };
   function play() {
     if (!roles.some((id) => engine.enabled.get(id)))
       engine.setLayer("kick", true);
@@ -254,7 +310,9 @@ export function initBeatbox() {
   root
     .querySelectorAll("[data-role]")
     .forEach((el) =>
-      el.addEventListener("click", () => run(() => toggle(el.dataset.role))),
+      el.addEventListener("click", () =>
+        runAudio(() => toggle(el.dataset.role)),
+      ),
     );
   root
     .querySelectorAll("[data-variant-role]")
@@ -272,10 +330,12 @@ export function initBeatbox() {
     .querySelectorAll("[data-retry]")
     .forEach((el) =>
       el.addEventListener("click", () =>
-        run(() => engine.retry(el.dataset.retry)),
+        runAudio(() => engine.retry(el.dataset.retry)),
       ),
     );
-  document.querySelector("#bb-play").addEventListener("click", () => run(play));
+  document
+    .querySelector("#bb-play")
+    .addEventListener("click", () => runAudio(play));
   document
     .querySelector("#bb-pause")
     .addEventListener("click", () => run(() => engine.pause()));
@@ -286,7 +346,7 @@ export function initBeatbox() {
     }),
   );
   document.querySelector("#bb-demo").addEventListener("click", () =>
-    run(() => {
+    runAudio(() => {
       roles.forEach((id) =>
         engine.setLayer(id, ["kick", "hat", "vocal-bass"].includes(id)),
       );
@@ -313,7 +373,7 @@ export function initBeatbox() {
     const id = roles[Number(event.key) - 1];
     if (id) {
       event.preventDefault();
-      run(() => toggle(id));
+      runAudio(() => toggle(id));
     }
   });
   document.addEventListener("perkusi:locale", localize);
@@ -322,6 +382,10 @@ export function initBeatbox() {
   });
   function dispose() {
     disposed = true;
+    preload.dispose();
+    cancelAnimationFrame(preloadFrame);
+    cancelAnimationFrame(preloadStartFrame);
+    observedContext?.removeEventListener("statechange", contextStateChanged);
     transfer?.dispose();
     canonicalOrigin?.dispose();
     projects?.dispose();
@@ -348,6 +412,7 @@ export function initBeatbox() {
     catalog: originalCatalog,
     onChange: render,
     trackEvent,
+    audioReady: () => preload.isReady(),
     exporter: new OfflineWavExporter({
       catalog: originalCatalog,
       packForSelection: originalGrooveSelectionPack,
@@ -394,10 +459,26 @@ export function initBeatbox() {
           });
       },
     );
+  root.querySelector("#bb-preload-retry").addEventListener("click", () => {
+    if (projects.snapshot().loading || projects.snapshot().busy) return;
+    void preload.retry();
+    observeContext();
+  });
+  render();
+  preloadFrame = requestAnimationFrame(() => {
+    preloadStartFrame = requestAnimationFrame(() => {
+      void Promise.resolve(projects.ready)
+        .then(() => {
+          if (!disposed) return preload.start();
+        })
+        .catch(() => {});
+    });
+  });
   frame = requestAnimationFrame(animate);
   if (["localhost", "127.0.0.1"].includes(location.hostname))
     window.perkusiBeatbox = {
       engine,
+      preload,
       projects,
       catalog: originalCatalog,
       render,

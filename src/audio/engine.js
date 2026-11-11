@@ -34,10 +34,12 @@ export class AudioEngine {
       lookahead = 0.12,
       tickMs = 25,
       preserveLoadingOnPause = false,
+      preserveLoadingOnSelection = false,
     } = {},
   ) {
     this.pack = pack;
     this.preserveLoadingOnPause = preserveLoadingOnPause;
+    this.preserveLoadingOnSelection = preserveLoadingOnSelection;
     this.sequenceCatalog = sequenceCatalog;
     this.sequence = null;
     this.mixer = null;
@@ -349,6 +351,8 @@ export class AudioEngine {
   }
   play() {
     if (this.disposed) return Promise.reject(new Error("Engine disposed"));
+    if (this.padReadiness?.() === false)
+      return Promise.resolve(this.snapshot());
     this.playbackRequested = true;
     if (this.startPromise) return this.startPromise;
     if (this.transport.running && this.context?.state === "running")
@@ -515,8 +519,9 @@ export class AudioEngine {
     this.enabled.set(id, enabled);
     if (!enabled && !this.sequence) {
       this.variantOperations.set(id, this.variantOperations.get(id) + 1);
-      for (const choice of this.variants.get(id).values())
-        choice.bank.cancel(id);
+      if (!this.preserveLoadingOnSelection)
+        for (const choice of this.variants.get(id).values())
+          choice.bank.cancel(id);
     }
     this.queueChange(id);
     const entry = this.variantEntry(id);
@@ -557,7 +562,7 @@ export class AudioEngine {
     if (this.disposed) return;
     this.pump();
     const previous = this.selectedVariant.get(id);
-    if (previous !== variant)
+    if (previous !== variant && !this.preserveLoadingOnSelection)
       this.variants.get(id).get(previous).bank.cancel(id);
     this.selectedVariant.set(id, variant);
     const token = this.variantOperations.get(id) + 1;
@@ -566,7 +571,12 @@ export class AudioEngine {
     const choice = this.variants.get(id).get(variant),
       operation = this.operation,
       context = this.context;
-    if (!context || (!this.sequence && !this.enabled.get(id))) return;
+    if (
+      !context ||
+      this.padReadiness?.() === false ||
+      (!this.sequence && !this.enabled.get(id))
+    )
+      return;
     await choice.bank.load(id, context, { priority: 10 });
     if (
       this.disposed ||
@@ -746,7 +756,8 @@ export class AudioEngine {
     return voice;
   }
   async triggerPad(id) {
-    if (!this.sequence || this.disposed || this.padReadiness?.() === false) return;
+    if (!this.sequence || this.disposed || this.padReadiness?.() === false)
+      return;
     const context = this.ensureContext(),
       operation = this.operation;
     // A cached pad on a running clock can schedule in this gesture. A no-op
