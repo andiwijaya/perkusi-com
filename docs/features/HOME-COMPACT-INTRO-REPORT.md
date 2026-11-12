@@ -1,6 +1,6 @@
 # Laporan Pembuka Beranda Ringkas
 
-Tanggal 12 November 2026 WIB. Baseline `a3caf8c`. Status: implementasi dan QA hasil build selesai; publikasi diverifikasi pada bagian deployment.
+Tanggal 12 November 2026 WIB. Baseline `a3caf8c`. Status: SELESAI; implementasi, QA, dan deployment fitur terverifikasi. Dokumentasi penutup menggunakan jalur publikasi yang sama.
 
 ## Hasil implementasi
 
@@ -37,6 +37,12 @@ Pemeriksaan memakai browser internal Windows dan emulasi viewport. Ponsel fisik 
 
 ## Deployment
 
-Jalur publikasi GitHub main → Cloudflare Pages. Commit fitur, kecocokan runtime dan pengukuran live dicatat setelah terverifikasi. SHA penutup dicatat dalam `completion.json` setelah HEAD, GitHub main, dan produksi cocok.
+Commit fitur `47dab123aa7b488fe13c476dfa3ce1bf76382752` dipush ke GitHub main dan terbit melalui Cloudflare Pages. `version.json` menunjukkan SHA tersebut dan branch main. Verifier membandingkan 32 HTML/JS/CSS termasuk beranda ID/EN: 17 identik byte demi byte, 15 identik setelah pemetaan referensi nama aset melalui manifest. Perbedaan terbatas pada NOTICE Windows 2.622 bytes CRLF versus produksi 2.611 bytes LF, dengan teks identik setelah konversi; hash NOTICE dan bundle yang merujuknya ikut berbeda. Tidak ada perbedaan kode lain. Bukti `deployment-47dab12.json`.
+
+Delapan kombinasi layout live ID/EN lulus. Pada 360×800 dan 390×844, bagian bawah CTA pertama berada sekitar 723,77 dan 726,29 px, cocok dengan hasil compiled. Judul/deskripsi, urutan, CTA48, dan ketidakadaan ilustrasi/tombol perantara kembali diperiksa. Screenshot layar awal diambil pada scrollTop 0; CTA seluruhnya masuk viewport. CTA Studio live membuka halaman Studio yang benar; pengamatan berikutnya mencapai 49/49 dan Putar enabled. Tidak diubah pola maupun pilihan proyek produksi pengguna, dan tidak dimulai playback.
+
+Bukti tambahan: `live-layouts.json`, `live-initial-screen.json`, `live-primary-navigation.json`, screenshot live HP/desktop ID/EN. Console akhir tanpa warning/error. Viewport dikembalikan ke default, tab/server preview ditutup, dan tab pengguna dipertahankan pada awal beranda ID.
+
+Dokumentasi penutup diterbitkan melalui GitHub main ke Cloudflare Pages. SHA akhir serta kecocokan HEAD/GitHub/live dicatat dalam `completion.json` setelah deployment penutup terverifikasi. Tidak ada upload manual deployment.
 
 URL hasil: https://perkusi.com/?lang=id
