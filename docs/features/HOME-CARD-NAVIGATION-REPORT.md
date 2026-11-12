@@ -1,6 +1,6 @@
 # Laporan Navigasi Kartu Beranda
 
-Tanggal 12 November 2026 WIB. Baseline `69964a0`. Status: implementasi dan QA hasil build selesai; verifikasi publikasi ditambahkan sesudah deployment.
+Tanggal 12 November 2026 WIB. Baseline `69964a0`. Status: SELESAI; implementasi, QA, serta deployment fitur terverifikasi. Dokumentasi penutup mengikuti jalur publikasi yang sama.
 
 ## Hasil
 
@@ -38,6 +38,12 @@ Tidak dibuat unit test baru yang sekadar mencerminkan markup untuk perubahan UI 
 
 ## Deployment
 
-Publikasi melalui GitHub main ke Cloudflare Pages. SHA fitur, kecocokan runtime serta UI live dicatat setelah terverifikasi. SHA penutup dicatat dalam `completion.json` sesudah HEAD, GitHub main, dan versi produksi cocok.
+Commit fitur `1531da0394da47ee78f8923b3e0670b1f6325817` dipush ke GitHub main dan terbit otomatis di Cloudflare Pages. `version.json` menunjukkan SHA tersebut dan branch main. Verifier membandingkan 32 HTML/JS/CSS, termasuk beranda ID/EN: 17 identik byte demi byte; 15 identik setelah pemetaan referensi nama aset melalui manifest. Perbedaan yang dibatasi adalah NOTICE Windows 2.622 bytes CRLF versus produksi 2.611 bytes LF; teks identik setelah konversi, sehingga hash NOTICE dan bundle yang merujuknya ikut berbeda. Tidak ada perbedaan kode lain. Bukti `deployment-1531da0.json`.
+
+UI live diperiksa pada 390/1440 px, ID/EN. Semua CTA setinggi 48 px dan memenuhi lebar bagian dalam kartu; satu link per kartu, panah berada di dalam, serta tidak ada overflow halaman. Pada live HP, judul Studio membuka halaman Studio dan mencapai 49/49; ilustrasi Beatbox membuka Beatbox dan mencapai 12/12; CTA Pad Station membuka Pad Station lalu 23 pad termasuk Kethuk siap. Pengujian ini hanya navigasi dan observasi, tanpa mengubah pola, pilihan instrumen, atau menyalakan playback pada proyek produksi pengguna. Console akhir tanpa warning/error.
+
+Inspeksi DOM sempat timeout pada transisi navigasi live Studio. Observasi native berikutnya menunjukkan halaman sudah mencapai 49/49, lalu pembacaan DOM berhasil; hal ini tidak dicatat sebagai kegagalan navigasi aplikasi. Bukti live: `live-layouts.json`, `live-navigation.json`, dan screenshot mobile/desktop ID/EN.
+
+Viewport sementara telah dikembalikan ke default. Tab preview serta server QA milik tugas telah ditutup; tab pengguna berada pada beranda ID bagian pilihan alat. Dokumen penutup dipublikasikan melalui GitHub main ke Cloudflare Pages. SHA akhir dan kecocokan HEAD/GitHub/live dicatat dalam `completion.json` setelah deployment penutup terverifikasi. Tidak ada upload manual deployment.
 
 URL hasil: https://perkusi.com/?lang=id#tools
