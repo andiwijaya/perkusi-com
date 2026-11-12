@@ -1,6 +1,6 @@
 # Laporan Preload Audio Beatbox
 
-Tanggal 12 November 2026 WIB. Baseline `57cfb24`. Status: implementasi dan QA lokal selesai; deployment dan verifikasi live dicatat setelah publikasi.
+Tanggal 12 November 2026 WIB. Baseline `57cfb24`. Status: SELESAI; implementasi, QA, dan deployment fitur telah terverifikasi. Dokumentasi penutup diterbitkan melalui jalur yang sama.
 
 ## Hasil implementasi
 
@@ -47,6 +47,14 @@ Regresi build: Studio mencapai 49/49, Kick, Muat demo, Putar, Jeda, dan Kembali 
 
 ## Deployment dan UI live
 
-Jalur publikasi: GitHub main ke Cloudflare Pages. Commit, kecocokan runtime/aset, responsive ID/EN, regresi Studio/Pad Station, serta hasil live ditambahkan setelah verifikasi. SHA dokumentasi akhir dicatat dalam `completion.json` setelah HEAD, GitHub, dan produksi cocok.
+Commit fitur `f5d52b499bcd8fc875dcdbfdc674a0c62ceeae2e` dipush ke GitHub main dan terbit melalui deployment otomatis Cloudflare Pages. `version.json` menunjukkan SHA tersebut dan branch main. Verifier membandingkan 31 HTML/JS/CSS: 17 identik byte demi byte; 14 identik setelah pemetaan referensi nama aset dari manifest. Perbedaan yang dibatasi adalah NOTICE Windows 2.622 bytes CRLF versus produksi 2.611 bytes LF, teks identik setelah konversi. Hash NOTICE dan bundle yang merujuknya berubah; tidak ada perbedaan kode lain. Bukti `deployment-f5d52b4.json`. Seluruh 12 WAV merespons HTTP 200 dan identik byte dengan aset lokal (`live-audio-audit.json`). Pemeriksaan awal sempat mengalami timeout koneksi; pengulangan dengan retry terbatas selesai lulus.
+
+Alur live dari beranda memperlihatkan waiting 0/12; enam karakter, Putar, Coba groove, dan Buat WAV disabled. Kemudian siap 12/12 dengan enam karakter, 12 tombol A/B, Putar, Coba groove, dan Buat WAV enabled. Jumlah karakter aktif tetap 0, sesuai aturan tanpa autoplay. Pemeriksaan live tidak mengubah pilihan karakter, variasi, demo, atau pola draft pengguna; pengujian audio rinci dilakukan pada localhost.
+
+Pada live ID/EN lebar 390 dan 1440, tidak ada overflow horizontal. Indikator berada tepat antara `.bb-intro` dan `.bb-guide`. Perubahan bahasa mempertahankan 12/12. Console tidak menampilkan error/warning. Bukti `live-startup.json`, `live-mobile-{id,en}.json`, `live-desktop-id.json`, serta screenshot ready mobile/desktop ID/EN. Viewport sementara dikembalikan ke default; tab dan server QA ditutup. Tab live dipertahankan untuk pengguna.
+
+Satu artefak source sempat tertimpa status awal saat reload dan pengulangan pada server dev lama mengalami timeout stream. Server dev QA diganti, suite source dijalankan ulang sampai selesai, lalu seluruh enam hasil skenario diperiksa lagi: source 19/19 dan compiled 19/19 lulus. Hasil WAITING/FAIL tidak dihitung sebagai lulus.
+
+Dokumentasi penutup dipublikasikan melalui jalur GitHub main ke Cloudflare Pages yang sama. SHA akhir dan kecocokan HEAD/GitHub/live direkam dalam `completion.json` setelah deployment penutup terverifikasi. Tidak ada upload manual deployment.
 
 URL hasil: https://perkusi.com/beatbox/?lang=id
