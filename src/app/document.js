@@ -28,8 +28,42 @@ export function renderDocument(page, locale) {
   const footer = `<footer class="site-footer wrap">${brand}<p>© <span id="year">2026</span> <span data-i18n="common.footer">${text("common.footer")}</span></p><nav data-i18n-aria-label="common.footerLabel" aria-label="${text("common.footerLabel")}"><a data-home-anchor="tools" href="${path("home")}#tools" data-i18n="common.tools">${text("common.tools")}</a><a data-home-anchor="approach" href="${path("home")}#approach" data-i18n="common.approach">${text("common.approach")}</a><a ${routeAttrs("privacy")} data-i18n="common.privacy">${text("common.privacy")}</a></nav></footer>`;
   let content;
   if (page === "home") {
-    const symbols = ["drum", "layers", "playground", "metro"];
-    content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span><br><span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><a class="button" data-home-anchor="tools" href="${path("home")}#tools"><span data-i18n="home.chooseTool">${text("home.chooseTool")}</span><span aria-hidden="true">↗</span></a><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div><figure class="rhythm-art" data-i18n-aria-label="home.artLabel" aria-label="${text("home.artLabel")}"><div class="art-top"><span data-i18n="home.artTop">${text("home.artTop")}</span><span>4 &times; 4</span></div><div class="loop-ring ring-one"></div><div class="loop-ring ring-two"></div><div class="loop-ring ring-three"></div><div class="orbit-dot dot-one"></div><div class="orbit-dot dot-two"></div><div class="pad-grid" aria-hidden="true">${Array.from({ length: 16 }, (_, index) => `<i class="${[1, 4, 10, 15].includes(index) ? "lit" : [7, 12].includes(index) ? "soft" : ""}"></i>`).join("")}</div><div class="art-bottom"><span><b></b><span data-i18n="home.artBottom">${text("home.artBottom")}</span></span><span aria-hidden="true">+<br>+</span></div>${tag("figcaption", "home.artCaption")}</figure></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${[1, 3].map((index) => `<article class="tool-card"><div class="card-meta">${tag("span", `home.card${index}.meta`)}${tag("span", index === 1 || index === 3 ? "common.playable" : "common.upcoming", 'class="badge"')}</div><div class="tool-symbol ${symbols[index - 1]}-symbol" aria-hidden="true">${"<i></i>".repeat([4, 3, 5, 1][index - 1])}</div>${tag("h3", `home.card${index}.title`)}${tag("p", `home.card${index}.copy`)}<div class="card-bottom">${index === 1 || index === 3 ? `<a ${routeAttrs(index === 1 ? "studio" : "beatbox")} data-i18n="${index === 1 ? "common.studio" : "home.explore"}">${text(index === 1 ? "common.studio" : "home.explore")}</a>` : tag("span", `home.card${index}.foot`)}<span aria-hidden="true">↗</span></div></article>`).join("")}<article class="tool-card" data-pad-station-card><div class="card-meta">${tag("span", "home.pads.meta")}${tag("span", "common.playable", 'class="badge"')}</div><div class="tool-symbol playground-symbol" aria-hidden="true">${"<i></i>".repeat(5)}</div>${tag("h3", "home.pads.title")}${tag("p", "home.pads.copy")}<div class="card-bottom"><a ${routeAttrs("pads")} data-i18n="common.pads">${text("common.pads")}</a><span aria-hidden="true">+</span></div></article></div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}</div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
+    const cards = [
+      {
+        route: "studio",
+        title: "home.card1.title",
+        copy: "home.card1.copy",
+        meta: "home.card1.meta",
+        action: "common.studio",
+        symbol: "drum",
+        marks: 4,
+      },
+      {
+        route: "beatbox",
+        title: "home.card3.title",
+        copy: "home.card3.copy",
+        meta: "home.card3.meta",
+        action: "home.explore",
+        symbol: "playground",
+        marks: 5,
+      },
+      {
+        route: "pads",
+        title: "home.pads.title",
+        copy: "home.pads.copy",
+        meta: "home.pads.meta",
+        action: "common.pads",
+        symbol: "playground",
+        marks: 5,
+      },
+    ];
+    const toolCards = cards
+      .map(
+        (card) =>
+          `<article class="tool-card"${card.route === "pads" ? " data-pad-station-card" : ""}><a class="tool-card-link" ${routeAttrs(card.route)} aria-labelledby="tool-${card.route}-action"><div class="card-meta">${tag("span", card.meta)}${tag("span", "common.playable", 'class="badge"')}</div><div class="tool-symbol ${card.symbol}-symbol" aria-hidden="true">${"<i></i>".repeat(card.marks)}</div>${tag("h3", card.title)}${tag("p", card.copy)}<div class="card-bottom"><span class="tool-card-cta" id="tool-${card.route}-action">${tag("span", card.action)}<span class="tool-card-arrow" aria-hidden="true">→</span></span></div></a></article>`,
+      )
+      .join("");
+    content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span><br><span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><a class="button" data-home-anchor="tools" href="${path("home")}#tools"><span data-i18n="home.chooseTool">${text("home.chooseTool")}</span><span aria-hidden="true">↗</span></a><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div><figure class="rhythm-art" data-i18n-aria-label="home.artLabel" aria-label="${text("home.artLabel")}"><div class="art-top"><span data-i18n="home.artTop">${text("home.artTop")}</span><span>4 &times; 4</span></div><div class="loop-ring ring-one"></div><div class="loop-ring ring-two"></div><div class="loop-ring ring-three"></div><div class="orbit-dot dot-one"></div><div class="orbit-dot dot-two"></div><div class="pad-grid" aria-hidden="true">${Array.from({ length: 16 }, (_, index) => `<i class="${[1, 4, 10, 15].includes(index) ? "lit" : [7, 12].includes(index) ? "soft" : ""}"></i>`).join("")}</div><div class="art-bottom"><span><b></b><span data-i18n="home.artBottom">${text("home.artBottom")}</span></span><span aria-hidden="true">+<br>+</span></div>${tag("figcaption", "home.artCaption")}</figure></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${toolCards}</div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}</div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
   } else if (page === "beatbox") {
     content = renderBeatbox(locale);
   } else if (page === "studio") {
