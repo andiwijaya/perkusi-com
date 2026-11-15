@@ -12,6 +12,25 @@ else {
     new Date().getFullYear(),
   );
   initAnalytics();
+  if (
+    document.body.dataset.page === "instruments" ||
+    document.body.dataset.page.startsWith("instrument-")
+  ) {
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted && document.body.dataset.page !== "instruments")
+        location.reload();
+    });
+    import("./instruments/localize.js")
+      .then(({ initInstrumentPages }) => initInstrumentPages())
+      .catch(() => {
+        const status = document.querySelector("#article-pad-status");
+        if (status)
+          status.textContent =
+            document.documentElement.lang === "id"
+              ? "Pemutar belum dapat disiapkan. Muat ulang halaman untuk mencoba lagi."
+              : "The player could not initialize. Reload the page to try again.";
+      });
+  }
   if (document.body.dataset.page === "beatbox") {
     import("./beatbox/main.js").then(({ initBeatbox }) => initBeatbox());
   }

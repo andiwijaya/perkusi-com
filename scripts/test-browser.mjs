@@ -69,7 +69,7 @@ try {
     assert.equal(await page.locator("html").getAttribute("lang"), "id");
     assert.equal(
       await page.locator("h1").textContent(),
-      messages.id["home.hero1"] + messages.id["home.hero2"],
+      messages.id["home.hero1"] + " " + messages.id["home.hero2"],
     );
     assert.equal(await page.title(), messages.id["meta.home.title"]);
   });
@@ -588,14 +588,7 @@ try {
   await check(
     "homepage contains no audio engine bundle/assets and no GA on localhost",
     async () => {
-      assert(
-        !requests.some(
-          (url) =>
-            url.includes("googletagmanager") ||
-            url.includes("audio-packs") ||
-            /\.(wav|mp3|ogg)(\?|$)/.test(url),
-        ),
-      );
+      assert(!requests.some((url) => url.includes("googletagmanager")));
       const homeContext = await browser.newContext();
       const homePage = await homeContext.newPage(),
         homeRequests = [];
@@ -606,7 +599,11 @@ try {
           document.querySelector("#year")?.textContent ===
           String(new Date().getFullYear()),
       );
-      assert(!homeRequests.some((url) => /\.wav|googletagmanager/.test(url)));
+      assert(
+        !homeRequests.some((url) =>
+          /\.(wav|flac|mp3|ogg)(\?|$)|audio-packs|googletagmanager/.test(url),
+        ),
+      );
       const jsFiles = homeRequests
         .filter((url) => url.endsWith(".js"))
         .map((url) => new URL(url).pathname.split("/").pop());

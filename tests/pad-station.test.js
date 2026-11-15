@@ -122,7 +122,8 @@ test("standalone retains 21 core pads plus two isolated Kethuk strikes without s
 test("homepage and navigation expose a new localized Pad Station card and retain the two existing tools", () => {
   for (const locale of ["id", "en"]) {
     const html = renderDocument("home", locale);
-    assert.equal((html.match(/class="tool-card"/g) || []).length, 3);
+    assert.equal((html.match(/class="tool-card"/g) || []).length, 4);
+    assert(html.includes("data-instrument-articles-card"));
     assert(html.includes("data-pad-station-card"));
     for (const key of [
       "home.card1.title",

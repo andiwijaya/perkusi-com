@@ -1,0 +1,66 @@
+{
+  "drum": {
+    "id": "Sebuah ketukan rendah, jawaban snare, lalu bunyi hi-hat yang menjaga gerak.",
+    "en": "A low thump, a snare answer, and a hi-hat keeping things moving: a drum kit puts several percussion voices under one player's hands and feet."
+  },
+  "bilah": {
+    "id": "Lima nada pendek dapat menjadi pintu masuk untuk mendengar melodi.",
+    "en": "Five short notes offer a welcoming way into melody."
+  },
+  "kendhang-ciblon": {
+    "id": "Dua permukaan kulit, sepasang tangan, dan banyak kemungkinan warna.",
+    "en": "Two skin heads, two hands, and a wide range of colors: the kendhang ciblon shows that rhythm is more than a repeated pulse."
+  },
+  "bass-elektrik": {
+    "id": "Bass sering terasa sebelum benar-benar diperhatikan.",
+    "en": "You may feel a bass part before you consciously follow it."
+  },
+  "gitar-nylon": {
+    "id": "Satu petikan dapat terdengar jelas di awal lalu perlahan menyatu dengan ruang.",
+    "en": "A single pluck can begin clearly, then soften into the space around it."
+  },
+  "kethuk": {
+    "id": "Sebuah bunyi singkat dapat mempunyai pekerjaan besar.",
+    "en": "A short sound can have a substantial job."
+  },
+  "kempyang": {
+    "id": "Bunyi kecil yang terang dapat membantu telinga menemukan pembagian di dalam musik.",
+    "en": "A small, bright sound can help a listener perceive divisions within music."
+  },
+  "kenong": {
+    "id": "Bunyi kenong mempunyai kehadiran yang mudah mengundang perhatian, tetapi tugasnya tidak berhenti pada warna suara.",
+    "en": "A kenong stroke has a presence that can draw the ear, but its role extends beyond its sound color."
+  },
+  "bonang-panerus": {
+    "id": "Suara bonang panerus mengajak telinga mengikuti bagian-bagian kecil yang bergerak di sekitar melodi.",
+    "en": "The bonang panerus draws attention to small movements around a melody."
+  },
+  "peking": {
+    "id": "Bentuknya kecil, tetapi kehadirannya dapat segera menarik telinga.",
+    "en": "It is a small instrument whose presence can quickly catch the ear."
+  },
+  "saron-barung": {
+    "id": "Saron barung mengundang kita memperhatikan bukan hanya nada yang dipukul, tetapi juga nada yang dilepaskan.",
+    "en": "The saron barung invites attention not only to a struck note but to the note released before it."
+  },
+  "bonang-barung": {
+    "id": "Deretan pencon bonang barung dapat terlihat seperti kumpulan gong kecil.",
+    "en": "The bonang barung may first appear to be a collection of small gongs."
+  },
+  "demung": {
+    "id": "Bilah yang lebih besar memberi petunjuk tentang tempat demung dalam keluarga saron.",
+    "en": "Larger keys offer a clue to the demung's place in the saron family."
+  },
+  "kempul": {
+    "id": "Kempul mengajak kita mendengar batas yang muncul di tengah perjalanan musik.",
+    "en": "Kempul invites us to hear boundaries within a musical journey."
+  },
+  "gong-ageng": {
+    "id": "Satu pukulan dapat mengubah cara kita merasakan perjalanan musik.",
+    "en": "One stroke can change how a musical journey feels."
+  },
+  "slenthem": {
+    "id": "Di bawah bilah slenthem terdapat tabung-tabung yang membantu membentuk bunyinya.",
+    "en": "Beneath the slenthem's keys are tubes that help shape its sound."
+  }
+}

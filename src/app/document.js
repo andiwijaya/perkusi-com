@@ -5,6 +5,12 @@ import { navigationHref, pagePath } from "./routes.js";
 import { renderBeatbox } from "../beatbox/page.js";
 import { renderStudio } from "../studio/page.js";
 import { renderPadStation } from "../pads/page.js";
+import { instrumentByPage, isInstrumentPage } from "../instruments/catalog.js";
+import { articleContent } from "../instruments/content.js";
+import {
+  renderInstrumentIndex,
+  renderInstrumentArticle,
+} from "../instruments/render.js";
 
 export const origin = "https://perkusi.com";
 export function escapeHtml(value) {
@@ -56,11 +62,19 @@ export function renderDocument(page, locale) {
         symbol: "playground",
         marks: 5,
       },
+      {
+        route: "instruments",
+        title: "home.articles.title",
+        copy: "home.articles.copy",
+        meta: "home.articles.meta",
+        action: "home.articles.action",
+        image: "/images/instruments/gong-ageng.webp",
+      },
     ];
     const toolCards = cards
       .map(
         (card) =>
-          `<article class="tool-card"${card.route === "pads" ? " data-pad-station-card" : ""}><a class="tool-card-link" ${routeAttrs(card.route)} aria-labelledby="tool-${card.route}-action"><div class="card-meta">${tag("span", card.meta)}${tag("span", "common.playable", 'class="badge"')}</div><div class="tool-symbol ${card.symbol}-symbol" aria-hidden="true">${"<i></i>".repeat(card.marks)}</div>${tag("h3", card.title)}${tag("p", card.copy)}<div class="card-bottom"><span class="tool-card-cta" id="tool-${card.route}-action">${tag("span", card.action)}<span class="tool-card-arrow" aria-hidden="true">→</span></span></div></a></article>`,
+          `<article class="tool-card"${card.route === "pads" ? " data-pad-station-card" : ""}${card.route === "instruments" ? " data-instrument-articles-card" : ""}><a class="tool-card-link" ${routeAttrs(card.route)} aria-labelledby="tool-${card.route}-action"><div class="card-meta">${tag("span", card.meta)}${tag("span", card.route === "instruments" ? "home.articles.badge" : "common.playable", 'class="badge"')}</div>${card.image ? `<img class="home-article-cover" src="${card.image}" alt="" width="1536" height="1024" loading="lazy">` : `<div class="tool-symbol ${card.symbol}-symbol" aria-hidden="true">${"<i></i>".repeat(card.marks)}</div>`}${tag("h3", card.title)}${tag("p", card.copy)}<div class="card-bottom"><span class="tool-card-cta" id="tool-${card.route}-action">${tag("span", card.action)}<span class="tool-card-arrow" aria-hidden="true">→</span></span></div></a></article>`,
       )
       .join("");
     content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span> <span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${toolCards}</div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}</div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
@@ -70,6 +84,15 @@ export function renderDocument(page, locale) {
     content = renderStudio(locale);
   } else if (page === "pads") {
     content = renderPadStation(locale);
+  } else if (page === "instruments") {
+    content = renderInstrumentIndex(locale);
+  } else if (instrumentByPage(page)) {
+    const instrument = instrumentByPage(page);
+    content = renderInstrumentArticle(
+      instrument.slug,
+      locale,
+      articleContent[instrument.slug],
+    );
   } else if (page === "privacy") {
     content = `<main id="main" class="document-page wrap" tabindex="-1">${tag("h1", "privacy.heading")}${tag("p", "privacy.updated", 'class="muted"')}${["analytics", "signals", "locale", "projects", "block"].map((key) => tag("p", "privacy." + key)).join("")}<p><a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer" data-i18n="privacy.optout">${text("privacy.optout")}</a> · <a href="https://policies.google.com/privacy" rel="noopener noreferrer" data-i18n="privacy.policy">${text("privacy.policy")}</a></p>${tag("p", "privacy.unavailable")}</main>`;
   } else if (page === "notFound") {
@@ -80,5 +103,29 @@ export function renderDocument(page, locale) {
   const descriptionKey = "meta." + page + ".description";
   const socialKey = page === "home" ? "meta.home.social" : descriptionKey;
   const canonical = origin + pagePath(page, locale);
-  return `<!doctype html><html lang="${locale}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#121513"><title>${text("meta." + page + ".title")}</title><meta name="description" content="${text(descriptionKey)}"><link rel="canonical" href="${canonical}">${["id", "en"].map((lang) => `<link rel="alternate" hreflang="${lang}" href="${origin + pagePath(page, lang)}">`).join("")}<link rel="alternate" hreflang="x-default" href="${origin + pagePath(page, "id")}">${page === "notFound" ? '<meta name="robots" content="noindex">' : ""}<meta property="og:type" content="website"><meta property="og:site_name" content="Perkusi.com"><meta property="og:title" content="${text("meta." + page + ".title")}"><meta property="og:description" content="${text(socialKey)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${origin}/social-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:locale" content="${locale === "id" ? "id_ID" : "en_US"}"><meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="stylesheet" href="/src/style.css">${page === "beatbox" ? '<link rel="stylesheet" href="/src/beatbox/style.css"><link rel="stylesheet" href="/src/project/style.css">' : ""}${page === "studio" ? '<link rel="stylesheet" href="/src/studio/style.css">' : ""}${page === "pads" ? '<link rel="stylesheet" href="/src/pads/style.css">' : ""}<script type="module" src="/src/main.js"></script></head><body data-page="${page}">${header}${content}${footer}</body></html>`;
+  const instrument = instrumentByPage(page);
+  const article = instrument && articleContent[instrument.slug][locale];
+  const socialImage = instrument
+    ? origin + instrument.image
+    : origin + "/social-card.png";
+  const schema = article
+    ? `<script type="application/ld+json" data-article-schema>${JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: article.title,
+        description: article.dek,
+        image: [socialImage],
+        inLanguage: locale,
+        datePublished: "2026-11-15T00:00:00+07:00",
+        dateModified: "2026-11-15T00:00:00+07:00",
+        author: { "@type": "Organization", name: "Perkusi.com", url: origin },
+        publisher: {
+          "@type": "Organization",
+          name: "Perkusi.com",
+          url: origin,
+        },
+        mainEntityOfPage: canonical,
+      }).replace(/</g, "\\u003c")}</script>`
+    : "";
+  return `<!doctype html><html lang="${locale}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#121513"><title>${text("meta." + page + ".title")}</title><meta name="description" content="${text(descriptionKey)}"><link rel="canonical" href="${canonical}">${["id", "en"].map((lang) => `<link rel="alternate" hreflang="${lang}" href="${origin + pagePath(page, lang)}">`).join("")}<link rel="alternate" hreflang="x-default" href="${origin + pagePath(page, "id")}">${page === "notFound" ? '<meta name="robots" content="noindex">' : ""}<meta property="og:type" content="${article ? "article" : "website"}"><meta property="og:site_name" content="Perkusi.com"><meta property="og:title" content="${text("meta." + page + ".title")}"><meta property="og:description" content="${text(socialKey)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="${instrument ? 1536 : 1200}"><meta property="og:image:height" content="${instrument ? 1024 : 630}"><meta property="og:locale" content="${locale === "id" ? "id_ID" : "en_US"}"><meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="stylesheet" href="/src/style.css">${page === "beatbox" ? '<link rel="stylesheet" href="/src/beatbox/style.css"><link rel="stylesheet" href="/src/project/style.css">' : ""}${page === "studio" ? '<link rel="stylesheet" href="/src/studio/style.css">' : ""}${page === "pads" ? '<link rel="stylesheet" href="/src/pads/style.css">' : ""}${isInstrumentPage(page) ? '<link rel="stylesheet" href="/src/instruments/style.css">' : ""}${schema}<script type="module" src="/src/main.js"></script></head><body data-page="${page}">${header}${content}${footer}</body></html>`;
 }

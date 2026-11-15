@@ -116,7 +116,7 @@ test("missing EN uses id and reports the bug; unknown keys never disappear", () 
   assert.throws(() => t("unknown"), /Unknown translation/);
 });
 test("route entries cover static localized pages and legacy privacy aliases", () => {
-  assert.equal(Object.keys(buildEntries).length, 12);
+  assert.equal(Object.keys(buildEntries).length, 46);
   assert.equal(buildEntries.pads_id, "pad-station/index.html");
   assert.equal(buildEntries.pads_en, "en/pad-station/index.html");
   assert.equal(buildEntries.home_id, "index.html");

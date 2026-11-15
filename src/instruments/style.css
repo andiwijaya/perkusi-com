@@ -1,0 +1,523 @@
+.instrument-index,
+.instrument-article {
+  padding-block: 42px 84px;
+}
+.instrument-index-intro {
+  max-width: 880px;
+  padding-block: 22px 28px;
+}
+.instrument-index h1 {
+  font: 500 clamp(38px, 5vw, 70px)/1.06 var(--display);
+  letter-spacing: -0.045em;
+  margin: 20px 0;
+}
+.instrument-dek {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.75;
+}
+.instrument-index-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  color: var(--muted);
+  margin: 26px 0 12px;
+}
+.instrument-index-numbers b {
+  color: var(--green);
+  font: 500 27px var(--display);
+  margin-right: 7px;
+}
+.instrument-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-block: 24px;
+  border-block: 1px solid var(--line);
+}
+.instrument-filters label {
+  flex: 1 1 240px;
+}
+.instrument-filters label,
+.article-pad-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.instrument-filters input,
+.instrument-filters select,
+.article-pad select {
+  width: 100%;
+  color: var(--color-text);
+  background: #1b211d;
+  border: 1px solid #59665e;
+  border-radius: 8px;
+  padding: 13px 14px;
+  font: inherit;
+  min-height: 46px;
+}
+.instrument-filters input:focus-visible,
+.instrument-filters select:focus-visible,
+.article-pad input:focus-visible,
+.article-pad select:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.instrument-result-count {
+  font-size: 13px;
+  color: var(--muted);
+  margin-block: 24px;
+}
+.instrument-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.instrument-card {
+  min-width: 0;
+  background: #1a201c;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.instrument-card a {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.instrument-card a:focus-visible {
+  outline-offset: -4px;
+  outline-width: 3px;
+}
+.instrument-card img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s;
+}
+.instrument-card a:hover img {
+  transform: scale(1.025);
+}
+.instrument-card-copy {
+  padding: 22px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.instrument-card h2 {
+  font: 500 26px/1.15 var(--display);
+  letter-spacing: -0.025em;
+  margin: 10px 0;
+}
+.instrument-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.instrument-card-cta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--green);
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: auto;
+}
+.instrument-breadcrumb {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 32px;
+}
+.instrument-breadcrumb a:hover {
+  color: var(--green);
+}
+.instrument-article-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 42px;
+}
+.instrument-article h1 {
+  font: 500 clamp(35px, 4.3vw, 61px)/1.06 var(--display);
+  letter-spacing: -0.045em;
+  margin: 18px 0;
+  overflow-wrap: anywhere;
+}
+.instrument-article-hero figure {
+  margin: 0;
+  min-width: 0;
+}
+.instrument-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+.instrument-article figcaption {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  padding-top: 9px;
+}
+.instrument-byline {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.instrument-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  color: var(--green);
+  font-weight: 600;
+  margin-top: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--green);
+}
+.instrument-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin: 40px 0;
+  padding-block: 25px;
+  border-block: 1px solid var(--line);
+}
+.instrument-facts dt {
+  color: var(--green);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.instrument-facts dd {
+  margin: 10px 0 0;
+  line-height: 1.65;
+  font-size: 14px;
+}
+.article-pad {
+  padding: clamp(22px, 3vw, 38px);
+  background: linear-gradient(125deg, #22342a, #18261e);
+  border: 1px solid #456750;
+  border-radius: 18px;
+  scroll-margin-top: 24px;
+}
+.article-pad-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+}
+.article-pad h2 {
+  font: 500 clamp(26px, 3vw, 38px)/1.15 var(--display);
+  letter-spacing: -0.035em;
+  margin: 12px 0;
+}
+.article-pad-heading p:not(.eyebrow) {
+  color: #bbc9bf;
+  line-height: 1.7;
+  max-width: 650px;
+}
+.article-pad-mark {
+  color: var(--green);
+  font-size: 70px;
+  line-height: 1.3;
+}
+.article-pad-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: end;
+  margin-top: 24px;
+}
+.article-pad-controls button {
+  min-height: 47px;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-weight: 600;
+  border: 1px solid #6a8171;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.article-pad-controls .button {
+  color: #142119;
+  background: var(--green);
+  border-color: var(--green);
+}
+.article-pad-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.article-pad-controls label {
+  min-width: 140px;
+  flex: 1;
+  max-width: 280px;
+}
+.article-pad input[type="range"] {
+  accent-color: var(--green);
+  width: 100%;
+  min-height: 46px;
+  cursor: pointer;
+}
+#article-pad-status {
+  font-size: 13px;
+  min-height: 1.6em;
+  color: #d3ded6;
+  margin: 22px 0 16px;
+}
+.article-pad[data-state="error"] #article-pad-status {
+  color: #ffd2ba;
+}
+.article-pad-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+  gap: 10px;
+}
+.article-sound-pad {
+  position: relative;
+  min-height: 110px;
+  border: 1px solid #6c8c76;
+  border-radius: 10px;
+  background: #2d4735;
+  color: #f2f8f3;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 8px 16px;
+  font: inherit;
+}
+.article-sound-pad:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.article-sound-pad:not(:disabled):hover {
+  background: #3d5b43;
+}
+.article-sound-pad.is-struck,
+.article-sound-pad:active:not(:disabled) {
+  background: var(--green);
+  color: #112117;
+  transform: translateY(2px);
+}
+.article-sound-pad kbd {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  color: inherit;
+  font: 11px var(--display);
+  opacity: 0.7;
+}
+.article-sound-pad strong {
+  font-size: 15px;
+  text-align: center;
+}
+.article-sound-pad > span {
+  color: currentColor;
+  font-size: 8px;
+  opacity: 0.5;
+}
+.article-pad-hint {
+  color: #b8c8bd;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 18px 0 0;
+}
+.instrument-story-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 740px);
+  justify-content: space-between;
+  gap: 50px;
+  padding-top: 56px;
+}
+.instrument-toc {
+  align-self: start;
+  position: sticky;
+  top: 26px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+.instrument-toc ol {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+.instrument-toc li {
+  margin: 14px 0;
+  line-height: 1.5;
+  font-size: 13px;
+  color: var(--muted);
+}
+.instrument-toc a:hover {
+  color: var(--green);
+}
+.instrument-prose {
+  min-width: 0;
+}
+.instrument-prose h2 {
+  font: 500 30px/1.2 var(--display);
+  letter-spacing: -0.025em;
+  margin: 0 0 22px;
+}
+.instrument-prose section {
+  margin-bottom: 46px;
+  scroll-margin-top: 28px;
+}
+.instrument-prose p,
+.instrument-practice li {
+  font-size: 17px;
+  line-height: 1.95;
+  color: #c7d0c9;
+  margin: 0 0 20px;
+}
+.instrument-practice {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.instrument-practice ol {
+  padding-left: 24px;
+}
+.instrument-practice h2:not(:first-child) {
+  margin-top: 32px;
+}
+.instrument-sources a,
+.instrument-audio-credits a {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.instrument-sources li,
+.instrument-audio-credits li {
+  line-height: 1.8;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.instrument-audio-credits {
+  border-block: 1px solid var(--line);
+  padding: 20px 0;
+}
+.instrument-audio-credits summary {
+  cursor: pointer;
+  color: var(--green);
+}
+.instrument-audio-credits p {
+  font-size: 13px;
+  margin-top: 16px;
+}
+.instrument-related {
+  margin-top: 74px;
+  padding-top: 35px;
+  border-top: 1px solid var(--line);
+}
+.instrument-related > h2 {
+  font: 500 35px/1.2 var(--display);
+  margin: 0 0 30px;
+}
+.instrument-bottom-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  margin-top: 32px;
+}
+.instrument-bottom-links > a:last-child {
+  color: var(--green);
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 1100px) {
+  .instrument-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .instrument-article-hero {
+    gap: 26px;
+  }
+  .instrument-story-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 30px;
+  }
+}
+@media (max-width: 700px) {
+  .instrument-index,
+  .instrument-article {
+    padding-block: 26px 56px;
+  }
+  .instrument-index-intro {
+    padding-top: 8px;
+  }
+  .instrument-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .instrument-article-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .instrument-article h1 {
+    font-size: clamp(34px, 9vw, 48px);
+  }
+  .instrument-dek {
+    font-size: 16px;
+  }
+  .instrument-facts {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin: 28px 0;
+  }
+  .article-pad-mark {
+    display: none;
+  }
+  .article-pad-controls label {
+    max-width: none;
+  }
+  .article-pad-controls button {
+    flex: 1 1 130px;
+  }
+  .article-pad-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .article-sound-pad {
+    min-height: 104px;
+  }
+  .instrument-story-layout {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    padding-top: 36px;
+  }
+  .instrument-toc {
+    position: static;
+  }
+  .instrument-prose h2 {
+    font-size: 27px;
+  }
+  .instrument-prose p,
+  .instrument-practice li {
+    font-size: 16px;
+    line-height: 1.85;
+  }
+  .instrument-practice {
+    padding: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .instrument-card img {
+    transition: none;
+  }
+}

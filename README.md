@@ -1,6 +1,6 @@
 # Perkusi.com
 
-Browser-based Beatbox Playground and ordinary Rhythm Studio. Indonesian is the default; English has UI and metadata parity. Audio stays in the browser; no account or server database is required. Failed V5/V6 playback experiments are retired. Former Gamelan and Loop URLs show static notices; same-origin recovery routes preserve access to original saved data without restoring the failed playback engine.
+Browser-based Beatbox Playground, Rhythm Studio, Pad Station and an interactive instrument encyclopedia. Indonesian is the default; English has UI and metadata parity. The encyclopedia at `/instrumen/` and `/en/instrumen/` contains 16 researched topics, original ImageGen illustrations and instrument-only pads using the existing 110 curated strikes/pitches. Audio stays in the browser; no account or server database is required. Failed V5/V6 playback experiments are retired. Former Gamelan and Loop URLs show static notices; same-origin recovery routes preserve access to original saved data without restoring the failed playback engine.
 
 Studio Preview cannot be activated by a candidate flag. Downloaded and optimized instrument media, licenses and provenance remain in `internal/`; they are not automatically deployed. Recovery preserves original data and is not a promise that retired projects can play in the ordinary editor. Develop one feature at a time, build and verify its end-to-end journey before starting another.
 
@@ -22,6 +22,14 @@ npm run format
 `npm test` runs the Node unit suite. After `npm run build`, `npm run test:e2e` starts and closes a local Vite preview on port 4174 and checks routes, language precedence, session/DOM continuity, metadata, genuine 404s, keyboard navigation, and eight viewport widths in both languages. Browser QA requires Playwright and installed Chrome. On this Windows Codex host the runner uses the bundled package from `NODE_REPL_NODE_MODULE_DIRS`; elsewhere install Playwright locally. Set `PERKUSI_BROWSER_CHANNEL=msedge` to use installed Edge and `PERKUSI_QA_DIR` to choose a separate evidence directory. These tests do not use GitHub Actions or deploy.
 
 Static entry shells are transformed at build/dev time by `src/app/document.js` and the Vite plugin. Copy, metadata, and ARIA labels share `src/i18n/messages.js`. Locale selection is explicit URL (`/en/` or `?lang=id|en`), then a saved preference, then `id`. Same-page language links use History API and update text/metadata without rebuilding the DOM or in-memory workspace session. Back/forward restores that page's selected locale. Storage failure does not block switching. `appType: mpa` and local 404 middleware prevent unknown paths from becoming homepage responses. Cloudflare uses the built static entries and existing `404.html`; live verification remains a later release gate.
+
+## Instrument articles
+
+Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct editorial references. `catalog.js` defines the playable inventory; the article adapter dynamically imports only the selected bank and reuses the existing sample validation, load queue, audio ownership, envelopes and output protection. Nothing plays or fetches audio before explicit preparation. A prepared article preserves its owner during a same-page language change and releases it on navigation.
+
+`public/images/instruments/` contains the 16 WebP covers. `src/instruments/image-provenance.json` records the exact ImageGen prompts, references, visual reviews and hashes. AI illustrations are labelled; Bilah is identified as an original synthetic voice. Corresponding-source and license links remain accessible in audio credits.
+
+`npm run test:instruments` checks all 32 localized articles, 220 sound-output assertions, loading failures/retry, scale replacement, navigation disposal, both languages at eight viewport widths and static reading without JavaScript. It uses the same Playwright runtime setup as `test:e2e`. See `docs/features/INSTRUMENT-ARTICLES-CHECKLIST.md` and `docs/features/INSTRUMENT-ARTICLES-REPORT.md` for delivery evidence and limits.
 
 ## Retired engineering tooling
 

@@ -19,7 +19,7 @@ test("home advertises ordinary Studio, Beatbox and Pad Station in every build mo
       v5UX: true,
       finalStudio: true,
     });
-    assert.equal((html.match(/class="tool-card"/g) ?? []).length, 3);
+    assert.equal((html.match(/class="tool-card"/g) ?? []).length, 4);
     assert(html.includes('data-i18n="home.card1.title"'));
     assert(html.includes('data-i18n="home.card3.title"'));
     assert(!html.includes('data-i18n="home.card2.title"'));
@@ -40,7 +40,7 @@ test("home advertises ordinary Studio, Beatbox and Pad Station in every build mo
       ).transformIndexHtml.handler;
       const path = locale === "en" ? "/en/index.html" : "/index.html";
       const built = transform(readFileSync("." + path, "utf8"), { path });
-      assert.equal((built.match(/class="tool-card"/g) ?? []).length, 3);
+      assert.equal((built.match(/class="tool-card"/g) ?? []).length, 4);
       assert(
         !/href="[^"]*(?:gamelan|loop-station|candidate=canonical)/.test(built),
       );
@@ -91,7 +91,7 @@ test("default build selects retirement with the approved Pad Station while rende
     v5UX: true,
   });
   assert.doesNotMatch(html, /Gamelan Preview|data-loop-link/);
-  assert.equal((html.match(/class="tool-card"/g) ?? []).length, 3);
+  assert.equal((html.match(/class="tool-card"/g) ?? []).length, 4);
 });
 
 test("approved mic permission is same-origin only on exact bilingual Loop Station and Studio document aliases", () => {

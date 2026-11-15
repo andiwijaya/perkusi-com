@@ -1,5 +1,23 @@
+import { instruments } from "../instruments/catalog.js";
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  "common.articles": ["Artikel Instrumen", "Instrument Articles"],
+  "home.articles.meta": ["04 / JELAJAHI BUNYI", "04 / EXPLORE SOUND"],
+  "home.articles.title": ["Artikel Instrumen", "Instrument Articles"],
+  "home.articles.copy": [
+    "Kenali cerita, asal-usul, dan karakter suara berbagai instrumen. Baca artikelnya, lalu coba mainkan padnya.",
+    "Discover the stories, origins and distinctive sounds of musical instruments. Read an article, then try its sound pads.",
+  ],
+  "home.articles.action": ["Jelajahi Artikel", "Explore Articles"],
+  "home.articles.badge": ["Baca & mainkan", "Read & play"],
+  "meta.instruments.title": [
+    "Artikel Instrumen: Cerita, Asal-usul & Pad Interaktif | Perkusi.com",
+    "Instrument Articles: Stories, Origins & Interactive Pads | Perkusi.com",
+  ],
+  "meta.instruments.description": [
+    "Jelajahi 16 instrumen melalui cerita, ilustrasi dan pad interaktif. Kenali gamelan, drum, gitar, bass, dan suara Bilah Perkusi.com.",
+    "Explore 16 instruments through stories, illustrations and interactive pads. Discover gamelan, drums, guitar, bass and Perkusi.com's Bilah voice.",
+  ],
   "home.chooseTool": ["Pilih alat musik", "Choose a music tool"],
   "home.guideTitle": ["Sebelum bermain", "Before you play"],
   "home.guide.audio.title": [
@@ -52,8 +70,8 @@ const pairs = {
     "Perkusi.com - Music Tools in Your Browser",
   ],
   "meta.home.description": [
-    "Mainkan Pad Station, Beatbox Playground dan Rhythm Studio langsung di browser. Tanpa akun atau instalasi.",
-    "Play Pad Station, Beatbox Playground and Rhythm Studio right in your browser. No account or installation.",
+    "Mainkan Pad Station, Beatbox dan Rhythm Studio. Jelajahi artikel instrumen, kenali ceritanya dan coba suaranya langsung di browser.",
+    "Play Pad Station, Beatbox and Rhythm Studio. Explore instrument articles, discover their stories and try their sounds in your browser.",
   ],
   "meta.home.social": [
     "Tiga alat musik di browser: Rhythm Studio, Beatbox Playground dan Pad Station. Mulai bermain tanpa instalasi.",
@@ -218,6 +236,24 @@ const pairs = {
   "notFound.heading": ["Ketukan yang tersesat.", "A beat out of place."],
   "notFound.copy": ["Halaman ini tidak ditemukan.", "This page doesn't exist."],
 };
+for (const instrument of instruments) {
+  pairs["meta." + instrument.page + ".title"] = [
+    instrument.id + ": Cerita, Asal-usul & Pad Interaktif | Perkusi.com",
+    instrument.en + ": Story, Origins & Interactive Pads | Perkusi.com",
+  ];
+  pairs["meta." + instrument.page + ".description"] = [
+    "Kenali " +
+      instrument.id +
+      ": cerita, tradisi, bentuk dan cara memainkan. Coba " +
+      instrument.count +
+      " pad suara langsung di Perkusi.com.",
+    "Discover " +
+      instrument.en +
+      ": its story, traditions, construction and playing techniques. Try " +
+      instrument.count +
+      " sound pads on Perkusi.com.",
+  ];
+}
 export const messages = Object.freeze({
   id: Object.freeze(
     Object.fromEntries(
