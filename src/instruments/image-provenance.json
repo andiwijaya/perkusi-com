@@ -1,0 +1,266 @@
+{
+  "note": "Original builtin ImageGen illustrations. References informed factual anatomy; no reference photographs were uploaded or copied. All images are AI illustrations, not documentary photographs. WebP files are format/compression derivatives of the generated PNGs with no semantic image edits.",
+  "images": [
+    {
+      "slug": "gong-ageng",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A large Central Javanese gong ageng: one broad circular dark bronze hanging gong with a prominent rounded central boss and deep turned rim, suspended vertically by two sturdy cords from a carved dark teak wooden frame. Show its full circular face, substantial depth at oblique three-quarter view, and one soft padded round gong beater resting nearby. It must be recognizable as one large hanging bossed gong, not a flat orchestral tam-tam or cymbal.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/collections/show/1",
+        "https://asia.si.edu/explore-art-culture/audio/javanese-gamelan-music/"
+      ],
+      "anatomyReview": "Single large vertically suspended bossed gong with deep rim, carved frame and padded beater. Accepted as an AI illustration, not a documented artifact.",
+      "path": "/images/instruments/gong-ageng.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 142268,
+      "sha256": "2527b05739771d699a173da6c28d391eab07be447034fcef1ba8a17160703292",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/gong-ageng.png"
+    },
+    {
+      "slug": "gitar-nylon",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A traditional classical acoustic nylon-string guitar: warm natural cedar soundboard, dark wooden sides, round soundhole with subtle generic rosette, six strings, wide fingerboard and slotted headstock with exactly three tuners each side. Entire guitar including headstock and body visible in a gentle diagonal three-quarter view. No branding. No steel-string pickguard, no electric pickups. The instrument lies securely on a low dark display support.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://www.metmuseum.org/essays/the-spanish-guitar"
+      ],
+      "anatomyReview": "Six visible strings, slotted classical headstock with three tuners per side, acoustic body and display support. Accepted.",
+      "path": "/images/instruments/gitar-nylon.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 140160,
+      "sha256": "4eb462d91adc27f7463737d708225fb4f35c061e1af4e974daa0822fdd07def6",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/gitar-nylon.png"
+    },
+    {
+      "slug": "drum",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A coherent five-piece modern acoustic drum kit displayed in a clean FRONT three-quarter view: one large bass/kick drum with a plain front resonant drumhead facing camera, two rack toms mounted above it, one floor tom on three legs, one separate shallow snare drum on a tripod stand, a hi-hat pair on its own stand, one crash and one ride cymbal on separate stands. Drummer's stool is behind the kit and partly hidden. IMPORTANT: The bass drum pedal and beater are behind the bass drum on the drummer's side and MUST NOT BE VISIBLE from this front camera angle. Do not put any pedal or beater in front of the plain front bass drum head. Hide hi-hat pedal behind hardware as well. Dark wooden shells, plausible chrome hardware, whole kit in frame, no extra drums.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://www.yamaha.com/en/musical_instrument_guide/drums/"
+      ],
+      "anatomyReview": "Replacement accepted. Five drum shells, hi-hat and two separate cymbals; front bass resonant head is plain and no impossible front-mounted bass beater/pedal is shown. No branding.",
+      "path": "/images/instruments/drum.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 132736,
+      "sha256": "70d1fe7b4dc1b3130c01c1c9b258463d6636ab88a48df3874bdd563ec1fbc3ea",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/drum.png"
+    },
+    {
+      "slug": "bass-elektrik",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A generic four-string electric bass guitar with dark walnut double-cutaway solid wood body, long fretted neck, four clearly separated strings, simple black pickups, a sturdy four-saddle bridge, and exactly four tuning pegs on the headstock. Entire instrument visible, placed diagonally on a discreet display stand. No brand-specific headstock or logo.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://freepats.zenvoid.org/ElectricGuitar/clean-electric-bass.html"
+      ],
+      "anatomyReview": "Four strings and four tuners, solid body, fretted neck and pickups. Accepted.",
+      "path": "/images/instruments/bass-elektrik.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 92370,
+      "sha256": "805715f71cc252db80323f8b9a32c1a4780db4994539a7febb893efc961bedc2",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/bass-elektrik.png"
+    },
+    {
+      "slug": "kendhang-ciblon",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese kendhang ciblon, a medium double-headed hand drum: polished elongated barrel-shaped wooden shell tapering asymmetrically toward two different diameter hide drumheads, natural rawhide tension lacing running along the shell from end to end. It rests horizontally at a slight diagonal on a low simple wooden cradle so both its larger and smaller ends and authentic lacing are apparent. No sticks (played by hands), no metal conga hardware, no tabla decoration.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/9"
+      ],
+      "anatomyReview": "Asymmetrical double-headed barrel, hide heads and lacing, horizontal cradle, no sticks. Accepted.",
+      "path": "/images/instruments/kendhang-ciblon.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 194810,
+      "sha256": "2d4d8ce5adc4e2cceac6a96cc4c4d741c5fb35f6e6f618e283722c05a7f8cdc6",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/kendhang-ciblon.png"
+    },
+    {
+      "slug": "bilah",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A deliberately conceptual contemporary synthetic-voice instrument for Perkusi.com, not a historical artifact: exactly FIVE simple brushed bronze rectangular tone bars of progressively decreasing length, laid in one row on black cord supports above a minimal dark wooden resonance box, and one plain soft-headed mallet beside it. Clean simple modern construction with no traditional carvings. Visual metaphor for a five-note digital sound, not a claim of cultural authenticity.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "Perkusi.com internal/v3-sounds/manifest.json (five-note synthetic voice)"
+      ],
+      "anatomyReview": "Exactly five bronze bars on a simple modern box. Accepted as a concept illustration of a synthetic voice, not a historical artifact.",
+      "path": "/images/instruments/bilah.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 103092,
+      "sha256": "c7dc12f84238ee4636ad9b1acfe614ff5b097edf6978301712ae4ea26c8e794b",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/bilah.png"
+    },
+    {
+      "slug": "kethuk",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One small Central Javanese kethuk kettle gong: a squat round bronze pot with sloping shoulders, deep body and one prominent central knob pointing upward. Its open underside hangs clear of the floor, supported on crossed cords inside a compact dark wooden square cradle, simple carved corners. Include one short wooden beater with a tightly cloth-wrapped cylindrical end lying beside the cradle. Clear three-quarter overhead view showing its single knob and curved bronze shoulder. Not a bowl, not a flat cymbal.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/collections/show/1",
+        "https://asia.si.edu/explore-art-culture/audio/javanese-gamelan-music/"
+      ],
+      "anatomyReview": "Single squat boss-up bronze kettle on cord cradle with wrapped beater. Accepted.",
+      "path": "/images/instruments/kethuk.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 103508,
+      "sha256": "2d5e52c4bbeb13a98e9370697fb8955cbc4b02b18864f09e8fe83a6076149719",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/kethuk.png"
+    },
+    {
+      "slug": "kempyang",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A Central Javanese kempyang pair: two small bronze kettle gongs with narrow gently sloping shoulders and relatively high rounded central bosses, each resting horizontally with boss upward on crossed cord supports inside one low carved dark teak rectangular rack. Open underside not contacting floor. A cloth-wrapped wooden beater rests nearby. Three-quarter elevated view, clearly distinguish the two individual bossed kettle gongs, not bowls or cymbals.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/collections/show/1",
+        "https://asia.si.edu/explore-art-culture/audio/javanese-gamelan-music/"
+      ],
+      "anatomyReview": "Pair of small high-boss kettle gongs in one cord-supported frame with wrapped beater. Accepted as a paired illustrative set.",
+      "path": "/images/instruments/kempyang.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 146330,
+      "sha256": "c373a8f167740e509c4deda3eed0004f30ab9bb96e5145298a46d738aa33c0b9",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/kempyang.png"
+    },
+    {
+      "slug": "kenong",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese kenong: a large deep-bodied bronze kettle gong with broad gently rounded shoulder and prominent central raised boss, sitting horizontally boss-up on crossed cord supports inside an open square carved teak frame. This kenong has an impressively tall deep pot-shaped body, larger and taller than a small kethuk or bonang pot. A short padded cylindrical beater is beside the frame. Three-quarter elevated view clearly showing depth and support cords.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/collections/show/1",
+        "https://asia.si.edu/explore-art-culture/audio/javanese-gamelan-music/"
+      ],
+      "anatomyReview": "Single deep-bodied horizontal bossed kettle gong on cord frame, wrapped beater. Accepted.",
+      "path": "/images/instruments/kenong.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 138224,
+      "sha256": "1f86b7befb15a3116569ff3b9e288a4cef83eeb354b75827d6df650044557d03",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/kenong.png"
+    },
+    {
+      "slug": "bonang-panerus",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A Central Javanese bonang panerus set: fourteen small bronze kettle gongs, organized as exactly two parallel rows of seven on a low rectangular carved dark teak rack. Every kettle gong has a rounded central boss pointing upward and a rim, sitting level on a grid of supporting cords, with subtle graduated sizes. Two thin wooden beaters with cloth-wrapped cylindrical ends lie neatly in front. Panerus pots are small and relatively compact, giving a high-register visual character. Elevated three-quarter view showing complete coherent two-row layout.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/3"
+      ],
+      "anatomyReview": "Two rows of seven small bossed kettle gongs, cord support and two padded beaters. Accepted; illustrative full physical set differs from curated web audio subset.",
+      "path": "/images/instruments/bonang-panerus.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 159732,
+      "sha256": "fff3bb982378e465f57792a4878525afa41d57e29f831dc9efd6936881d4781f",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/bonang-panerus.png"
+    },
+    {
+      "slug": "bonang-barung",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. A Central Javanese bonang barung set: fourteen medium bronze kettle gongs, organized as exactly two parallel rows of seven on a low rectangular carved dark teak rack. Each pot has one raised rounded central boss pointing upward and a pronounced rim, supported on cords, with subtle graduated diameters. These are noticeably substantial medium pots, larger than bonang panerus. Two thin wooden beaters with cloth-wrapped cylindrical ends lie neatly beside the rack. Elevated three-quarter view showing entire coherent two-row layout.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/3"
+      ],
+      "anatomyReview": "Two rows of seven medium bossed kettle gongs, cord support and paired padded beaters. Accepted; full-set illustration does not imply all depicted notes have samples.",
+      "path": "/images/instruments/bonang-barung.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 139818,
+      "sha256": "56649e6522be262ff0ba66dbff917f328b761a082bc9c69c0453b71e23e540cb",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/bonang-barung.png"
+    },
+    {
+      "slug": "peking",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese peking (saron panerus), a compact high-register metallophone: seven short thick bronze rectangular keys in a single row, slightly arched and graduated in length, placed across two thin padded supports over a hollow low ornately carved dark teak trough. The keys are bronze metal, not wooden. A small hard horn-headed wooden-handled beater lies beside it. The overall instrument is compact and keys comparatively short and thick. Elevated three-quarter view shows all seven keys and the low open resonant trough.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/7"
+      ],
+      "anatomyReview": "Seven short thick metal keys on a compact hollow wooden trough with a hard-headed mallet. Accepted as an illustrative object; dimensions are not a measured scale drawing.",
+      "path": "/images/instruments/peking.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 152192,
+      "sha256": "e0dee330d3d581d4c0a1207cfa8c81cc917a15350378bebb12f3d9820254165c",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/peking.png"
+    },
+    {
+      "slug": "saron-barung",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese saron barung metallophone: seven medium-length thick bronze rectangular keys in one row, subtly graduated lengths, the keys slightly arched and resting across two padded supports above a hollow carved teak trough-shaped resonator. No vertical tubes. One sturdy wooden mallet with a thick wedge-shaped wooden head lies beside it. Entire medium-sized instrument visible from elevated three-quarter view, full row of seven bronze keys clear.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/7"
+      ],
+      "anatomyReview": "Seven medium metal keys over a hollow wooden trough, wooden mallet, no tube resonators. Accepted.",
+      "path": "/images/instruments/saron-barung.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 203064,
+      "sha256": "f0ca9f24fd0f3c500b29fa3e3f573dce4daeb33b5f2aa9452073c0b201c5ac5e",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/saron-barung.png"
+    },
+    {
+      "slug": "demung",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese demung, a large low-register saron-family metallophone: seven broad long heavy bronze keys in one row, slightly arched with subtle graduated length, supported across a substantial low hollow dark carved teak trough resonator. Broad keys and a wide deep wooden frame convey a much larger lower-register instrument than a peking. No tubes. Include one large solid wooden mallet with a thick wedge-shaped head beside it. Elevated three-quarter view showing full seven-key row.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/7"
+      ],
+      "anatomyReview": "Seven broad heavy bronze keys on a large wooden trough, with a substantial wooden mallet. Accepted; image conveys instrument type rather than measured relative scale.",
+      "path": "/images/instruments/demung.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 144632,
+      "sha256": "ced2abea172124af44624acc9eb5aef2f0c80c8a05996445409cff042b687abf",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/demung.png"
+    },
+    {
+      "slug": "kempul",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese kempul, a medium-sized round bronze hanging bossed gong, suspended vertically by a simple cord from a modest dark teak wooden frame. Its visible face is round with a prominent raised central knob and deep turned rim, bronze with natural dark patina, approximately half a person's height but no person shown. Include one modest padded round beater on the floor near the frame. Three-quarter front view, entire gong and frame visible. Distinctly a medium hanging gong, not horizontal kettle gong or flat cymbal.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/collections/show/1",
+        "https://asia.si.edu/explore-art-culture/audio/javanese-gamelan-music/"
+      ],
+      "anatomyReview": "Single medium vertically suspended bossed gong with rim, modest frame and padded beater. Accepted.",
+      "path": "/images/instruments/kempul.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 85164,
+      "sha256": "7b53ef75cf94ff0ae5e421731a4d6eab70dafd52d104222f08d64c5a4fb63a27",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/kempul.png"
+    },
+    {
+      "slug": "slenthem",
+      "prompt": "Create a NEW original realistic editorial illustration for an educational instrument encyclopedia, landscape 3:2 composition. A single instrument or its specified set, fully visible with generous margins on a matte dark forest-green studio backdrop and floor. Warm soft directional light, believable bronze and wood materials, tactile detail, restrained museum-catalog elegance, clean uncluttered framing. Accurate educational anatomy. No people, no text, no labels, no logos, no watermark, no invented lettering. This is an illustration, not a copy of any existing photo. One Central Javanese slenthem metallophone: exactly seven THIN flat bronze rectangular tone bars, in a single gently graduated row, each SUSPENDED by cords over its own individual upright bamboo tube resonator. Seven vertical hollow bamboo tubes of graduated lengths are clearly visible directly beneath the seven metal keys in an open dark teak wooden stand. The tubes are a crucial unmistakable feature; do not replace them with a wooden trough or closed box. Include one round soft padded disc-headed beater with a slim wooden handle resting beside the instrument. Full instrument shown at a slightly elevated three-quarter view.",
+      "provider": "builtin image_gen",
+      "generatedDate": "2026-11-15",
+      "references": [
+        "https://wesomeka.wesleyan.edu/vim2/items/show/7"
+      ],
+      "anatomyReview": "Seven thin cord-suspended keys above seven visible graduated vertical bamboo resonator tubes, with a soft disc-headed beater. Accepted.",
+      "path": "/images/instruments/slenthem.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 155508,
+      "sha256": "2711bef162c274bbb6491ae2517dba30b9ee981d66ccdc91baad888518b03086",
+      "originalArchive": "qa-artifacts/instrument-articles/images-original/slenthem.png"
+    }
+  ]
+}

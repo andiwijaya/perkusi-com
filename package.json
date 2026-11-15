@@ -12,6 +12,7 @@
     "check": "npm run lint && npm run build",
     "test": "node --test tests/*.test.js",
     "test:e2e": "node scripts/test-browser.mjs",
+    "test:instruments": "node scripts/test-instrument-articles.mjs",
     "fixtures:audio": "python scripts/make-audio-fixtures.py",
     "format": "prettier --write index.html 404.html privacy.html en beatbox studio src tests scripts/test-browser.mjs public/privacy.css vite.config.js eslint.config.js package.json README.md"
   },

@@ -28,6 +28,7 @@ export default [
   {
     files: [
       "scripts/test-browser.mjs",
+      "scripts/test-instrument-articles.mjs",
       "scripts/test-beatbox.mjs",
       "scripts/test-beatbox-repair.mjs",
       "scripts/test-v1-release.mjs",

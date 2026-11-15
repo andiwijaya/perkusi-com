@@ -1,3 +1,5 @@
+import { instruments } from "../instruments/catalog.js";
+
 export const pages = [
   "home",
   "beatbox",
@@ -5,6 +7,8 @@ export const pages = [
   "pads",
   "privacy",
   "notFound",
+  "instruments",
+  ...instruments.map((i) => i.page),
 ];
 const basePaths = {
   home: "/",
@@ -13,6 +17,10 @@ const basePaths = {
   pads: "/pad-station/",
   privacy: "/privacy.html",
   notFound: "/404.html",
+  instruments: "/instrumen/",
+  ...Object.fromEntries(
+    instruments.map((i) => [i.page, "/instrumen/" + i.slug + "/"]),
+  ),
 };
 export function pagePath(page, locale = "id") {
   const base = basePaths[page];
@@ -37,6 +45,13 @@ export function pageFromPath(pathname) {
   if (base === "/beatbox" || base === "/beatbox/") return "beatbox";
   if (base === "/studio" || base === "/studio/") return "studio";
   if (base === "/pad-station" || base === "/pad-station/") return "pads";
+  const instrumentPath = base.endsWith("/") ? base : base + "/";
+  const instrumentPage = Object.entries(basePaths).find(
+    ([key, path]) =>
+      (key === "instruments" || key.startsWith("instrument-")) &&
+      path === instrumentPath,
+  );
+  if (instrumentPage) return instrumentPage[0];
   if (base === "/privacy" || base === "/privacy.html") return "privacy";
   return "notFound";
 }

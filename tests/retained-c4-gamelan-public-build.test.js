@@ -42,7 +42,7 @@ test("Homepage compatibility leaves the retained tools plus Pad Station", () => 
       decorated = publicCandidateHTML(original, { page: "home", locale });
     assert.ok(!original.includes("data-gamelan-link"));
     assert.equal(decorated, original);
-    assert.equal((decorated.match(/class="tool-card"/g) ?? []).length, 3);
+    assert.equal((decorated.match(/class="tool-card"/g) ?? []).length, 4);
     assert.ok(!decorated.includes("data-gamelan-link"));
   }
 });
