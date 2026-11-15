@@ -1,6 +1,8 @@
 import { instruments } from "../instruments/catalog.js";
+import { tutorialPairs } from "../tutorials/messages.js";
 // All user-facing foundation copy, including metadata and accessibility labels.
 const pairs = {
+  ...tutorialPairs,
   "common.articles": ["Artikel Instrumen", "Instrument Articles"],
   "home.articles.meta": ["04 / JELAJAHI BUNYI", "04 / EXPLORE SOUND"],
   "home.articles.title": ["Artikel Instrumen", "Instrument Articles"],

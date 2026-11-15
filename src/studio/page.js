@@ -4,6 +4,7 @@ import { navigationHref } from "../app/routes.js";
 import { legacyRecoveryHref } from "../app/legacy-recovery-link.js";
 import { renderPadGroups } from "./live-pads.js";
 import { renderStudioPreload } from "./preload-page.js";
+import { renderTutorial } from "../tutorials/page.js";
 const esc = (value) =>
   String(value).replace(
     /[&<>"']/g,
@@ -32,7 +33,7 @@ export function renderStudio(locale) {
   const heading = (key, tag = "h2") => copy(key, tag);
   const intro = `<section class="st-intro"><div>${copy("eyebrow", "p", 'class="eyebrow"')}${heading("title", "h1")}${copy("intro", "p")}</div><div class="st-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><b>16 / 08</b></div></section>
     ${renderStudioPreload(locale)}<div id="st-desktop" class="st-desktop-note">${copy("desktop", "p")}${button("dismiss", "dismiss")}</div>
-    <ol class="st-guide" aria-label="${t("quick")}">${[1, 2, 3].map((n) => `<li><b>${n}</b>${copy("step" + n)}</li>`).join("")}</ol>`;
+    <ol class="st-guide" aria-label="${t("quick")}">${[1, 2, 3].map((n) => `<li><b>${n}</b>${copy("step" + n)}</li>`).join("")}</ol>${renderTutorial("studio", locale)}`;
   const transport = `<section class="st-transport" aria-label="${t("tempo")}"><div class="st-buttons">${button("play", "play", 'class="st-primary"')}${button("pause", "pause")}${button("stop", "stop")}</div>
     <label>${copy("tempo")}<input id="st-bpm" type="number" min="60" max="180" step="1" value="110"> BPM</label>${range("swing", "swing", 0, 0.5, 0.01, 0)}${range("master", "master", 0, 0.75, 0.01, 0.65)}
     <p id="st-status" role="status" aria-live="polite">${t("idle")}</p><output id="st-position" aria-live="off">1 : 1</output></section>`;

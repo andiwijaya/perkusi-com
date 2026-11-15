@@ -1,6 +1,7 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/dm-sans";
 @import "./styles/tokens.css";
+@import "./tutorials/style.css";
 
 :root {
   font-family: var(--font-body);
