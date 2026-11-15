@@ -31,6 +31,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:instruments` checks all 32 localized articles, 220 sound-output assertions, loading failures/retry, scale replacement, navigation disposal, both languages at eight viewport widths and static reading without JavaScript. It uses the same Playwright runtime setup as `test:e2e`. See `docs/features/INSTRUMENT-ARTICLES-CHECKLIST.md` and `docs/features/INSTRUMENT-ARTICLES-REPORT.md` for delivery evidence and limits.
 
+`npm run test:tutorials` checks the beginner guides on Pad Station, Beatbox and Rhythm Studio in both languages, keyboard and static reading, eight viewport widths, instrument controls, and actual WAV downloads from the first-beat examples. Run after a production build, using the same Playwright setup as `test:e2e`. For release QA, set `PERKUSI_TUTORIAL_BASE_URL=https://perkusi.com` and a separate `PERKUSI_TUTORIAL_QA_DIR`; the isolated test browser suppresses analytics. See `docs/features/BEGINNER-TUTORIALS-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.
