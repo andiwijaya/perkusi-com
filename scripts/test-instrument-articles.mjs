@@ -16,14 +16,19 @@ try {
     join(process.env.NODE_REPL_NODE_MODULE_DIRS, "playwright"),
   );
 }
-const output = "qa-artifacts/instrument-articles";
+const output =
+  process.env.PERKUSI_ARTICLE_QA_DIR || "qa-artifacts/instrument-articles";
 await mkdir(output, { recursive: true });
-const server = await preview({
-  preview: { host: "127.0.0.1", port: 4175, strictPort: true },
-});
-const base = "http://127.0.0.1:4175";
+const remoteBase = process.env.PERKUSI_ARTICLE_BASE_URL;
+const server = remoteBase
+  ? null
+  : await preview({
+      preview: { host: "127.0.0.1", port: 4175, strictPort: true },
+    });
+const base = remoteBase || "http://127.0.0.1:4175";
 const evidence = {
   date: new Date().toISOString(),
+  baseUrl: base,
   checks: [],
   instruments: [],
   errors: [],
@@ -44,6 +49,13 @@ try {
   });
   evidence.browser = await browser.version();
   const context = await browser.newContext({ reducedMotion: "reduce" });
+  if (remoteBase) {
+    // Keep release QA visits out of the production analytics property.
+    await context.route(
+      /googletagmanager\.com|google-analytics\.com/,
+      (route) => route.fulfill({ status: 200, body: "" }),
+    );
+  }
   await context.addInitScript(() => {
     const state = (window.__articleAudio = {
       starts: 0,
@@ -402,5 +414,5 @@ try {
     JSON.stringify(evidence, null, 2),
   );
   await browser?.close();
-  await server.close();
+  await server?.close();
 }

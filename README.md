@@ -76,3 +76,5 @@ Foundation QA on October 5, 2026: clean `npm ci`, lint, and production build pas
 ## V1 release candidate
 
 The homepage links directly to the playable bilingual Beatbox. The production-only GA tag sends six narrowly scoped milestones without role IDs, variation choices, patterns or files. See `docs/v1-release.md` for acceptance qualifications, existing Git integration deployment and rollback. `public/THIRD-PARTY-NOTICES.txt` retains font and Vite notices. No Actions workflow is present or needed for the existing Pages Git integration.
+
+For explicitly authorized production article QA, set `PERKUSI_ARTICLE_BASE_URL=https://perkusi.com` and a separate `PERKUSI_ARTICLE_QA_DIR` before `npm run test:instruments`. Remote runs suppress Google Analytics only inside the isolated test browser and do not start a local preview server.

@@ -16,7 +16,7 @@ Started: 15 November 2026 (Asia/Jakarta). Scope: 16 instrument topics in Indones
 - [x] Verify responsive layouts, keyboard accessibility, images, metadata, sitemap and no-JavaScript reading.
 - [x] Run lint, unit tests, production build and browser regression checks; resolve failures.
 - [x] Record final evidence and remaining verification limits.
-- [ ] Publish through the existing GitHub main → Cloudflare Pages integration and verify the production commit, article routes, images and pads.
+- [x] Publish through the existing GitHub main → Cloudflare Pages integration and verify the production commit, article routes, images and pads.
 
 ## Per-topic status
 
@@ -45,7 +45,7 @@ Implementation status: all 32 localized articles and both index pages render at 
 
 During first browser QA, independent bass notes were incorrectly subjected to simultaneous-loop headroom admission. The article adapter now registers its playable bank as a separate instrument bank, matching the existing composition architecture. Shared memory admission, PCM inspection, envelopes and output ceiling remain active. Four focused regression tests cover note admission, complete long tails, Stop during pending resume, and substantive localized static articles.
 
-Final evidence: all 659 unit tests pass (655 existing plus four new). Article browser QA passes 38 grouped checks, 32 localized article journeys, 220 measured sound-output assertions, 48 responsive views and 32 no-JavaScript article views. Ordinary browser regression passes 14 checks and 64 viewport views. Touch emulation passes for all 16 instruments; all 16 lazy images decode after scrolling. Tests ran outside the Windows sandbox because it prevented junction creation and localhost connections. The local production build succeeded after the sandbox had refused the managed dist rename. See `INSTRUMENT-ARTICLES-REPORT.md` for evidence paths and verification limits. Local implementation is complete; production publication was subsequently authorized and is being verified.
+Final evidence: all 659 unit tests pass (655 existing plus four new). Article browser QA passes 38 grouped checks, 32 localized article journeys, 220 measured sound-output assertions, 48 responsive views and 32 no-JavaScript article views. Ordinary browser regression passes 14 checks and 64 viewport views. Touch emulation passes for all 16 instruments; all 16 lazy images decode after scrolling. Tests ran outside the Windows sandbox because it prevented junction creation and localhost connections. The local production build succeeded after the sandbox had refused the managed dist rename. See `INSTRUMENT-ARTICLES-REPORT.md` for evidence paths and verification limits. Production release `6628c92bbebee9343e0978c5ded0a0bbe9f29641` is live and the full 38-check article suite also passed against perkusi.com, including 220 sound-output assertions and all 16 image hashes. Closing-commit verification is recorded in the live completion evidence.
 
 - Bilah is Perkusi.com's synthetic voice; never describe it as a documented traditional artifact.
 - Separate cultural origins from recording provenance and from later geographic spread.
