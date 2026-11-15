@@ -4,7 +4,7 @@ Date: 15 November 2026 (Asia/Jakarta).
 
 ## Delivered scope
 
-The local implementation includes 16 instrument topics in Indonesian and English, two localized index pages, 16 original ImageGen covers, an independent playable pad on each article and a fourth homepage card after Pad Station. This is 32 localized articles plus two localized index pages. The user authorized production publication after the local checks passed; deployment verification is recorded below.
+The release includes 16 instrument topics in Indonesian and English, two localized index pages, 16 original ImageGen covers, an independent playable pad on each article and a fourth homepage card after Pad Station. This is 32 localized articles plus two localized index pages. The user authorized production publication after the local checks passed; deployment verification is recorded below.
 
 The topics are Drum, Bilah, Kendhang Ciblon, electric bass, nylon guitar, Kethuk, Kempyang, Kenong, Bonang panerus, Peking, Saron barung, Bonang barung, Demung, Kempul, Gong ageng and Slenthem. Each locale has six substantive sections, four introductory exercise steps, geographic/traditional context, construction and technique facts, a listening note, and three or four editorial references. Bilah is explicitly identified as Perkusi.com's original synthetic voice. A digital drum voice inventory is not represented as eight physical drum-kit components.
 
@@ -52,6 +52,14 @@ Editorial links were also checked separately: no source returned HTTP 404. Some 
 
 Browser checks used installed Chrome 157 and emulated viewport/touch settings. No physical phone, Safari/iOS, spoken screen reader, expert cultural review or human listening session was performed. Measured browser output establishes functional playback, not speaker quality or a complete simulation of physical playing technique. AI illustrations were visually reviewed but are not expert-certified instrument diagrams. ImageGen use alone is not a legal guarantee; reference/provenance records are retained.
 
-The work is complete in the current checkout, with a successful local production build. Production publication uses the existing GitHub main → Cloudflare Pages integration, as authorized by the user. Existing unrelated untracked files were preserved.
+The release is live on `https://perkusi.com/`. PR #1 merged the feature as `6628c92bbebee9343e0978c5ded0a0bbe9f29641`; Cloudflare Pages reported success at 08:10 WIB on 15 November 2026. Production version.json matched that exact commit and branch main. Existing unrelated untracked files were preserved.
 
 Progress checklist: `docs/features/INSTRUMENT-ARTICLES-CHECKLIST.md`.
+
+## Production verification
+
+The complete article browser suite was also executed against `https://perkusi.com`, with Google Analytics suppressed only in the isolated QA browser. All 38 grouped checks passed: every one of the 110 curated strikes/pitches produced measured output in both languages (220 assertions), all 32 localized articles rendered without JavaScript, and 48 home/index/article responsive views passed at eight widths. Preparation/retry, a simulated client-only 503, slow loading, scale replacement, Stop, language/history preservation, canonical metadata and page-exit context closure passed on the live site.
+
+All 16 live WebP files returned HTTP 200 and matched the SHA256 hashes in the ImageGen provenance file byte for byte. Production evidence: `qa-artifacts/instrument-articles/live/browser-evidence.json`, `live/deployment-verification.json`, live screenshots, and `qa-artifacts/instrument-articles/live-browser-tests.log`. Final closing-commit/version verification is recorded in `qa-artifacts/instrument-articles/live/completion.json`.
+
+Cloudflare feature deployment: `4262ee66-d0aa-4ab2-b008-d6f3501048a7`. Feature PR: https://github.com/andiwijaya/perkusi-com/pull/1 . Publication used the existing Git integration; no manual upload deployment was used.
