@@ -33,6 +33,7 @@ const evidence = {
   checks: [],
   wav: [],
   errors: [],
+  mobileTouchViewports: [360, 390, 430],
 };
 const check = async (name, task) => {
   await task();
@@ -90,7 +91,7 @@ async function open(page, tool, locale) {
 }
 async function saveWav(page, button, name, seconds) {
   const pending = page.waitForEvent("download");
-  await page.locator(button).click();
+  await page.locator(button).tap();
   const download = await pending;
   assert.match(download.suggestedFilename(), /\.wav$/);
   const path = join(output, name + ".wav");
@@ -130,6 +131,31 @@ function watch(page) {
   page.on("console", (message) => {
     if (message.type() === "error") evidence.errors.push(message.text());
   });
+}
+async function guidedJump(page, step) {
+  if (!(await page.locator("#tutorial").evaluate((el) => el.open)))
+    await page.locator("#tutorial summary").tap();
+  const link = page.locator(`#tutorial-step-${step} > [data-tutorial-jump]`);
+  const target = (await link.getAttribute("href")).slice(1);
+  await link.tap();
+  await page.waitForFunction((id) => document.activeElement.id === id, target);
+  assert.equal(
+    await page.locator("#tutorial").evaluate((el) => el.open),
+    false,
+  );
+  return target;
+}
+async function backToStep(page, step) {
+  await page
+    .locator(`.tutorial-return[href="#tutorial-step-${step}"]:visible`)
+    .first()
+    .tap();
+  await page.waitForFunction(
+    (id) =>
+      document.activeElement.id === id &&
+      document.querySelector("#tutorial").open,
+    `tutorial-step-${step}`,
+  );
 }
 try {
   browser = await playwright.chromium.launch({
@@ -236,13 +262,89 @@ try {
     }
   }
   await staticContext.close();
+  for (const width of [360, 390, 430]) {
+    const mobile = await newContext({
+      viewport: { width, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    const phone = await mobile.newPage();
+    watch(phone);
+    for (const tool of ["pads", "beatbox", "studio"]) {
+      for (const locale of ["id", "en"]) {
+        await check(
+          `${tool} ${locale}: touch tutorial links and browser Back at ${width}px`,
+          async () => {
+            await open(phone, tool, locale);
+            await phone.locator("#tutorial summary").tap();
+            const steps = await phone
+              .locator(".tutorial-steps > li:has(> [data-tutorial-jump])")
+              .evaluateAll((elements) =>
+                elements.map((el) => Number(el.id.split("-").at(-1))),
+              );
+            for (const step of steps) {
+              const target = await guidedJump(phone, step);
+              const bounds = await phone.locator("#" + target).boundingBox();
+              assert(
+                bounds.y >= 0 && bounds.y < 844,
+                `${tool}: ${target} must land in the viewport`,
+              );
+              assert.equal(
+                await phone
+                  .locator(".tutorial-return")
+                  .first()
+                  .getAttribute("href"),
+                `#tutorial-step-${step}`,
+              );
+              await phone.goBack();
+              await phone.waitForFunction(
+                (id) =>
+                  document.querySelector("#tutorial").open &&
+                  document.activeElement.id === id,
+                `tutorial-step-${step}`,
+              );
+              assert.equal(
+                await phone.locator("html").getAttribute("lang"),
+                locale,
+              );
+            }
+            assert.equal(
+              await phone.evaluate(() => window.__tutorialStarts),
+              0,
+            );
+            assert(
+              await phone.evaluate(
+                () => document.documentElement.scrollWidth <= innerWidth + 1,
+              ),
+            );
+            if (tool === "pads") {
+              assert(
+                await phone
+                  .locator("#ps-controls")
+                  .evaluate((el) => el.getBoundingClientRect().height <= 150),
+              );
+              assert.equal(
+                await phone.locator('[data-st-pad="kick"] > b').isVisible(),
+                false,
+              );
+            }
+          },
+        );
+      }
+    }
+    await mobile.close();
+  }
   for (const locale of ["id", "en"]) {
-    const flowContext = await newContext();
+    const flowContext = await newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
     const flow = await flowContext.newPage();
     watch(flow);
     flow.setDefaultTimeout(30000);
     await check(
-      `Studio ${locale}: follow the recipe, play four bars and download WAV`,
+      `Studio ${locale}: phone tutorial to grid, four bars and downloaded WAV`,
       async () => {
         await open(flow, "studio", locale);
         await flow.waitForFunction(
@@ -251,41 +353,52 @@ try {
           null,
           { timeout: 60000 },
         );
-        await flow.locator("#tutorial summary").click();
-        assert(await flow.locator(".tutorial-pattern").isVisible());
-        await flow.locator("#tutorial summary").click();
+        await guidedJump(flow, 1);
         await flow.locator("#st-kit").selectOption("ruang");
+        await backToStep(flow, 1);
+        await guidedJump(flow, 2);
         await flow.locator("#st-bpm").fill("100");
         await flow.locator("#st-bpm").press("Tab");
+        await backToStep(flow, 2);
+        await guidedJump(flow, 3);
+        assert(
+          await flow.locator("#st-grid-practice .tutorial-pattern").isVisible(),
+        );
         for (const [role, columns] of Object.entries({
           kick: [1, 5, 9, 13],
           snare: [5, 13],
           "closed-hat": [1, 3, 5, 7, 9, 11, 13, 15],
         })) {
           for (const col of columns)
-            await flow.locator(`[data-st-step="${role}:${col - 1}"]`).click();
+            await flow.locator(`[data-st-step="${role}:${col - 1}"]`).tap();
         }
         assert.equal(
           await flow.locator('[data-st-step][aria-pressed="true"]').count(),
           14,
         );
-        for (let i = 0; i < 3; i++) await flow.locator("#st-add-chain").click();
+        await backToStep(flow, 3);
+        await guidedJump(flow, 5);
+        for (let i = 0; i < 3; i++) await flow.locator("#st-add-chain").tap();
         assert.equal(await flow.locator(".st-chain-slot").count(), 4);
         assert.equal(
           parseFloat(await flow.locator("#st-duration").innerText()),
           9.6,
         );
         await flow.locator("#st-chain-mode").check();
-        await flow.locator("#st-play").click();
+        await backToStep(flow, 5);
+        await guidedJump(flow, 4);
+        await flow.locator("#st-play").tap();
         await flow.waitForFunction(() =>
           /Memutar|Playing/.test(
             document.querySelector("#st-status").textContent,
           ),
         );
         assert(await flow.evaluate(() => window.__tutorialStarts > 0));
-        await flow.locator("#st-pause").click();
+        await flow.locator("#st-pause").tap();
+        await backToStep(flow, 4);
+        await guidedJump(flow, 6);
         await flow.locator("#st-title").fill("Beat pertamaku");
-        await flow.locator("#st-render").click();
+        await flow.locator("#st-render").tap();
         await flow
           .locator("#st-wav-download")
           .waitFor({ state: "visible", timeout: 60000 });
@@ -295,6 +408,9 @@ try {
           `studio-first-beat-${locale}`,
           9.6,
         );
+        await flow.screenshot({
+          path: join(output, `studio-phone-export-${locale}.png`),
+        });
       },
     );
     await check(
@@ -308,10 +424,20 @@ try {
           null,
           { timeout: 60000 },
         );
+        await guidedJump(flow, 2);
+        assert.equal(
+          await flow.locator("#ps-drums").evaluate((el) => el.open),
+          true,
+        );
         const kick = flow.locator('[data-st-pad="kick"]'),
           snare = flow.locator('[data-st-pad="snare"]');
-        for (const pad of [kick, snare, kick, snare]) await pad.click();
+        for (const pad of [kick, snare, kick, snare]) await pad.tap();
         assert(await flow.evaluate(() => window.__tutorialStarts >= 4));
+        await flow.screenshot({
+          path: join(output, `pads-phone-practice-${locale}.png`),
+        });
+        await backToStep(flow, 2);
+        await guidedJump(flow, 3);
         await flow.locator("#ps-extra-instrument").selectOption("kenong-pelog");
         await flow.waitForFunction(
           () =>
@@ -320,10 +446,12 @@ try {
           null,
           { timeout: 60000 },
         );
-        await flow.locator(".ps-extra-pad").first().click();
-        await flow.locator("#ps-mute").check();
-        await flow.locator("#ps-mute").uncheck();
-        await flow.locator("#ps-stop").click();
+        await flow.locator(".ps-extra-pad").first().tap();
+        await backToStep(flow, 3);
+        await guidedJump(flow, 4);
+        await flow.locator("#ps-mute").tap();
+        await flow.locator("#ps-mute").tap();
+        await flow.locator("#ps-stop").tap();
         assert.match(
           await flow.locator("#ps-status").innerText(),
           /dihentikan|stopped/,
@@ -344,23 +472,28 @@ try {
           null,
           { timeout: 60000 },
         );
-        await flow.locator("#bb-play").click();
+        await guidedJump(flow, 1);
+        await flow.locator("#bb-play").tap();
         assert.equal(
           await flow.locator('[data-role="kick"]').getAttribute("aria-pressed"),
           "true",
         );
+        await backToStep(flow, 1);
+        await guidedJump(flow, 2);
         for (const role of ["hat", "vocal-bass"])
-          await flow.locator(`[data-role="${role}"]`).click();
+          await flow.locator(`[data-role="${role}"]`).tap();
         await flow.waitForFunction(
           () =>
             document.querySelectorAll('.character[aria-pressed="true"]')
               .length === 3,
         );
-        await flow.locator("#bb-demo").click();
-        await flow.locator("#bb-pause").click();
+        await flow.locator("#bb-demo").tap();
+        await flow.locator("#bb-pause").tap();
+        await backToStep(flow, 2);
+        await guidedJump(flow, 5);
         await flow.locator("#project-title").fill("Groove pertamaku");
         await flow.locator("#project-bars").selectOption("4");
-        await flow.locator("#project-render").click();
+        await flow.locator("#project-render").tap();
         await flow
           .locator("#project-download")
           .waitFor({ state: "visible", timeout: 60000 });

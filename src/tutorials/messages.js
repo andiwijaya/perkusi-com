@@ -1,4 +1,80 @@
 export const tutorialPairs = {
+  "tutorial.useLinks": [
+    "Ikuti satu langkah, lalu gunakan tautan di bawahnya untuk langsung mencoba. Pilih “Kembali ke tutorial” saat ingin membaca langkah selanjutnya.",
+    "Follow one step, then use its link to try it in the tool. Choose “Back to tutorial” when you want to read the next step.",
+  ],
+  "tutorial.back": ["Kembali ke tutorial", "Back to tutorial"],
+  "tutorial.pads.tryDrums": ["Coba pad Drum", "Try the drum pads"],
+  "tutorial.pads.tryRhythm": ["Coba irama 1–2–3–4", "Try the 1–2–3–4 rhythm"],
+  "tutorial.pads.tryExtras": [
+    "Ke pilihan instrumen tambahan",
+    "Go to additional instruments",
+  ],
+  "tutorial.controls": ["Ke kontrol suara", "Go to sound controls"],
+  "tutorial.pads.practiceTitle": [
+    "Latihan di pad: 1–2–3–4",
+    "Pad practice: 1–2–3–4",
+  ],
+  "tutorial.pads.practiceHint": [
+    "Ketuk pad Kick dan Snare di bawah mengikuti urutan ini. Ulangi perlahan; hitungan ini kamu jalankan sendiri.",
+    "Tap the Kick and Snare pads below in this order. Repeat slowly; you set the pace yourself.",
+  ],
+  "tutorial.studio.prepare": [
+    "Ke pilihan pola dan kit",
+    "Go to pattern and kit controls",
+  ],
+  "tutorial.studio.setTempo": [
+    "Atur tempo di alat",
+    "Set the tempo in the tool",
+  ],
+  "tutorial.studio.tryGrid": [
+    "Isi contoh di grid",
+    "Try the example in the grid",
+  ],
+  "tutorial.studio.tryChain": [
+    "Susun empat bar di rantai",
+    "Build four bars in the chain",
+  ],
+  "tutorial.studio.tryExport": [
+    "Ke pembuatan dan unduhan WAV",
+    "Go to WAV creation and download",
+  ],
+  "tutorial.studio.practiceTitle": [
+    "Lihat contoh beat sambil mengisi grid",
+    "Keep the beat example open while editing",
+  ],
+  "tutorial.studio.practiceHint": [
+    "Gunakan Ruang, 100 BPM, Swing 0. Pada tiap baris, nyalakan nomor kolom berikut. Geser grid ke samping untuk mencapai kolom 16; nama suara tetap terlihat di kiri.",
+    "Use Ruang, 100 BPM and Swing 0. In each row, turn on these column numbers. Scroll the grid sideways to reach column 16; sound names stay visible on the left.",
+  ],
+  "tutorial.studio.afterGrid": [
+    "Lanjut: putar dan susun rantai",
+    "Next: play and build the chain",
+  ],
+  "tutorial.studio.afterChain": [
+    "Lanjut: buat dan unduh WAV",
+    "Next: make and download WAV",
+  ],
+  "tutorial.studio.exportHint": [
+    "Isi Nama proyek, tekan Buat WAV rantai, lalu tunggu tombol Unduh WAV muncul. Setelah mengubah beat, buat WAV baru sebelum mengunduh lagi.",
+    "Enter a Project name, press Make chain WAV, then wait for Download WAV to appear. After editing the beat, make a new WAV before downloading again.",
+  ],
+  "tutorial.beatbox.tryMix": [
+    "Ke karakter Bumi, Cicik, dan Dum",
+    "Go to Bumi, Cicik and Dum",
+  ],
+  "tutorial.beatbox.tryVariants": [
+    "Coba variasi pada karakter",
+    "Try character variations",
+  ],
+  "tutorial.beatbox.tryExport": [
+    "Ke penyimpanan dan WAV",
+    "Go to saving and WAV",
+  ],
+  "tutorial.beatbox.practiceHint": [
+    "Campuran pertama: Bumi + Cicik + Dum. Biarkan karakter yang sudah aktif; ketuk yang belum aktif. Di HP, Cicik dan Dum berada di baris berikutnya.",
+    "First mix: Bumi + Cicik + Dum. Leave enabled characters on; tap the ones that are off. On a phone, Cicik and Dum are in the next row.",
+  ],
   "tutorial.steps": ["Mulai dalam tiga langkah", "Start in three steps"],
   "tutorial.keyboard": ["Bermain dengan keyboard", "Playing with a keyboard"],
   "tutorial.soundHelp": [
@@ -64,8 +140,8 @@ export const tutorialPairs = {
     "Share the parts: one person plays drums while another plays bass or melody on their own device. Agree on a count-in together. Each device runs independently, so phones do not automatically stay in sync.",
   ],
   "tutorial.pads.keys": [
-    "Drum: 1–8 · Bilah: Z/X/C/V/B · Kendhang: A/S · Bass: D/F/G · Gitar: H/J/K. Huruf dan angka juga tertulis pada pad. Instrumen tambahan dimainkan dengan klik atau ketuk. Pintasan tidak aktif saat kamu sedang mengubah kolom input.",
-    "Drums: 1–8 · Bilah: Z/X/C/V/B · Kendhang: A/S · Bass: D/F/G · Guitar: H/J/K. The keys are also printed on the pads. Click or tap to play additional instruments. Shortcuts are inactive while you are editing an input field.",
+    "Drum: 1–8 · Bilah: Z/X/C/V/B · Kendhang: A/S · Bass: D/F/G · Gitar: H/J/K. Pada layar lebar, huruf dan angka pintasan juga tertulis pada pad. Instrumen tambahan dimainkan dengan klik atau ketuk. Pintasan tidak aktif saat kamu sedang mengubah kolom input.",
+    "Drums: 1–8 · Bilah: Z/X/C/V/B · Kendhang: A/S · Bass: D/F/G · Guitar: H/J/K. On wider screens, shortcut keys are also printed on the pads. Click or tap to play additional instruments. Shortcuts are inactive while you are editing an input field.",
   ],
   "tutorial.pads.trouble": [
     "Pad masih abu-abu? Periksa status pemuatan di grupnya. Jika muncul kegagalan, periksa koneksi lalu tekan “Coba lagi” atau “Lanjutkan pemuatan”. Jika pad sudah siap tetapi tetap senyap, lepas “Bisukan semua”, naikkan Volume utama, periksa volume perangkat/tab browser, lalu ketuk lagi.",
@@ -195,8 +271,8 @@ export const tutorialPairs = {
     "Build a groove with three characters",
   ],
   "tutorial.beatbox.step2": [
-    "Biarkan Bumi aktif, lalu ketuk Cicik untuk hi-hat dan Dum untuk bass. Jika Bumi belum aktif, ketuk sekali untuk menambahkannya. Jika memakai Coba groove, ketiganya sudah aktif. Ketuk karakter aktif lagi untuk mengeluarkannya. Saat musik berjalan, perubahan menunggu awal bar berikutnya agar tetap rapi; lihat status di bawah karakter.",
-    "Keep Bumi enabled, then tap Cicik for hi-hats and Dum for bass. If Bumi is not enabled, tap it once to add it. If you used Try a groove, all three are already active. Tap an enabled character again to remove it. During playback, changes wait for the next bar to stay in time; check the status below each character.",
+    "Biarkan Bumi aktif, lalu ketuk Cicik untuk hi-hat dan Dum untuk bass. Di HP, gulir ke baris berikutnya untuk menemukan Cicik dan Dum. Jika Bumi belum aktif, ketuk sekali. Jika memakai Coba groove, ketiganya sudah aktif. Ketuk karakter aktif lagi untuk mengeluarkannya. Saat musik berjalan, perubahan menunggu awal bar berikutnya; lihat status di bawah karakter.",
+    "Keep Bumi enabled, then tap Cicik for hi-hats and Dum for bass. On a phone, scroll to the next row to find Cicik and Dum. If Bumi is off, tap it once. If you used Try a groove, all three are already active. Tap an enabled character again to remove it. During playback, changes wait for the next bar; check the status below each character.",
   ],
   "tutorial.beatbox.step3Title": [
     "Ubah variasi dan isi suaranya",
