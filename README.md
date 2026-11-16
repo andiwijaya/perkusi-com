@@ -33,6 +33,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:tutorials` checks the beginner guides on Pad Station, Beatbox and Rhythm Studio in both languages, keyboard and static reading, eight viewport widths, phone touch navigation and browser Back at 360/390/430 pixels, instrument controls, and actual WAV downloads from the first-beat examples. Run after a production build, using the same Playwright setup as `test:e2e`. For release QA, set `PERKUSI_TUTORIAL_BASE_URL=https://perkusi.com` and a separate `PERKUSI_TUTORIAL_QA_DIR`; the isolated test browser suppresses analytics. See `docs/features/BEGINNER-TUTORIALS-REPORT.md` and `docs/features/MOBILE-TUTORIAL-FLOW-REPORT.md`.
 
+`npm run test:tutorials:desktop` adds mouse/keyboard tutorial journeys at 1280, 1440 and 1920 pixels, desktop recipe and shortcut checks, and actual Studio/Beatbox WAV downloads. It uses the same browser runtime and production base URL setting, with `PERKUSI_DESKTOP_QA_DIR` for its evidence. See `docs/features/DESKTOP-TUTORIAL-FLOW-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.

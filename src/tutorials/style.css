@@ -183,11 +183,19 @@
   padding: 0 12px 8px;
 }
 .tutorial-practice-body p,
-.tutorial-context {
+.tutorial-context,
+.tutorial-desktop-note,
+.tutorial-mobile-note {
   max-width: 82ch;
   line-height: 1.7;
   color: #c9d3c5;
   font-size: 0.9rem;
+}
+.tutorial-mobile-note {
+  display: none;
+}
+.tutorial-desktop-note {
+  color: #d7edb5;
 }
 .tutorial-context {
   border-left: 3px solid #93b46b;
@@ -219,7 +227,33 @@
   gap: 8px 18px;
   margin-top: 12px;
 }
+@media (min-width: 1100px) {
+  #st-grid-practice .tutorial-practice-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 12px 24px;
+    align-items: start;
+  }
+  #st-grid-practice .tutorial-practice-body > p {
+    margin: 0;
+  }
+  #st-grid-practice .tutorial-pattern {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+  #st-grid-practice .tutorial-return {
+    grid-column: 1;
+    justify-self: start;
+    margin: 0;
+  }
+}
 @media (max-width: 700px) {
+  .tutorial-desktop-note {
+    display: none;
+  }
+  .tutorial-mobile-note {
+    display: block;
+  }
   .tutorial-quick {
     grid-template-columns: 1fr;
     gap: 10px;

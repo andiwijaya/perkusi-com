@@ -36,13 +36,32 @@ export function tutorialNote(locale, key) {
   return copy(locale, key, "p", 'class="tutorial-context"');
 }
 
+export function tutorialDeviceHint(locale, tool) {
+  return (
+    copy(
+      locale,
+      `tutorial.${tool}.desktopHint`,
+      "p",
+      'class="tutorial-desktop-note"',
+    ) +
+    (tool === "beatbox"
+      ? copy(
+          locale,
+          "tutorial.beatbox.mobileHint",
+          "p",
+          'class="tutorial-mobile-note"',
+        )
+      : "")
+  );
+}
+
 export function renderStudioRecipe(locale) {
   const text = (key) => copy(locale, `tutorial.studio.${key}`, "span");
   return `<table class="tutorial-pattern"><caption>${text("recipeCaption")}</caption><thead><tr><th scope="col">${text("recipeSound")}</th><th scope="col">${text("recipeColumns")}</th></tr></thead><tbody><tr><th scope="row">Kick</th><td>1 · 5 · 9 · 13</td></tr><tr><th scope="row">Snare</th><td>5 · 13</td></tr><tr><th scope="row">${text("closedHat")}</th><td>1 · 3 · 5 · 7 · 9 · 11 · 13 · 15</td></tr></tbody></table>`;
 }
 
 export function renderPadPractice(locale) {
-  return `<details id="ps-drums" class="tutorial-practice tutorial-destination" tabindex="-1"><summary>${copy(locale, "tutorial.pads.practiceTitle", "span")}</summary><div class="tutorial-practice-body"><ol class="tutorial-count">${["Kick", "Snare", "Kick", "Snare"].map((sound, i) => `<li><b>${i + 1}</b><span>${sound}</span></li>`).join("")}</ol>${copy(locale, "tutorial.pads.practiceHint")}${tutorialReturn(locale, 2)}</div></details>`;
+  return `<details id="ps-drums" class="tutorial-practice tutorial-destination" tabindex="-1"><summary>${copy(locale, "tutorial.pads.practiceTitle", "span")}</summary><div class="tutorial-practice-body"><ol class="tutorial-count">${["Kick", "Snare", "Kick", "Snare"].map((sound, i) => `<li><b>${i + 1}</b><span>${sound}</span></li>`).join("")}</ol>${copy(locale, "tutorial.pads.practiceHint")}${tutorialDeviceHint(locale, "pads")}${tutorialReturn(locale, 2)}</div></details>`;
 }
 
 export function renderStudioPractice(locale) {

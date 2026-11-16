@@ -29,6 +29,7 @@ export default [
     files: [
       "scripts/test-browser.mjs",
       "scripts/test-beginner-tutorials.mjs",
+      "scripts/test-desktop-tutorials.mjs",
       "scripts/test-instrument-articles.mjs",
       "scripts/test-beatbox.mjs",
       "scripts/test-beatbox-repair.mjs",

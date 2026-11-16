@@ -32,6 +32,18 @@
   opacity: 0.5;
   cursor: default;
 }
+.pad-station .st-pad > span {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.pad-station .st-pad > b {
+  order: 1;
+  padding: 2px 7px;
+  border: 1px solid #59644d;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
 .pad-station :focus-visible {
   outline: 3px solid var(--st-gold);
   outline-offset: 3px;
