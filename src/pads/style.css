@@ -194,12 +194,37 @@
     padding-top: 24px;
   }
   .ps-controls {
-    gap: 8px 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
     padding: 12px;
     top: 4px;
   }
-  .ps-controls label:first-of-type {
-    flex: 1;
+  .ps-controls .ps-volume-control {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto minmax(50px, 1fr) auto;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+  .ps-controls #ps-stop {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+  .ps-controls .ps-volume-control input[type="range"] {
+    width: 100%;
+    min-width: 0;
+  }
+  .ps-mute-control {
+    justify-content: flex-end;
+    font-size: 0.8rem;
+  }
+  .pad-station .st-pad > b {
+    display: none;
+  }
+  .pad-station .st-pad > span {
+    font-size: 0.85rem;
+    font-weight: 600;
   }
   .pad-station .st-live-pads {
     padding: 16px;

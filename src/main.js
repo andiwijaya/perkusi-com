@@ -2,12 +2,14 @@ import { initAnalytics } from "./analytics.js";
 import { initNavigation } from "./app/navigation.js";
 import { initLocalization } from "./app/localization.js";
 import { handoffRecoveryRedirect } from "./app/legacy-recovery-link.js";
+import { initTutorialNavigation } from "./tutorials/navigation.js";
 
 const recoveryRedirect = handoffRecoveryRedirect(location.href);
 if (recoveryRedirect) location.replace(recoveryRedirect);
 else {
   initLocalization();
   initNavigation();
+  initTutorialNavigation();
   document.querySelector("#year").textContent = String(
     new Date().getFullYear(),
   );

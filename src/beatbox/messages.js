@@ -5,8 +5,7 @@ export const beatboxMessages = {
     title2: "Hidupkan irama.",
     intro: "Enam suara, dua variasi, irama yang kamu tentukan.",
     preview: "Pratinjau Beatbox",
-    soundNote:
-      "Original Groove masih menunggu penilaian listening. Belum dirilis.",
+    soundNote: "Original Groove · versi uji. Suaranya masih dalam evaluasi.",
     stageLabel: "Enam karakter beatbox",
     play: "Putar",
     start: "Mulai main",
@@ -85,7 +84,8 @@ export const beatboxMessages = {
     title2: "Bring the beat to life.",
     intro: "Six voices, two variations, a groove that's yours.",
     preview: "Beatbox preview",
-    soundNote: "Original Groove is awaiting listening review. Unreleased.",
+    soundNote:
+      "Original Groove · trial version. Its sound is still being evaluated.",
     stageLabel: "Six beatbox characters",
     play: "Play",
     start: "Start playing",

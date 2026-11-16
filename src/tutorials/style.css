@@ -59,6 +59,7 @@
 .tutorial-steps > li {
   padding-left: 8px;
   margin-block: 24px;
+  scroll-margin-top: 16px;
 }
 .tutorial-steps > li::marker {
   color: #c3f36b;
@@ -131,6 +132,93 @@
   border-radius: 50%;
   color: #c3f36b;
 }
+.tutorial-jump,
+.tutorial-return {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #c3f36b;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.tutorial-jump {
+  margin-block: 8px;
+  padding: 10px 14px;
+  border: 1px solid #647a4b;
+  border-radius: 8px;
+  background: #243025;
+  font-size: 0.9rem;
+}
+.tutorial-return {
+  margin-block: 4px 12px;
+  font-size: 0.85rem;
+}
+.tutorial-enhanced:not(.tutorial-in-use) .tutorial-return {
+  display: none;
+}
+.tutorial-destination,
+#ps-extra-title {
+  scroll-margin-top: var(--tutorial-scroll-gap, 16px);
+}
+#ps-controls,
+#st-controls,
+#bb-controls {
+  scroll-margin-top: 16px;
+}
+.tutorial-practice {
+  margin-block: 0 18px;
+  border: 1px solid #4c6049;
+  border-radius: 10px;
+  background: #1b251d;
+}
+.tutorial-practice > summary {
+  padding: 12px;
+  min-height: 44px;
+  cursor: pointer;
+  color: #d7edb5;
+  font-size: 0.9rem;
+}
+.tutorial-practice-body {
+  padding: 0 12px 8px;
+}
+.tutorial-practice-body p,
+.tutorial-context {
+  max-width: 82ch;
+  line-height: 1.7;
+  color: #c9d3c5;
+  font-size: 0.9rem;
+}
+.tutorial-context {
+  border-left: 3px solid #93b46b;
+  padding: 8px 12px;
+}
+.tutorial-count {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  gap: 8px;
+  padding: 0;
+}
+.tutorial-count li {
+  display: grid;
+  gap: 6px;
+  padding: 10px 4px;
+  text-align: center;
+  border-radius: 8px;
+  background: #2c3a27;
+  font-size: 0.85rem;
+}
+.tutorial-count b {
+  color: #c3f36b;
+}
+.tutorial-continue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 12px;
+}
 @media (max-width: 700px) {
   .tutorial-quick {
     grid-template-columns: 1fr;
@@ -151,5 +239,8 @@
   .tutorial-pattern th,
   .tutorial-pattern td {
     padding: 8px;
+  }
+  .studio-page .st-transport {
+    position: static;
   }
 }
