@@ -16,8 +16,12 @@ export const tutorialPairs = {
     "Pad practice: 1–2–3–4",
   ],
   "tutorial.pads.practiceHint": [
-    "Ketuk pad Kick dan Snare di bawah mengikuti urutan ini. Ulangi perlahan; hitungan ini kamu jalankan sendiri.",
-    "Tap the Kick and Snare pads below in this order. Repeat slowly; you set the pace yourself.",
+    "Mainkan pad Kick dan Snare di bawah mengikuti urutan ini. Ulangi perlahan; hitungan ini kamu jalankan sendiri.",
+    "Play the Kick and Snare pads below in this order. Repeat slowly; you set the pace yourself.",
+  ],
+  "tutorial.pads.desktopHint": [
+    "Dengan keyboard, urutannya 1 → 2 → 1 → 2. Angka kecil pada pad adalah tombol keyboard; hitungan latihan ada pada empat kotak di atas.",
+    "On the keyboard, use 1 → 2 → 1 → 2. Small numbers on pads are keyboard keys; the four boxes above show the practice counts.",
   ],
   "tutorial.studio.prepare": [
     "Ke pilihan pola dan kit",
@@ -72,8 +76,16 @@ export const tutorialPairs = {
     "Go to saving and WAV",
   ],
   "tutorial.beatbox.practiceHint": [
-    "Campuran pertama: Bumi + Cicik + Dum. Biarkan karakter yang sudah aktif; ketuk yang belum aktif. Di HP, Cicik dan Dum berada di baris berikutnya.",
-    "First mix: Bumi + Cicik + Dum. Leave enabled characters on; tap the ones that are off. On a phone, Cicik and Dum are in the next row.",
+    "Campuran pertama: Bumi + Cicik + Dum. Biarkan karakter yang sudah aktif; pilih yang belum aktif.",
+    "First mix: Bumi + Cicik + Dum. Leave enabled characters on; select the ones that are off.",
+  ],
+  "tutorial.beatbox.desktopHint": [
+    "Keyboard: 1–6 mengikuti urutan karakter. Setelah Bumi aktif, tekan 3 untuk Cicik dan 4 untuk Dum. Tekan tombol yang sama lagi untuk mematikan karakter.",
+    "Keyboard: 1–6 follow the character order. Once Bumi is on, press 3 for Cicik and 4 for Dum. Press the same key again to turn a character off.",
+  ],
+  "tutorial.beatbox.mobileHint": [
+    "Di HP, gulir ke baris berikutnya untuk menemukan Cicik dan Dum.",
+    "On a phone, scroll to the next row to find Cicik and Dum.",
   ],
   "tutorial.steps": ["Mulai dalam tiga langkah", "Start in three steps"],
   "tutorial.keyboard": ["Bermain dengan keyboard", "Playing with a keyboard"],
