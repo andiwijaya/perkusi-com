@@ -9,7 +9,11 @@ import {
   trackGain,
 } from "./sequencing.js";
 import { disconnectVoice } from "./voice.js";
-import { calibratePCM, PROGRAMME_SCRATCH_BYTES } from "./programme-level.js";
+import {
+  calibratePCM,
+  PROGRAMME_MAX_GAIN,
+  PROGRAMME_SCRATCH_BYTES,
+} from "./programme-level.js";
 import { programmeSample } from "./programme-output.js";
 
 export function studioExportBudget(
@@ -81,9 +85,22 @@ export class StudioWavExporter {
   cancel() {
     this.active?.abort();
   }
-  async render(project, onProgress = () => {}, pcmOptions = null) {
+  async render(
+    project,
+    onProgress = () => {},
+    pcmOptions = null,
+    wavOptions = {},
+  ) {
     if (this.disposed) throw new ProjectError("cancelled");
     if (this.active) throw new ProjectError("exportBusy");
+    const playbackGain = wavOptions.programmeGain;
+    if (
+      playbackGain !== undefined &&
+      (!Number.isFinite(playbackGain) ||
+        playbackGain < 1 ||
+        playbackGain > PROGRAMME_MAX_GAIN)
+    )
+      throw new ProjectError("exportFailed");
     const budget = studioExportBudget(
         project,
         this.catalog,
@@ -232,6 +249,10 @@ export class StudioWavExporter {
             budget.valid.master.volume,
           )
         : { gain: 1, metrics: null };
+      // Live mix edits retain the sounding programme gain. Re-measuring that
+      // quieter/louder mix must not change the level of its downloaded WAV.
+      if (this.matchProgramme && !pcmOptions && playbackGain !== undefined)
+        calibration.gain = playbackGain;
       if (this.matchProgramme && !pcmOptions?.uncalibrated)
         for (let c = 0; c < 2; c++) {
           const a = pcm.getChannelData(c);

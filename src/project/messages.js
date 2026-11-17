@@ -42,6 +42,8 @@ export const projectMessages = {
     cancelling: "Membatalkan; menunggu pekerjaan audio selesai…",
     cancelled: "Ekspor dibatalkan. Iramamu tetap ada.",
     exportReady: "WAV siap. Unduh atau bagikan file di bawah.",
+    wavChanged:
+      "Beat berubah. Tekan Buat WAV lagi untuk mengunduh versi terbaru.",
     fileSnapshot: "File ini memakai pilihan saat dibuat:",
     downloaded: "WAV siap diunduh.",
     shared: "File diserahkan ke menu berbagi perangkat.",
@@ -119,6 +121,8 @@ export const projectMessages = {
     cancelling: "Cancelling; waiting for audio work to finish…",
     cancelled: "Export cancelled. Your groove stays here.",
     exportReady: "WAV is ready. Download or share the file below.",
+    wavChanged:
+      "The beat changed. Press Make WAV again to download the latest version.",
     fileSnapshot: "This file uses the selection when it was made:",
     downloaded: "WAV is ready to download.",
     shared: "File handed to your device's share menu.",

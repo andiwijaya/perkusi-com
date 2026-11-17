@@ -47,6 +47,7 @@ import {
 } from "../project/files.js";
 import { projectMessages } from "../project/messages.js";
 import { trackEvent, exportFailureCategory } from "../analytics.js";
+import { wavSnapshotKey } from "../project/wav-snapshot.js";
 import {
   legacyRecoveryHref,
   originalRecoveryHref,
@@ -102,6 +103,8 @@ export function initStudio() {
     reading = false,
     receiving = false,
     readyFile = null,
+    readyKey = "",
+    lastPlayback = null,
     selectedSave = "",
     projectStatus = "idle",
     statusError = false,
@@ -206,16 +209,23 @@ export function initStudio() {
     }
   }
   function changed() {
+    const invalidated = readyFile && readyKey !== wavSnapshotKey(current());
+    if (invalidated) {
+      readyFile = null;
+      $("result").hidden = true;
+    }
     clearTimeout(draftTimer);
     if (!receiving) draftTimer = setTimeout(saveDraft, 250);
     sync();
+    if (invalidated) message("wavChanged");
+    return invalidated;
   }
   function edit(fn) {
     if (reading || receiving) return;
     try {
       if (history.edit(fn)) {
-        changed();
-        message("editSaved");
+        const invalidated = changed();
+        message(invalidated ? "wavChanged" : "editSaved");
       }
     } catch (e) {
       fail(e);
@@ -231,6 +241,7 @@ export function initStudio() {
     engine.arrangement = true;
     $("chain-mode").checked = true;
     history.replace(valid);
+    lastPlayback = null;
     readyFile = null;
     $("result").hidden = true;
     $("title").value = current().title;
@@ -246,6 +257,13 @@ export function initStudio() {
       p,
       studioCatalog.kits.findIndex((k) => k.id === p.pack.id) + 1,
     );
+    if (engine.transport.running)
+      lastPlayback = {
+        key: wavSnapshotKey(p),
+        gain: engine.outputStage.programmeGain,
+        arrangement: engine.arrangement,
+        context: engine.context,
+      };
     compositionPanel.update();
     livePads?.update();
     $("kit").value = p.pack.id;
@@ -534,6 +552,13 @@ export function initStudio() {
     renderStatus();
     await job;
     if (!disposed) {
+      if (engine.transport.running)
+        lastPlayback = {
+          key: wavSnapshotKey(project()),
+          gain: engine.outputStage.programmeGain,
+          arrangement: engine.arrangement,
+          context: engine.context,
+        };
       if (engine.stats.starts > before && engine.context?.state === "running")
         trackEvent("audio_started");
       renderStatus();
@@ -632,6 +657,14 @@ export function initStudio() {
       return;
     }
     if (!engine.arrangement && !window.confirm(c.previewExport)) return;
+    const key = wavSnapshotKey(p);
+    const programmeGain =
+      engine.arrangement &&
+      lastPlayback?.arrangement &&
+      lastPlayback.context === engine.context &&
+      lastPlayback.key === key
+        ? lastPlayback.gain
+        : undefined;
     ownFocus();
     readyFile = null;
     $("result").hidden = true;
@@ -650,13 +683,20 @@ export function initStudio() {
               : (bar.value = progress.value);
           }
         },
+        null,
+        { programmeGain },
       );
       if (disposed) return;
+      if (wavSnapshotKey(project()) !== key) {
+        message("wavChanged");
+        return;
+      }
       readyFile = new File(
         [result.blob],
         safeFilename(result.project.title, "wav"),
         { type: "audio/wav" },
       );
+      readyKey = key;
       text($("filename"), readyFile.name);
       $("result").hidden = false;
       text(

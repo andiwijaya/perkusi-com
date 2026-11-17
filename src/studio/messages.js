@@ -100,6 +100,10 @@ const pairs = {
   share: ["Bagikan WAV", "Share WAV"],
   shareDownload: ["Unduh untuk berbagi", "Download to share"],
   readyFile: ["Snapshot WAV yang siap:", "Ready WAV snapshot:"],
+  wavChanged: [
+    "Beat berubah. Tekan Buat WAV rantai lagi untuk mengunduh versi terbaru.",
+    "The beat changed. Press Make chain WAV again to download the latest version.",
+  ],
   idle: [
     "Siap. Pilih demo atau buat pola pertama.",
     "Ready. Choose a demo or make your first pattern.",

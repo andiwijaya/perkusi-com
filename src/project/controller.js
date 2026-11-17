@@ -4,6 +4,7 @@ import { ProjectStore } from "./store.js";
 import { FileDelivery, safeFilename, readProjectFile } from "./files.js";
 import { serializeProject } from "./schema.js";
 import { exportFailureCategory } from "../analytics.js";
+import { wavSnapshotKey } from "./wav-snapshot.js";
 
 export function initProjectControls({
   engine,
@@ -24,6 +25,7 @@ export function initProjectControls({
     loading = false,
     receiving = false,
     file = null,
+    fileKey = "",
     status = "ready",
     isError = false,
     warning = false,
@@ -152,6 +154,10 @@ export function initProjectControls({
     const signature = JSON.stringify(project);
     if (signature === lastSignature) return;
     lastSignature = signature;
+    if (file && fileKey !== wavSnapshotKey(project)) {
+      file = null;
+      notify("wavChanged");
+    }
     clearTimeout(draftTimer);
     if (draftEnabled)
       draftTimer = setTimeout(() => {
@@ -282,6 +288,7 @@ export function initProjectControls({
         if (!audioReady() || busy || loading || receiving) return;
         const project = current();
         busy = true;
+        const key = wavSnapshotKey(project);
         file = null;
         progress = { phase: "loading", value: 0 };
         notify("loading");
@@ -293,6 +300,10 @@ export function initProjectControls({
             render();
           });
           if (disposed) return;
+          if (wavSnapshotKey(current()) !== key) {
+            notify("wavChanged");
+            return;
+          }
           file = new File(
             [result.blob],
             safeFilename(
@@ -301,6 +312,7 @@ export function initProjectControls({
             ),
             { type: "audio/wav" },
           );
+          fileKey = key;
           trackEvent("export_succeeded");
           notify("exportReady");
         } catch (error) {
@@ -325,6 +337,8 @@ export function initProjectControls({
     "click",
     () =>
       void guarded(() => {
+        update();
+        if (!file) return;
         delivery.download(file, file.name);
         notify("downloaded");
       }),
@@ -334,6 +348,8 @@ export function initProjectControls({
     "click",
     () =>
       void guarded(async () => {
+        update();
+        if (!file) return;
         sharing = true;
         render();
         try {
