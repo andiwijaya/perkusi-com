@@ -106,15 +106,16 @@ export async function renderPreparedAudio(
   project,
   progress,
   options,
+  wavOptions,
 ) {
   let released = false;
   try {
     try {
-      return await exporter.render(project, progress, options);
+      return await exporter.render(project, progress, options, wavOptions);
     } catch (error) {
       if (error.code !== "exportLimit" || !preload.releaseIdle()) throw error;
       released = true;
-      return await exporter.render(project, progress, options);
+      return await exporter.render(project, progress, options, wavOptions);
     }
   } finally {
     if (released) await preload.start();

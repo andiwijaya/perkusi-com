@@ -35,6 +35,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:tutorials:desktop` adds mouse/keyboard tutorial journeys at 1280, 1440 and 1920 pixels, desktop recipe and shortcut checks, and actual Studio/Beatbox WAV downloads. It uses the same browser runtime and production base URL setting, with `PERKUSI_DESKTOP_QA_DIR` for its evidence. See `docs/features/DESKTOP-TUTORIAL-FLOW-REPORT.md`.
 
+`npm run test:wav` compares actual WAV downloads with lossless PCM captured from the real-time output graph. It covers Beatbox A/B mixes, Studio tempo/swing and mixer settings, instruments and pattern changes, live mixer edits, and stale downloads after/during edits. Set `PERKUSI_WAV_BASE_URL=https://perkusi.com` for upstream production assets and `PERKUSI_WAV_QA_DIR` for evidence. A local proxy adds only the test capture worklet while forwarding unchanged upstream bytes and CSP; resource hashes record the tested assets. No QA worklet is deployed. See `docs/features/WAV-PLAYBACK-PARITY-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.

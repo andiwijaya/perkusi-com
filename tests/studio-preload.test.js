@@ -196,8 +196,10 @@ test("idle release preserves banks backing live voices and restores readiness af
   const protectedBuffer = f.kits[0].entries.get("0").buffer;
   f.engine.voices.add({ source: { buffer: protectedBuffer } });
   let attempts = 0;
+  const wavOptions = { programmeGain: 3.25 };
   const exporter = {
-    async render() {
+    async render(project, progress, pcmOptions, forwardedWavOptions) {
+      assert.equal(forwardedWavOptions, wavOptions);
       attempts++;
       if (attempts === 1)
         throw Object.assign(new Error("limit"), { code: "exportLimit" });
@@ -206,7 +208,14 @@ test("idle release preserves banks backing live voices and restores readiness af
       return { blob: "result" };
     },
   };
-  const rendered = renderPreparedAudio(f.preload, exporter, {}, () => {});
+  const rendered = renderPreparedAudio(
+    f.preload,
+    exporter,
+    {},
+    () => {},
+    null,
+    wavOptions,
+  );
   await flush();
   await complete(f);
   assert.deepEqual(await rendered, { blob: "result" });
