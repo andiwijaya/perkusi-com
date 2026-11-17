@@ -90,6 +90,14 @@ const pairs = {
   save: ["Simpan proyek baru", "Save a new project"],
   choose: ["Pilih proyek tersimpan", "Choose a saved project"],
   load: ["Muat", "Load"],
+  loadConfirm: [
+    "Muat simpanan “{title}” dan ganti proyek aktif beserta editnya? Simpan atau unduh proyek aktif lebih dulu jika ingin mempertahankannya.",
+    "Load saved project “{title}” and replace your active project and edits? Save or download your active project first if you want to keep it.",
+  ],
+  loadCancelled: [
+    "Pemuatan dibatalkan. Proyek aktif dan editnya tetap ada.",
+    "Loading cancelled. Your active project and edits remain.",
+  ],
   remove: ["Hapus simpanan", "Delete saved"],
   downloadProject: ["Unduh proyek", "Download project"],
   importProject: ["Impor proyek", "Import project"],

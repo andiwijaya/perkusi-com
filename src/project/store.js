@@ -102,9 +102,9 @@ export class ProjectStore {
     );
     this.write(items.filter((x) => x.id !== id));
   }
-  load(id) {
+  load(id, expected) {
     const item = this.read().find((x) => x.id === id);
-    if (!item) throw new ProjectError("missingProject");
+    assertSavedProjectUnchanged(item, expected);
     return item.project;
   }
   readDraft() {

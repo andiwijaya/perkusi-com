@@ -19,6 +19,8 @@ import { pagePath } from "../src/app/routes.js";
 const recoveryOnly = process.argv.includes("--recovery");
 const clearOnly = process.argv.includes("--clear-backups");
 const deleteOnly = process.argv.includes("--delete-projects");
+const loadOnly = process.argv.includes("--load-projects");
+const loadCopy = process.env.PERKUSI_LOAD_COPY !== "0";
 const deleteCopy = process.env.PERKUSI_DELETE_COPY !== "0";
 const clearCopy = process.env.PERKUSI_CLEAR_COPY !== "0";
 const recoveryGuidance = process.env.PERKUSI_RECOVERY_GUIDANCE !== "0";
@@ -31,13 +33,15 @@ try {
 }
 const output =
   process.env.PERKUSI_TRANSFER_QA_DIR ||
-  (deleteOnly
-    ? "qa-artifacts/delete-projects"
-    : clearOnly
-      ? "qa-artifacts/clear-backups"
-      : recoveryOnly
-        ? "qa-artifacts/transfer-recovery"
-        : "qa-artifacts/mode-transfer");
+  (loadOnly
+    ? "qa-artifacts/load-projects"
+    : deleteOnly
+      ? "qa-artifacts/delete-projects"
+      : clearOnly
+        ? "qa-artifacts/clear-backups"
+        : recoveryOnly
+          ? "qa-artifacts/transfer-recovery"
+          : "qa-artifacts/mode-transfer");
 await mkdir(output, { recursive: true });
 const remote = process.env.PERKUSI_TRANSFER_BASE_URL;
 const server = remote
@@ -1660,9 +1664,320 @@ async function savedDeleteFailure(tool, kind) {
     await ctx.close();
   }
 }
+async function confirmSavedLoad(
+  page,
+  tool,
+  accept,
+  title,
+  name,
+  whileOpen = () => {},
+  trigger = () => page.locator("#" + ids(tool).load).click(),
+) {
+  page.removeAllListeners("dialog");
+  const event = page
+      .waitForEvent("dialog", { timeout: 5000 })
+      .catch(() => null),
+    click = trigger();
+  const dialog = await event;
+  if (!dialog) {
+    await click;
+    await project(page, tool, name + "-without-confirmation");
+    throw new Error(
+      "Loading a saved project replaced active edits without confirmation",
+    );
+  }
+  assert.equal(dialog.type(), "confirm");
+  if (loadCopy) {
+    assert(
+      dialog.message().includes(title),
+      "Load confirmation must name the chosen save",
+    );
+    assert(/aktif|current|active/i.test(dialog.message()));
+    assert(/[Uu]nduh|[Dd]ownload/.test(dialog.message()));
+  }
+  try {
+    await whileOpen();
+  } finally {
+    accept ? await dialog.accept() : await dialog.dismiss();
+  }
+  const result = await click;
+  page.on("dialog", (d) => d.accept());
+  return result;
+}
+async function savedLoadNormal(tool, locale, width) {
+  const name = `load-${tool}-${locale}-${width}`,
+    seed = savedDeleteSeed(),
+    ctx = await context(width, seed),
+    page = await ctx.newPage();
+  try {
+    await open(page, tool, locale);
+    await page.locator("#" + ids(tool).list).selectOption("target");
+    await page.locator("#" + ids(tool).load).click();
+    await page.waitForFunction(
+      ({ id, volume }) =>
+        Number(document.querySelector("#" + id).value) === volume,
+      {
+        id: tool === "studio" ? "st-master" : "bb-volume",
+        volume: JSON.parse(seed[savedKey(tool)]).items[0].project.master.volume,
+      },
+    );
+    await page.waitForFunction(
+      (id) => !document.querySelector("#" + id).disabled,
+      ids(tool).file,
+    );
+    const chosen = await project(page, tool, name + "-chosen"),
+      audio = await wav(page, tool, name + "-chosen");
+    if (width === 390 && tool === "studio")
+      await page.locator("#st-chain-mode").click();
+    else if (width === 390)
+      await page.locator("#project-bars").selectOption("8");
+    else {
+      await page
+        .locator("#" + ids(tool).title)
+        .fill("Active edits before load — $&");
+      if (locale === "id")
+        await page
+          .locator(
+            tool === "studio"
+              ? '[data-st-step="kick:0"]'
+              : '[data-role="kick"]',
+          )
+          .click();
+    }
+    const active = await project(page, tool, name + "-active-before");
+    assert.notDeepEqual(active, chosen);
+    await savedDraftReady(page, tool, active);
+    await page.reload();
+    await ready(page, tool);
+    assert.deepEqual(
+      await project(page, tool, name + "-active-restored"),
+      active,
+    );
+    await page.locator("#" + ids(tool).list).selectOption("target");
+    const protectedBefore = await rawValues(page, [...protectedKeys, KEY]);
+    await confirmSavedLoad(page, tool, false, chosen.title, name);
+    assert.deepEqual(await project(page, tool, name + "-cancelled"), active);
+    assert.deepEqual(
+      await rawValues(page, [...protectedKeys, KEY]),
+      protectedBefore,
+    );
+    await page.reload();
+    await ready(page, tool);
+    assert.deepEqual(
+      await project(page, tool, name + "-cancel-refresh"),
+      active,
+    );
+    await page.locator("#" + ids(tool).list).selectOption("target");
+    const starts = await page.evaluate(() => window.__transferStarts);
+    await confirmSavedLoad(page, tool, true, chosen.title, name);
+    await savedDraftReady(page, tool, chosen);
+    await page.waitForFunction(
+      ({ id, title }) => document.querySelector("#" + id).value === title,
+      { id: ids(tool).title, title: chosen.title },
+    );
+    assert.deepEqual(await project(page, tool, name + "-loaded"), chosen);
+    assert.equal(await page.evaluate(() => window.__transferStarts), starts);
+    await recoveryControls(page, tool, chosen);
+    const unchanged = [
+      ...protectedKeys.filter((key) => key !== draftKey(tool)),
+      KEY,
+    ];
+    assert.deepEqual(
+      await rawValues(page, unchanged),
+      Object.fromEntries(unchanged.map((key) => [key, protectedBefore[key]])),
+    );
+    await page.reload();
+    await ready(page, tool);
+    assert.deepEqual(
+      await project(page, tool, name + "-loaded-refresh"),
+      chosen,
+    );
+    const after = await wav(page, tool, name + "-loaded");
+    assert.equal(after.channels, audio.channels);
+    const metrics = Array.from({ length: audio.channels }, (_, channel) =>
+      sameAudio(after, audio, channel),
+    );
+    if (tool === "studio") {
+      await page.locator("#st-saved").selectOption("legacy0-protected-legacy");
+      const legacy = JSON.parse(seed["perkusi.projects.studio.v2"]).items[0]
+        .project;
+      await confirmSavedLoad(page, tool, true, legacy.title, name + "-legacy");
+      await page.waitForFunction(
+        (title) => document.querySelector("#st-title").value === title,
+        legacy.title,
+      );
+      assert.deepEqual(
+        studioView(await project(page, tool, name + "-legacy")),
+        legacy,
+      );
+      await page.locator("#st-saved").selectOption("legacy1-target");
+      const b = JSON.parse(seed[savedKey("beatbox")]).items[0].project;
+      await confirmSavedLoad(page, tool, true, b.title, name + "-bb-original");
+      await page.waitForFunction(
+        (title) => document.querySelector("#st-title").value === title,
+        b.title,
+      );
+      assert.deepEqual(
+        toBeatbox(await project(page, tool, name + "-bb-original")),
+        b,
+      );
+    }
+    evidence.checks.push({
+      name,
+      result: "PASS",
+      metrics,
+      restoredEditsConfirmed: true,
+    });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
+async function savedLoadFailure(tool, kind) {
+  const name = `load-${kind}-${tool}`,
+    seed = savedDeleteSeed(),
+    ctx = await context(1440, seed),
+    page = await ctx.newPage();
+  try {
+    await open(page, tool, "id");
+    await page
+      .locator("#" + ids(tool).title)
+      .fill("Active before guarded load");
+    const active = await project(page, tool, name + "-active-before");
+    if (kind !== "immediate") await savedDraftReady(page, tool, active);
+    await page.locator("#" + ids(tool).list).selectOption("target");
+    const selected = JSON.parse(seed[savedKey(tool)]).items[0].project;
+    if (kind === "immediate") {
+      active.title = "Fresh edit before autosave — $&";
+      const pending = await confirmSavedLoad(
+        page,
+        tool,
+        false,
+        selected.title,
+        name,
+        () => {},
+        () =>
+          page.evaluate(
+            ({ titleId, loadId, key, title }) => {
+              const input = document.querySelector("#" + titleId);
+              input.value = title;
+              input.dispatchEvent(new Event("input", { bubbles: true }));
+              const pending =
+                JSON.parse(localStorage.getItem(key)).title !== title;
+              document.querySelector("#" + loadId).click();
+              return pending;
+            },
+            {
+              titleId: ids(tool).title,
+              loadId: ids(tool).load,
+              key: draftKey(tool),
+              title: active.title,
+            },
+          ),
+      );
+      assert.equal(
+        pending,
+        true,
+        "The cancelled load must protect an edit before its draft timer runs",
+      );
+      assert.deepEqual(await project(page, tool, name + "-cancelled"), active);
+      await page.reload();
+      await ready(page, tool);
+      assert.deepEqual(await project(page, tool, name + "-refresh"), active);
+    } else {
+      const writer = kind === "denied" ? null : await ctx.newPage();
+      if (writer) {
+        await writer.goto(base + "/privacy.html");
+        await page.bringToFront();
+      }
+      const before = await rawValues(page, [...protectedKeys, KEY]);
+      const revised = JSON.parse(seed[savedKey(tool)]);
+      if (kind === "changed") {
+        revised.items[0].project.title = "Changed chosen save";
+        revised.items[0].project.master.volume = 0.17;
+      } else if (kind === "missing")
+        revised.items = revised.items.filter((item) => item.id !== "target");
+      else
+        await page.evaluate((key) => {
+          const get = Storage.prototype.getItem;
+          window.__loadOriginalGet = get;
+          let reads = 0;
+          Storage.prototype.getItem = function (name) {
+            if (name === key && ++reads > 1)
+              throw new DOMException("Read denied", "SecurityError");
+            return get.call(this, name);
+          };
+        }, savedKey(tool));
+      await confirmSavedLoad(
+        page,
+        tool,
+        true,
+        selected.title,
+        name,
+        async () => {
+          if (writer)
+            await writer.evaluate(
+              ({ key, raw }) => localStorage.setItem(key, raw),
+              { key: savedKey(tool), raw: JSON.stringify(revised) },
+            );
+        },
+      );
+      await page.waitForFunction(
+        (id) =>
+          document.querySelector("#" + id).getAttribute("role") === "alert",
+        tool === "studio" ? "st-project-status" : "project-status",
+      );
+      if (kind === "denied")
+        await page.evaluate(() => {
+          Storage.prototype.getItem = window.__loadOriginalGet;
+        });
+      const after = await rawValues(page, [...protectedKeys, KEY]);
+      const expected = {
+        ...before,
+        [savedKey(tool)]:
+          kind === "denied" ? before[savedKey(tool)] : JSON.stringify(revised),
+      };
+      assert.deepEqual(after, expected);
+      assert.deepEqual(
+        await project(page, tool, name + "-active-after"),
+        active,
+      );
+    }
+    evidence.checks.push({ name, result: "PASS", activeEditsPreserved: true });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
 try {
   browser = await pw.chromium.launch({ channel: "chrome", headless: true });
   evidence.browser = browser.version();
+  if (loadOnly) {
+    const only = process.env.PERKUSI_LOAD_CASE;
+    if (!only || only === "normal" || only === "one") {
+      for (const [locale, width] of [
+        ["id", 1440],
+        ["en", 1440],
+        ["id", 390],
+      ]) {
+        for (const tool of ["beatbox", "studio"])
+          if (
+            !process.env.PERKUSI_LOAD_TOOL ||
+            process.env.PERKUSI_LOAD_TOOL === tool
+          )
+            await savedLoadNormal(tool, locale, width);
+        if (only === "one") break;
+      }
+    }
+    for (const kind of ["changed", "missing", "denied", "immediate"])
+      if (!only || only === kind)
+        for (const tool of ["beatbox", "studio"])
+          if (
+            !process.env.PERKUSI_LOAD_TOOL ||
+            process.env.PERKUSI_LOAD_TOOL === tool
+          )
+            await savedLoadFailure(tool, kind);
+  }
   if (deleteOnly) {
     const only = process.env.PERKUSI_DELETE_CASE;
     if (!only || only === "normal")
@@ -1732,6 +2047,7 @@ try {
     !recoveryOnly &&
     !clearOnly &&
     !deleteOnly &&
+    !loadOnly &&
     process.env.PERKUSI_TRANSFER_CASE !== "failure"
   )
     for (const [locale, width] of [
@@ -1748,6 +2064,7 @@ try {
     !recoveryOnly &&
     !clearOnly &&
     !deleteOnly &&
+    !loadOnly &&
     (!process.env.PERKUSI_TRANSFER_CASE ||
       process.env.PERKUSI_TRANSFER_CASE === "failure")
   ) {

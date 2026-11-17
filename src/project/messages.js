@@ -10,6 +10,9 @@ export const projectMessages = {
     savedList: "Proyek di browser ini",
     choose: "Pilih proyek tersimpan",
     load: "Muat proyek",
+    loadConfirm:
+      "Muat simpanan “{title}” dan ganti proyek aktif beserta editnya? Simpan atau unduh proyek aktif lebih dulu jika ingin mempertahankannya.",
+    loadCancelled: "Pemuatan dibatalkan. Proyek aktif dan editnya tetap ada.",
     remove: "Hapus proyek",
     deleteConfirm:
       "Hapus simpanan “{title}” dari browser? Proyek aktif, simpanan lainnya, dan file yang telah diunduh tetap ada.",
@@ -35,7 +38,7 @@ export const projectMessages = {
     deleted:
       "Simpanan terpilih dihapus. Proyek aktif dan simpanan lainnya tetap ada.",
     projectChanged:
-      "Simpanan berubah atau sudah dihapus di tab lain. Daftar diperbarui; periksa pilihan sebelum menghapus lagi. Proyek aktif tetap ada.",
+      "Simpanan berubah atau sudah dihapus di tab lain. Daftar diperbarui; periksa pilihan sebelum melanjutkan. Proyek aktif tetap ada.",
     imported: "File proyek dimuat dan dijeda. Ketuk Putar untuk mulai.",
     projectDownloaded: "File proyek siap diunduh. Simpan sebagai cadangan.",
     recovered: "Edit terakhir dipulihkan. Ketuk Putar untuk mulai.",
@@ -91,6 +94,9 @@ export const projectMessages = {
     savedList: "Projects in this browser",
     choose: "Choose a saved project",
     load: "Load project",
+    loadConfirm:
+      "Load saved project “{title}” and replace your active project and edits? Save or download your active project first if you want to keep it.",
+    loadCancelled: "Loading cancelled. Your active project and edits remain.",
     remove: "Delete project",
     deleteConfirm:
       "Delete saved project “{title}” from this browser? Your active project, other saved projects and downloaded files remain.",
@@ -116,7 +122,7 @@ export const projectMessages = {
     deleted:
       "Selected saved project deleted. Your active project and other saves remain.",
     projectChanged:
-      "The saved project changed or was deleted in another tab. The list has been refreshed; review your choice before deleting again. Your active project remains.",
+      "The saved project changed or was deleted in another tab. The list has been refreshed; review your choice before continuing. Your active project remains.",
     imported: "Project file loaded and paused. Tap Play to start.",
     projectDownloaded:
       "Project file is ready to download. Keep it as a backup.",
