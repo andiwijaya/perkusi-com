@@ -65,6 +65,7 @@ test("V0/V1/V1.1 and V2 migrate into a strict canonical composition; old parser 
     for (const bars of [4, 8]) {
       const bb = beatbox(v, bars),
         p = migrateProject(bb, catalog);
+      assert.deepEqual(p.playback, { mode: "chain", programmeGain: 1 });
       assert.deepEqual(toBeatbox(p), bb);
       assert.deepEqual(reverseReasons(p), []);
       assert.equal(p.clipPack.processing, "bumi-presence-v1");

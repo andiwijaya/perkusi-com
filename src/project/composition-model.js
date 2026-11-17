@@ -347,6 +347,9 @@ export function fromBeatbox(p) {
   const result = newComposition(p.title);
   result.timing = { bpm: 96, meter: [4, 4], swing: 0, quantize: true };
   result.master = { ...p.master };
+  // Beatbox's output is already mastered. Keep that level when the same loops
+  // first enter Studio; subsequent unplayed musical edits can recalibrate.
+  result.playback = { mode: "chain", programmeGain: 1 };
   result.chain = Array(p.export.bars).fill("p1");
   result.clips = p.tracks.map((t) => ({ ...t, ...mix() }));
   return result;
