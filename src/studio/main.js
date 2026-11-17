@@ -191,6 +191,20 @@ export function initStudio() {
   function fail(error) {
     message(error.code || "invalidProject", true);
   }
+  function confirmReplacement(key) {
+    const p = current(),
+      pattern = p.patterns.find((a) => a.id === p.activePattern);
+    if (
+      window.confirm(
+        c[key].replace(/\{(pattern|title)\}/g, (_, field) =>
+          field === "pattern" ? pattern.name : cleanTitle($("title").value),
+        ),
+      )
+    )
+      return true;
+    message("resetCancelled");
+    return false;
+  }
   function readSaves() {
     try {
       savedItems = store.read();
@@ -878,15 +892,7 @@ export function initStudio() {
           $("desktop").hidden = true;
           break;
         case "st-demo":
-          if (
-            history.past.length &&
-            !window.confirm(
-              locale === "en"
-                ? "Replace this arrangement? You can undo to restore it."
-                : "Ganti susunan ini? Gunakan Urungkan untuk mengembalikannya.",
-            )
-          )
-            break;
+          if (!confirmReplacement("demoConfirm")) break;
           edit((p) =>
             Object.assign(
               p,
@@ -905,6 +911,7 @@ export function initStudio() {
           $("title").value = current().title;
           break;
         case "st-clear":
+          if (!confirmReplacement("clearConfirm")) break;
           edit((p) => {
             const a = p.patterns.find((a) => a.id === p.activePattern);
             a.steps = emptyPattern().steps;
@@ -948,6 +955,8 @@ export function initStudio() {
           break;
         }
         case "st-delete-pattern":
+          if (current().patterns.length === 1) throw new ProjectError("limits");
+          if (!confirmReplacement("deletePatternConfirm")) break;
           edit((p) => {
             if (p.patterns.length === 1) throw new ProjectError("limits");
             const id = p.activePattern;

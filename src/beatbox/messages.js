@@ -66,6 +66,10 @@ export const beatboxMessages = {
     wait: "menunggu",
     disabled: "Nonaktif",
     loadingProgress: "suara siap",
+    resetConfirm:
+      "Mulai ulang proyek “{title}”? Semua karakter akan dinonaktifkan dan variasi kembali ke A. Nama proyek, volume, panjang WAV, dan proyek tersimpan tetap ada. Simpan proyek aktif lebih dulu jika ingin mempertahankan beat ini.",
+    resetCancelled:
+      "Mulai ulang dibatalkan. Proyek aktif dan editnya tetap ada.",
     resetAnnouncement: "Panggung dikosongkan. Posisi kembali ke awal.",
     demoAnnouncement: "Groove Bumi, Cicik, dan Dum dipilih.",
     jsRequired:
@@ -147,6 +151,9 @@ export const beatboxMessages = {
     wait: "waiting",
     disabled: "Off",
     loadingProgress: "sounds ready",
+    resetConfirm:
+      "Reset project “{title}”? All characters will be turned off and variations returned to A. The project name, volume, WAV length and saved projects remain. Save your active project first if you want to keep this beat.",
+    resetCancelled: "Reset cancelled. Your active project and edits remain.",
     resetAnnouncement: "Stage cleared. Position returned to the beginning.",
     demoAnnouncement: "Bumi, Cicik and Dum groove selected.",
     jsRequired:

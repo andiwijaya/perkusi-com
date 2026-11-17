@@ -343,6 +343,14 @@ export function initBeatbox() {
     .addEventListener("click", () => run(() => engine.pause()));
   document.querySelector("#bb-reset").addEventListener("click", () =>
     run(() => {
+      if (
+        !window.confirm(
+          copy.resetConfirm.replace("{title}", () => projects.current().title),
+        )
+      ) {
+        announce(copy.resetCancelled);
+        return;
+      }
       engine.reset();
       announce(copy.resetAnnouncement);
     }),
