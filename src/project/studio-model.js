@@ -199,26 +199,29 @@ export class ProjectHistory {
     this.future = [];
     this.limit = limit;
   }
-  edit(fn) {
-    const next = structuredClone(this.current);
+  edit(fn, snapshot = this.current) {
+    // Runtime playback mode/level can change without a score edit. Capture the
+    // complete live state on this edge, without adding a separate undo entry.
+    const before = this.validate(snapshot),
+      next = structuredClone(before);
     fn(next);
     const valid = this.validate(next);
-    if (JSON.stringify(valid) === JSON.stringify(this.current)) return false;
-    this.past.push(this.current);
+    if (JSON.stringify(valid) === JSON.stringify(before)) return false;
+    this.past.push(before);
     if (this.past.length > this.limit) this.past.shift();
     this.current = valid;
     this.future = [];
     return true;
   }
-  undo() {
+  undo(snapshot = this.current) {
     if (!this.past.length) return false;
-    this.future.push(this.current);
+    this.future.push(this.validate(snapshot));
     this.current = this.past.pop();
     return true;
   }
-  redo() {
+  redo(snapshot = this.current) {
     if (!this.future.length) return false;
-    this.past.push(this.current);
+    this.past.push(this.validate(snapshot));
     this.current = this.future.pop();
     return true;
   }
