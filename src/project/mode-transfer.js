@@ -10,6 +10,7 @@ import { compositionRegistry } from "./studio-registry.js";
 import { originalRegistry } from "./original-registry.js";
 import { safeFilename } from "./files.js";
 import { trackEvent } from "../analytics.js";
+import { navigationHref } from "../app/routes.js";
 const KEY = "perkusi.mode-transfer.v3",
   MARKER = "perkusi.mode-transfer.pending.v3";
 const copy = {
@@ -54,6 +55,16 @@ const copy = {
     recoveryFailure:
       "Perpindahan belum selesai. Draft saat ini dipertahankan; salinan tertunda tidak akan menimpa edit baru saat refresh. Unduh salinan perpindahan untuk mengimpornya jika kamu memilih mengganti draft, atau mulai perpindahan baru. Proyek asal dan cadangan tetap tersimpan.",
     copy: "Unduh salinan perpindahan",
+    recoveryTitle: "Pulihkan proyek setelah pindah",
+    recoveryNote:
+      "Impor mengganti proyek yang terbuka di tool tujuan. Unduh proyek itu lebih dulu. Setelah pemulihan, pilih Simpan proyek baru jika ingin menambahkannya ke daftar simpanan.",
+    originalLabel: "Proyek asal saat pindah",
+    draftLabel: "Draft tujuan sebelum diganti",
+    restoreHelp:
+      "Unduh file terpilih, lalu buka {tool}, pilih Impor proyek, dan pilih file tadi.",
+    restoreOpen: "Buka {tool} untuk impor",
+    unreadableDraft:
+      "Cadangan ini tidak dapat dibaca sebagai proyek. File mentah tetap dapat diunduh; pilih cadangan lain untuk memulihkan beat.",
   },
   en: {
     forward: "Continue in Studio",
@@ -96,6 +107,16 @@ const copy = {
     recoveryFailure:
       "The transfer did not finish. Your current draft is kept; the pending copy will not overwrite newer edits on reload. Download the transfer copy to import it if you choose to replace the draft, or start a new transfer. Originals and backups are kept.",
     copy: "Download transfer copy",
+    recoveryTitle: "Restore a project after switching",
+    recoveryNote:
+      "Import replaces the project open in the destination tool. Download that project first. After restoring, choose Save new project to add it to your saved projects.",
+    originalLabel: "Original project when switching",
+    draftLabel: "Destination draft before replacement",
+    restoreHelp:
+      "Download the selected file, then open {tool}, choose Import project, and select that file.",
+    restoreOpen: "Open {tool} to import",
+    unreadableDraft:
+      "This backup cannot be read as a project. You can still download its raw file; choose another backup to restore your beat.",
   },
 };
 const language = () => (document.documentElement.lang === "en" ? "en" : "id");
@@ -461,15 +482,43 @@ export function initModeTransfer({
   oldDraft.id = "mode-draft-backup";
   candidateCopy.id = "mode-candidate-copy";
   status.setAttribute("role", "status");
-  panel.append(
-    button,
-    status,
+  const recoveryPanel = document.createElement("section"),
+    recoveryTitle = document.createElement("h3"),
+    recoveryNote = document.createElement("p"),
+    recoveryGrid = document.createElement("div");
+  recoveryPanel.id = "mode-recovery";
+  recoveryTitle.id = "mode-recovery-title";
+  recoveryNote.id = "mode-recovery-note";
+  recoveryPanel.setAttribute("aria-labelledby", recoveryTitle.id);
+  recoveryGrid.className = "mode-recovery-grid";
+  const originalGroup = document.createElement("div"),
+    draftGroup = document.createElement("div"),
+    originalLabel = document.createElement("label"),
+    draftLabel = document.createElement("label"),
+    originalHelp = document.createElement("p"),
+    draftHelp = document.createElement("p"),
+    originalOpen = document.createElement("a"),
+    draftOpen = document.createElement("a");
+  originalLabel.htmlFor = originalList.id;
+  draftLabel.htmlFor = draftList.id;
+  originalHelp.id = "mode-original-help";
+  draftHelp.id = "mode-draft-help";
+  originalOpen.id = "mode-original-open";
+  draftOpen.id = "mode-draft-open";
+  originalOpen.className = draftOpen.className = "mode-restore-link";
+  originalList.setAttribute("aria-describedby", originalHelp.id);
+  draftList.setAttribute("aria-describedby", draftHelp.id);
+  originalGroup.append(
+    originalLabel,
     originalList,
     backup,
-    draftList,
-    oldDraft,
-    candidateCopy,
+    originalHelp,
+    originalOpen,
   );
+  draftGroup.append(draftLabel, draftList, oldDraft, draftHelp, draftOpen);
+  recoveryGrid.append(originalGroup, draftGroup);
+  recoveryPanel.append(recoveryTitle, recoveryNote, recoveryGrid);
+  panel.append(button, status, recoveryPanel, candidateCopy);
   root.append(panel);
   const clear = document.createElement("button");
   clear.type = "button";
@@ -532,6 +581,31 @@ export function initModeTransfer({
     backup.textContent = c.backup;
     oldDraft.textContent = c.oldDraft;
     candidateCopy.textContent = c.copy;
+    recoveryTitle.textContent = c.recoveryTitle;
+    recoveryNote.textContent = c.recoveryNote;
+    originalLabel.textContent = c.originalLabel;
+    draftLabel.textContent = c.draftLabel;
+    for (const [list, help, link] of [
+      [originalList, originalHelp, originalOpen],
+      [draftList, draftHelp, draftOpen],
+    ]) {
+      const option = list.selectedOptions[0],
+        target = option?.dataset.target,
+        tool = target === "studio" ? "Rhythm Studio" : "Beatbox";
+      const readable = !!target && option.dataset.readable !== "false";
+      help.textContent = readable
+        ? c.restoreHelp.replace("{tool}", tool)
+        : c.unreadableDraft;
+      link.hidden = !readable;
+      link.textContent = c.restoreOpen.replace("{tool}", tool);
+      if (readable)
+        link.href = navigationHref(
+          target,
+          language(),
+          target === "studio" ? "st-import" : "project-import",
+        );
+      else link.removeAttribute("href");
+    }
     for (const option of draftList.options)
       option.textContent = `${Number(option.value) + 1} · ${option.dataset.target === "studio" ? "Studio" : "Beatbox"}${option.dataset.title ? " · " + option.dataset.title : ""}`;
     clear.textContent = c.clear;
@@ -548,6 +622,7 @@ export function initModeTransfer({
   function recovery() {
     try {
       const r = read(localStorage);
+      recoveryPanel.hidden = !r;
       clear.hidden =
         backup.hidden =
         originalList.hidden =
@@ -555,6 +630,7 @@ export function initModeTransfer({
           !r;
       const drafts = retainedDrafts(r);
       oldDraft.hidden = draftList.hidden = !drafts.length;
+      draftGroup.hidden = !drafts.length;
       draftList.replaceChildren(
         ...drafts.map((d, i) => {
           const option = new Option(
@@ -562,11 +638,13 @@ export function initModeTransfer({
             String(i),
           );
           option.dataset.target = d.target;
+          option.dataset.readable = "false";
           try {
             option.dataset.title = parseProject(
               d.raw,
               targetCatalog(d.target),
             ).title;
+            option.dataset.readable = "true";
           } catch {
             // Opaque/corrupt legacy drafts remain downloadable byte-for-byte.
           }
@@ -579,17 +657,19 @@ export function initModeTransfer({
       if (drafts.length)
         draftList.value = String(latest >= 0 ? latest : drafts.length - 1);
       originalList.replaceChildren(
-        ...(r?.originals || []).map(
-          (p, i) =>
-            new Option(
-              `${i + 1} · ${p.schemaVersion === 1 ? "Beatbox" : "Studio"} · ${p.title}`,
-              String(i),
-            ),
-        ),
+        ...(r?.originals || []).map((p, i) => {
+          const option = new Option(
+            `${i + 1} · ${p.schemaVersion === 1 ? "Beatbox" : "Studio"} · ${p.title}`,
+            String(i),
+          );
+          option.dataset.target = p.schemaVersion === 1 ? "beatbox" : "studio";
+          return option;
+        }),
       );
       if (r) originalList.value = String(r.originals.length - 1);
     } catch {
       failed = true;
+      recoveryPanel.hidden = true;
       clear.hidden =
         backup.hidden =
         originalList.hidden =
@@ -600,6 +680,8 @@ export function initModeTransfer({
     }
     localize();
   }
+  listen(originalList, "change", localize);
+  listen(draftList, "change", localize);
   listen(button, "click", () => {
     if (locked()) return;
     try {
@@ -640,7 +722,10 @@ export function initModeTransfer({
           p.schemaVersion === 1 ? originalRegistry : compositionRegistry;
       delivery.download(
         new Blob([serializeProject(p, catalog)], { type: "application/json" }),
-        safeFilename(p.title + "-original", "perkusi.json"),
+        safeFilename(
+          `original-${p.schemaVersion === 1 ? "beatbox" : "studio"}-${p.title}`,
+          "perkusi.json",
+        ),
       );
     } catch {
       failed = true;
@@ -649,12 +734,19 @@ export function initModeTransfer({
   });
   listen(oldDraft, "click", () => {
     try {
-      const r = read(localStorage);
+      const r = read(localStorage),
+        d = retainedDrafts(r)[Number(draftList.value)];
+      let title = String(Number(draftList.value) + 1);
+      try {
+        title = parseProject(d.raw, targetCatalog(d.target)).title;
+      } catch {
+        // An unreadable draft must remain available as its exact original bytes.
+      }
       delivery.download(
-        new Blob([retainedDrafts(r)[Number(draftList.value)].raw], {
+        new Blob([d.raw], {
           type: "application/json",
         }),
-        `destination-draft-${Number(draftList.value) + 1}.perkusi.json`,
+        safeFilename(`draft-${d.target}-${title}`, "perkusi.json"),
       );
     } catch {
       failed = true;

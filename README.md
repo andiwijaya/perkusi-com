@@ -41,6 +41,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:transfer` checks Beatbox → Studio → Beatbox, explicit Studio derived copies, original and displaced-draft downloads, cancellation, storage failure, newer destination edits and safe refresh. It covers ID/EN desktop and ID phone viewports with isolated synthetic projects. Set `PERKUSI_TRANSFER_BASE_URL=https://perkusi.com` for direct production QA and `PERKUSI_TRANSFER_QA_DIR` for evidence. See `docs/features/MODE-TRANSFER-REPORT.md`.
 
+`npm run test:recovery` follows downloaded originals and displaced drafts through the recovery links and actual Import buttons in both tools. It compares all project fields and both WAV channels after import, refresh and named save/load, including a damaged current draft, older archive choices, legacy Studio V2 and rejection of an unreadable backup. It uses the same production/evidence environment variables as `test:transfer`. See `docs/features/TRANSFER-RECOVERY-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.

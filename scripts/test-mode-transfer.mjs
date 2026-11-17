@@ -8,12 +8,16 @@ import {
   withPatternLoops,
   newCompositionClip,
   toBeatbox,
+  studioView,
 } from "../src/project/composition-model.js";
+import { newStudioProject } from "../src/project/studio-model.js";
 import { withKendhang } from "../src/project/kendhang.js";
 import { withBass } from "../src/project/bass.js";
 import { withGuitar } from "../src/project/guitar.js";
 import { originalRegistry } from "../src/project/original-registry.js";
 import { pagePath } from "../src/app/routes.js";
+const recoveryOnly = process.argv.includes("--recovery");
+const recoveryGuidance = process.env.PERKUSI_RECOVERY_GUIDANCE !== "0";
 const require = createRequire(import.meta.url);
 let pw;
 try {
@@ -22,7 +26,10 @@ try {
   pw = require(join(process.env.NODE_REPL_NODE_MODULE_DIRS, "playwright"));
 }
 const output =
-  process.env.PERKUSI_TRANSFER_QA_DIR || "qa-artifacts/mode-transfer";
+  process.env.PERKUSI_TRANSFER_QA_DIR ||
+  (recoveryOnly
+    ? "qa-artifacts/transfer-recovery"
+    : "qa-artifacts/mode-transfer");
 await mkdir(output, { recursive: true });
 const remote = process.env.PERKUSI_TRANSFER_BASE_URL;
 const server = remote
@@ -112,6 +119,8 @@ const ids = (tool) =>
         title: "st-title",
         json: "st-project-download",
         save: "st-save",
+        list: "st-saved",
+        load: "st-load",
         render: "st-render",
         result: "st-result",
         wav: "st-wav-download",
@@ -121,6 +130,8 @@ const ids = (tool) =>
         title: "project-title",
         json: "project-json",
         save: "project-save",
+        list: "project-list",
+        load: "project-load",
         render: "project-render",
         result: "project-result",
         wav: "project-download",
@@ -161,7 +172,11 @@ async function context(width, seed) {
   }, seed);
   return ctx;
 }
+const watchedPages = new WeakSet();
 async function watch(page) {
+  if (watchedPages.has(page)) return;
+  watchedPages.add(page);
+  page.setDefaultTimeout(45000);
   page.on("dialog", (d) => d.accept());
   page.on("pageerror", (e) => evidence.errors.push(e.message));
 }
@@ -184,23 +199,43 @@ async function open(page, tool, locale) {
   );
   await ready(page, tool);
 }
-async function imported(page, tool, p) {
-  await page.locator("#" + ids(tool).file).setInputFiles({
+async function imported(page, tool, p, raw) {
+  const file = {
     name: "transfer.perkusi.json",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(p)),
-  });
+    buffer: Buffer.from(raw ?? JSON.stringify(p)),
+  };
+  if (recoveryOnly) {
+    const chooser = page.waitForEvent("filechooser");
+    await page
+      .locator(tool === "studio" ? "#st-import" : "#project-import")
+      .click();
+    await (await chooser).setFiles(file);
+  } else await page.locator("#" + ids(tool).file).setInputFiles(file);
   await page.waitForFunction(
     ({ id, title }) => document.querySelector("#" + id).value === title,
     { id: ids(tool).title, title: p.title },
   );
   await ready(page, tool);
+  await page.waitForFunction(
+    (id) => !document.querySelector("#" + id).disabled,
+    ids(tool).file,
+  );
 }
 async function download(page, selector, name) {
   const job = page.waitForEvent("download");
   await page.locator(selector).click();
   const d = await job,
     path = join(output, name);
+  if (
+    recoveryOnly &&
+    recoveryGuidance &&
+    ["#mode-original", "#mode-draft-backup"].includes(selector)
+  )
+    assert(
+      /^(original|draft)-(beatbox|studio)-/.test(d.suggestedFilename()),
+      "Recovery filenames must identify their tool",
+    );
   await d.saveAs(path);
   return readFile(path);
 }
@@ -261,7 +296,7 @@ async function wav(page, tool, name) {
     pcm,
   };
 }
-function sameAudio(a, b) {
+function sameAudio(a, b, channel = 0) {
   assert.equal(a.rate, b.rate);
   const frames = a.pcm.length / 2 / a.channels;
   assert.equal(frames, b.pcm.length / 2 / b.channels);
@@ -274,8 +309,8 @@ function sameAudio(a, b) {
     i < frames - Math.round(0.015 * a.rate);
     i++
   ) {
-    const x = a.pcm.readInt16LE(i * a.channels * 2) / 32767,
-      y = b.pcm.readInt16LE(i * b.channels * 2) / 32767;
+    const x = a.pcm.readInt16LE((i * a.channels + channel) * 2) / 32767,
+      y = b.pcm.readInt16LE((i * b.channels + channel) * 2) / 32767;
     xx += x * x;
     yy += y * y;
     xy += x * y;
@@ -643,10 +678,409 @@ async function failureCase(kind) {
     await ctx.close();
   }
 }
+async function recoveryControls(page, tool, data) {
+  if (tool === "beatbox") return beatboxControls(page, data);
+  for (const [id, expected] of Object.entries({
+    "st-bpm": data.timing.bpm,
+    "st-swing": data.timing.swing,
+    "st-master": data.master.volume,
+  }))
+    assert.equal(Number(await page.locator("#" + id).inputValue()), expected);
+  assert.equal(await page.locator("#st-kit").inputValue(), data.pack.id);
+  assert.equal(
+    await page.locator("#st-pattern").inputValue(),
+    data.activePattern,
+  );
+  assert.equal(
+    await page.locator("#st-quantize").isChecked(),
+    data.timing.quantize,
+  );
+  assert.equal(
+    await page.locator("#st-chain-mode").isChecked(),
+    data.playback.mode === "chain",
+  );
+  assert.equal(await page.locator(".st-chain-slot").count(), data.chain.length);
+  for (const track of data.tracks) {
+    for (const field of ["volume", "pan"])
+      assert.equal(
+        Number(
+          await page.locator(`[data-st-${field}="${track.role}"]`).inputValue(),
+        ),
+        track[field],
+      );
+    for (const field of ["mute", "solo"])
+      assert.equal(
+        await page
+          .locator(`[data-st-${field}="${track.role}"]`)
+          .getAttribute("aria-pressed"),
+        String(track[field]),
+      );
+  }
+}
+async function restored(page, tool, expected, raw, audio, name, damaged) {
+  const changed = structuredClone(expected);
+  changed.title = "Work before recovery";
+  changed.master.volume = 0.12;
+  await imported(page, tool, changed);
+  if (damaged) {
+    // A damaged current draft must not stop an explicit valid recovery from surviving reload.
+    await page.waitForFunction(
+      ({ key, title }) =>
+        JSON.parse(localStorage.getItem(key) || "null")?.title === title,
+      { key: draftKey(tool), title: changed.title },
+    );
+    await page.addInitScript((key) => {
+      if (sessionStorage.getItem("__damageDraft") === key) {
+        sessionStorage.removeItem("__damageDraft");
+        localStorage.setItem(key, "{damaged current draft");
+      }
+    }, draftKey(tool));
+    await page.evaluate(
+      (key) => sessionStorage.setItem("__damageDraft", key),
+      draftKey(tool),
+    );
+    await page.reload();
+    await ready(page, tool);
+    assert.equal(
+      await page.evaluate((key) => localStorage.getItem(key), draftKey(tool)),
+      "{damaged current draft",
+    );
+  }
+  const starts = await page.evaluate(() => window.__transferStarts);
+  await imported(page, tool, expected, raw);
+  assert.equal(
+    await page.evaluate(() => window.__transferStarts),
+    starts,
+    "Recovery must not autoplay",
+  );
+  assert.deepEqual(await project(page, tool, name + "-restored"), expected);
+  await recoveryControls(page, tool, expected);
+  // Refresh before an explicit named save: the restored draft itself must persist.
+  await page.reload();
+  await ready(page, tool);
+  assert.deepEqual(await project(page, tool, name + "-refresh"), expected);
+  await recoveryControls(page, tool, expected);
+  await page.locator("#" + ids(tool).save).click();
+  const saved = await page.locator("#" + ids(tool).list).inputValue();
+  assert(saved);
+  await imported(page, tool, changed);
+  await page.locator("#" + ids(tool).list).selectOption(saved);
+  await page.locator("#" + ids(tool).load).click();
+  await page.waitForFunction(
+    ({ id, title }) => document.querySelector("#" + id).value === title,
+    { id: ids(tool).title, title: expected.title },
+  );
+  assert.deepEqual(await project(page, tool, name + "-saved-load"), expected);
+  await recoveryControls(page, tool, expected);
+  const after = await wav(page, tool, name + "-restored");
+  assert.equal(after.channels, audio.channels);
+  const metrics = Array.from({ length: audio.channels }, (_, channel) =>
+    sameAudio(after, audio, channel),
+  );
+  await page.locator(tool === "studio" ? "#st-play" : "#bb-play").click();
+  await page.waitForFunction(() => window.__transferStarts > 0, null, {
+    timeout: 30000,
+  });
+  await page.locator(tool === "studio" ? "#st-pause" : "#bb-pause").click();
+  return { tool, damagedDraft: damaged, metrics };
+}
+async function recoverJourney(source, locale, width) {
+  const target = source === "beatbox" ? "studio" : "beatbox";
+  const name = `recover-${source}-${locale}-${width}`;
+  const studio = advanced();
+  studio.title = "Restore — Studio lengkap";
+  studio.timing.quantize = false;
+  studio.playback.mode = locale === "en" ? "chain" : "pattern";
+  studio.tracks[0].pan = -0.25;
+  studio.tracks[1].mute = true;
+  studio.instrument.pan = 0.35;
+  studio.bass.volume = 0.41;
+  studio.guitar.pan = -0.3;
+  const b = beatbox("Restore — Beatbox", width === 390 ? 4 : 8);
+  const data = { studio, beatbox: b };
+  const raws = Object.fromEntries(
+    Object.entries(data).map(([tool, value]) => [
+      tool,
+      JSON.stringify(value, null, 3) + "\n",
+    ]),
+  );
+  const ctx = await context(
+    width,
+    Object.fromEntries(
+      Object.entries(raws).map(([tool, raw]) => [draftKey(tool), raw]),
+    ),
+  );
+  const page = await ctx.newPage();
+  try {
+    const baseline = {},
+      audio = {};
+    for (const tool of [target, source]) {
+      await open(page, tool, locale);
+      baseline[tool] = await project(page, tool, name + "-baseline-" + tool);
+      audio[tool] = await wav(page, tool, name + "-baseline-" + tool);
+    }
+    const displacedRaw = await page.evaluate(
+      (key) => localStorage.getItem(key),
+      draftKey(target),
+    );
+    await transfer(page, target, locale, name, source === "studio");
+    if (locale === "en" && width === 1440 && source === "beatbox") {
+      await transfer(page, source, locale, name + "-back");
+      await transfer(page, target, locale, name + "-again");
+    }
+    const record = await page.evaluate((key) => localStorage.getItem(key), KEY);
+    const retained = JSON.parse(record);
+    await page
+      .locator("#mode-original-list")
+      .selectOption(
+        String(
+          retained.originals.findIndex(
+            (p) =>
+              p.title === baseline[source].title &&
+              p.schemaVersion === baseline[source].schemaVersion,
+          ),
+        ),
+      );
+    await page
+      .locator("#mode-draft-list")
+      .selectOption(
+        String(
+          retained.drafts.findIndex(
+            (d) => d.target === target && d.raw === displacedRaw,
+          ),
+        ),
+      );
+    const originalFile = await download(
+      page,
+      "#mode-original",
+      name + "-original.perkusi.json",
+    );
+    const draftFile = await download(
+      page,
+      "#mode-draft-backup",
+      name + "-draft.perkusi.json",
+    );
+    assert.deepEqual(JSON.parse(originalFile), baseline[source]);
+    assert.equal(draftFile.toString(), displacedRaw);
+    if (recoveryGuidance) {
+      for (const [kind, tool] of [
+        ["original", source],
+        ["draft", target],
+      ]) {
+        const link = page.locator(`#mode-${kind}-open`);
+        const href = new URL(await link.getAttribute("href"), base);
+        assert.equal(href.pathname, pagePath(tool, locale));
+        assert.equal(
+          href.hash,
+          tool === "studio" ? "#st-import" : "#project-import",
+        );
+        assert(
+          (await page.locator(`#mode-${kind}-help`).innerText()).includes(
+            tool === "studio" ? "Rhythm Studio" : "Beatbox",
+          ),
+        );
+      }
+      assert(
+        /Impor|Import/.test(
+          await page.locator("#mode-recovery-note").innerText(),
+        ),
+      );
+      await page.locator("#mode-recovery").scrollIntoViewIfNeeded();
+      assert(
+        await page
+          .locator("#mode-recovery")
+          .evaluate((el) => el.getBoundingClientRect().right <= innerWidth + 1),
+      );
+      await page.screenshot({ path: join(output, name + "-recovery.png") });
+    }
+    const restoredCases = [];
+    // Restore the complete source in its own tool, then restore the displaced target draft.
+    if (recoveryGuidance) {
+      await page.locator("#mode-original-open").click();
+      await page.waitForURL((url) => url.pathname === pagePath(source, locale));
+      await ready(page, source);
+    } else await open(page, source, locale);
+    restoredCases.push(
+      await restored(
+        page,
+        source,
+        baseline[source],
+        originalFile,
+        audio[source],
+        name + "-original",
+        width === 390,
+      ),
+    );
+    if (recoveryGuidance) {
+      await page.locator("#mode-draft-open").click();
+      await page.waitForURL((url) => url.pathname === pagePath(target, locale));
+      await ready(page, target);
+    } else await open(page, target, locale);
+    restoredCases.push(
+      await restored(
+        page,
+        target,
+        baseline[target],
+        draftFile,
+        audio[target],
+        name + "-draft",
+        width === 390,
+      ),
+    );
+    assert.equal(
+      await page.evaluate((key) => localStorage.getItem(key), KEY),
+      record,
+      "Restoring must not modify the protected transfer archive",
+    );
+    evidence.checks.push({ name, result: "PASS", restored: restoredCases });
+    console.log("PASS " + name);
+  } catch (error) {
+    await writeFile(
+      join(output, name + "-failure.txt"),
+      await page.locator("body").innerText(),
+    );
+    await page.screenshot({ path: join(output, name + "-failure.png") });
+    throw error;
+  } finally {
+    await ctx.close();
+  }
+}
+async function recoveryEdge(kind) {
+  const name = `recover-${kind}`;
+  const legacy = newStudioProject("Legacy Studio draft");
+  legacy.timing = { bpm: 123, meter: [4, 4], swing: 0.31, quantize: false };
+  legacy.patterns[0].steps.kick[2] = 0.6;
+  legacy.tracks[0].pan = -0.4;
+  legacy.master.volume = 0.28;
+  legacy.chain = ["p1", "p1", "p1"];
+  const raw =
+    kind === "legacy"
+      ? JSON.stringify(legacy, null, 2) + "\n"
+      : "{unreadable retained draft\n";
+  const key =
+    kind === "legacy" ? "perkusi.draft.studio.v2" : draftKey("studio");
+  const ctx = await context(390, { [key]: raw }),
+    page = await ctx.newPage();
+  try {
+    await open(page, "beatbox", "id");
+    await imported(page, "beatbox", beatbox("Recovery edge source", 4));
+    await transfer(page, "studio", "id", name);
+    const before = await project(page, "studio", name + "-before");
+    const archive = await page.evaluate(
+      (key) => localStorage.getItem(key),
+      KEY,
+    );
+    const file = await download(
+      page,
+      "#mode-draft-backup",
+      name + ".perkusi.json",
+    );
+    assert.equal(file.toString(), raw);
+    if (kind === "legacy") {
+      assert(await page.locator("#mode-draft-open").isVisible());
+      await page.locator("#mode-draft-open").click();
+      const chooser = page.waitForEvent("filechooser");
+      await page.locator("#st-import").click();
+      await (
+        await chooser
+      ).setFiles({
+        name: "legacy.perkusi.json",
+        mimeType: "application/json",
+        buffer: file,
+      });
+      await page.waitForFunction(
+        (title) => document.querySelector("#st-title").value === title,
+        legacy.title,
+      );
+      assert.deepEqual(
+        studioView(await project(page, "studio", name + "-restored")),
+        legacy,
+      );
+      await page.reload();
+      await ready(page, "studio");
+      assert.deepEqual(
+        studioView(await project(page, "studio", name + "-refresh")),
+        legacy,
+      );
+      assert.equal(
+        await page.evaluate((key) => localStorage.getItem(key), key),
+        raw,
+      );
+    } else {
+      assert(await page.locator("#mode-draft-open").isHidden());
+      assert(
+        /tidak dapat dibaca/.test(
+          await page.locator("#mode-draft-help").innerText(),
+        ),
+      );
+      const chooser = page.waitForEvent("filechooser");
+      await page.locator("#st-import").click();
+      await (
+        await chooser
+      ).setFiles({
+        name: "bad.perkusi.json",
+        mimeType: "application/json",
+        buffer: file,
+      });
+      await page.waitForFunction(
+        () =>
+          document.querySelector("#st-project-status").getAttribute("role") ===
+          "alert",
+        null,
+        { timeout: 10000 },
+      );
+      assert.deepEqual(
+        await project(page, "studio", name + "-after-rejection"),
+        before,
+      );
+      await page.reload();
+      await ready(page, "studio");
+      assert.deepEqual(
+        await project(page, "studio", name + "-refresh"),
+        before,
+      );
+    }
+    assert.equal(
+      await page.evaluate((key) => localStorage.getItem(key), KEY),
+      archive,
+    );
+    evidence.checks.push({ name, result: "PASS", rawBytesPreserved: true });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
 try {
   browser = await pw.chromium.launch({ channel: "chrome", headless: true });
   evidence.browser = browser.version();
-  if (process.env.PERKUSI_TRANSFER_CASE !== "failure")
+  if (recoveryOnly) {
+    for (const [locale, width] of [
+      ["id", 1440],
+      ["en", 1440],
+      ["id", 390],
+    ]) {
+      if (process.env.PERKUSI_RECOVERY_CASE === "phone" && width !== 390)
+        continue;
+      for (const source of ["beatbox", "studio"]) {
+        if (
+          process.env.PERKUSI_RECOVERY_SOURCE &&
+          source !== process.env.PERKUSI_RECOVERY_SOURCE
+        )
+          continue;
+        await recoverJourney(source, locale, width);
+        if (process.env.PERKUSI_RECOVERY_CASE === "one") break;
+      }
+      if (process.env.PERKUSI_RECOVERY_CASE === "one") break;
+    }
+    if (
+      !process.env.PERKUSI_RECOVERY_CASE &&
+      !process.env.PERKUSI_RECOVERY_SOURCE
+    ) {
+      await recoveryEdge("legacy");
+      await recoveryEdge("unreadable");
+    }
+  }
+  if (!recoveryOnly && process.env.PERKUSI_TRANSFER_CASE !== "failure")
     for (const [locale, width] of [
       ["id", 1440],
       ["en", 1440],
@@ -658,8 +1092,9 @@ try {
       await derived(locale, width);
     }
   if (
-    !process.env.PERKUSI_TRANSFER_CASE ||
-    process.env.PERKUSI_TRANSFER_CASE === "failure"
+    !recoveryOnly &&
+    (!process.env.PERKUSI_TRANSFER_CASE ||
+      process.env.PERKUSI_TRANSFER_CASE === "failure")
   ) {
     await failureCase("quota");
     await failureCase("newer-draft");
