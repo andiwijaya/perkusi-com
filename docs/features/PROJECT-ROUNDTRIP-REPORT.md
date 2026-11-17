@@ -22,6 +22,6 @@ WAV comparison requires identical channel count, sample rate and PCM length, at 
 
 Evidence is under `qa-artifacts/project-roundtrip-20261117/`. Tests use synthetic projects in isolated Chrome contexts and do not read or overwrite personal production saves. Phone checks use browser viewport/touch emulation; physical devices, recruited users and human listening are not part of this check.
 
-The production build and all 666 unit tests passed. The build receipt is `qa-artifacts/build-retention/runs/b4510712-03f5-473c-af31-39dbf0fbc08b.json`. Release QA matches the live main commit, then runs the project journeys directly against production.
+The final production build and all 667 unit tests passed, including a valid custom pattern ID named `chain` that must not reuse the other mode's level. The final build receipt is `qa-artifacts/build-retention/runs/f8caf0d1-9be3-4746-9b50-6aff250a737c.json`. Release QA matches the live main commit, then runs the project journeys directly against production.
 
 All seven local project journeys passed with 22 WAV downloads and no browser errors. Visible control checks include track levels/pan, mute/solo, kit, active pattern, tempo/swing, quantization, playback mode, character selection/variation, master volume and export bars. Six native playback-versus-WAV regression scenarios also passed after the persistence change.

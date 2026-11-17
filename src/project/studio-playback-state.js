@@ -21,7 +21,10 @@ export function studioPlaybackKey(project, arrangement) {
 export function studioProjectSnapshot(project, arrangement, playback) {
   const next = structuredClone(project);
   next.playback = { mode: arrangement ? "chain" : "pattern" };
-  if (playback?.key === studioPlaybackKey(next, arrangement))
+  if (
+    playback?.arrangement === arrangement &&
+    playback.key === studioPlaybackKey(next, arrangement)
+  )
     next.playback.programmeGain = playback.gain;
   return next;
 }
