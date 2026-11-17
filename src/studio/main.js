@@ -246,7 +246,7 @@ export function initStudio() {
       fail(e);
     }
   }
-  function apply(p) {
+  function apply(p, restoreDraft = false) {
     const valid = withGuitar(
       withBass(
         withKendhang(withPatternLoops(validateProject(p, studioCatalog))),
@@ -269,6 +269,11 @@ export function initStudio() {
     $("title").value = current().title;
     changed();
     message("loaded");
+    if (restoreDraft) {
+      // Explicit recovery may replace an unreadable draft that disabled autosave.
+      draftAllowed = true;
+      saveDraft();
+    }
   }
   function sync() {
     if (disposed) return;
@@ -966,7 +971,7 @@ export function initStudio() {
                 : "Muat proyek ini? Draft saat ini akan diganti. Unduh dulu untuk menyimpannya.",
             )
           )
-            apply(store.load(selectedSave));
+            apply(store.load(selectedSave), true);
           break;
         case "st-saved-delete":
           if (window.confirm(c.deleteConfirm)) {
@@ -1074,7 +1079,7 @@ export function initStudio() {
                 : "Impor proyek ini? Draft saat ini akan diganti. Unduh dulu untuk menyimpannya.",
             ))
         )
-          apply(valid);
+          apply(valid, true);
       } catch (e) {
         if (!disposed) fail(e);
       } finally {

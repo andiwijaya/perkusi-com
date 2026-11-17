@@ -193,6 +193,18 @@ export function initProjectControls({
       onChange();
       await pending;
       if (disposed) return;
+      if (code === "imported" || code === "loaded") {
+        // A validated, explicitly chosen project replaces a failed draft recovery.
+        // Persist it now so an immediate reload keeps the recovered work too.
+        try {
+          store.saveDraft(current());
+          draftEnabled = true;
+          warning = false;
+        } catch {
+          draftEnabled = false;
+          warning = true;
+        }
+      }
       lastSignature = "";
       update();
       notify(code);
