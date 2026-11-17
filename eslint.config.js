@@ -32,6 +32,7 @@ export default [
       "scripts/test-desktop-tutorials.mjs",
       "scripts/test-wav-parity.mjs",
       "scripts/test-project-roundtrip.mjs",
+      "scripts/test-mode-transfer.mjs",
       "scripts/test-instrument-articles.mjs",
       "scripts/test-beatbox.mjs",
       "scripts/test-beatbox-repair.mjs",

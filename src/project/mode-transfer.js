@@ -20,7 +20,7 @@ const copy = {
     compatible:
       "Layer, variasi dan volume dipertahankan. Groove dimulai dalam keadaan jeda pada 96 BPM; ketuk Mainkan di halaman berikutnya.",
     incompatible:
-      "Salinan Beatbox mempertahankan loop Beatbox yang aktif saja. Bagian di bawah ini tidak ikut. Tempo salinan menjadi 96 BPM; proyek Studio lengkap tetap tersimpan sebagai file asal.",
+      "Salinan Beatbox membawa loop yang terdengar pada pola terpilih, variasi A/B, dan volume utama. Pengaturan di bawah ini tidak ikut. Tempo salinan menjadi 96 BPM; proyek Studio lengkap tetap tersimpan sebagai file asal.",
     kit: "Pilihan kit Studio",
     tempo: "Tempo atau swing",
     arrangement: "Susunan pola / durasi",
@@ -29,7 +29,7 @@ const copy = {
     kendhang: "Pukulan Kendhang Ciblon",
     bass: "Nada bass elektrik",
     guitar: "Nada gitar nylon",
-    mix: "Mix atau layer berbeda",
+    mix: "Level/pan per instrumen, mute/solo, atau level playback Studio",
     patternLoops:
       "Pilihan loop berbeda antar pola; salinan hanya memakai pola terpilih",
     continue: "Lanjutkan",
@@ -62,7 +62,7 @@ const copy = {
     compatible:
       "Layers, variations and volume are preserved. The groove opens paused at 96 BPM; press Play on the next page.",
     incompatible:
-      "The Beatbox copy keeps active Beatbox loops only. The parts below are left out. The copy uses 96 BPM; your complete Studio project is kept as the original file.",
+      "The Beatbox copy keeps the loops heard in the selected pattern, their A/B variations and master volume. The settings below are left out. The copy uses 96 BPM; your complete Studio project is kept as the original file.",
     kit: "Studio kit selection",
     tempo: "Tempo or swing",
     arrangement: "Pattern arrangement / duration",
@@ -71,7 +71,7 @@ const copy = {
     kendhang: "Kendhang Ciblon hits",
     bass: "Electric bass notes",
     guitar: "Nylon guitar notes",
-    mix: "Different mix or layers",
+    mix: "Per-instrument level/pan, mute/solo, or Studio playback level",
     patternLoops:
       "Different loops across patterns; the copy uses the selected pattern only",
     continue: "Continue",
@@ -533,7 +533,7 @@ export function initModeTransfer({
     oldDraft.textContent = c.oldDraft;
     candidateCopy.textContent = c.copy;
     for (const option of draftList.options)
-      option.textContent = `${Number(option.value) + 1} · ${option.dataset.target === "studio" ? "Studio" : "Beatbox"}`;
+      option.textContent = `${Number(option.value) + 1} · ${option.dataset.target === "studio" ? "Studio" : "Beatbox"}${option.dataset.title ? " · " + option.dataset.title : ""}`;
     clear.textContent = c.clear;
     originalList.setAttribute("aria-label", c.backup);
     status.textContent =
@@ -562,6 +562,14 @@ export function initModeTransfer({
             String(i),
           );
           option.dataset.target = d.target;
+          try {
+            option.dataset.title = parseProject(
+              d.raw,
+              targetCatalog(d.target),
+            ).title;
+          } catch {
+            // Opaque/corrupt legacy drafts remain downloadable byte-for-byte.
+          }
           return option;
         }),
       );
@@ -572,7 +580,11 @@ export function initModeTransfer({
         draftList.value = String(latest >= 0 ? latest : drafts.length - 1);
       originalList.replaceChildren(
         ...(r?.originals || []).map(
-          (p, i) => new Option(`${i + 1} · ${p.title}`, String(i)),
+          (p, i) =>
+            new Option(
+              `${i + 1} · ${p.schemaVersion === 1 ? "Beatbox" : "Studio"} · ${p.title}`,
+              String(i),
+            ),
         ),
       );
       if (r) originalList.value = String(r.originals.length - 1);
