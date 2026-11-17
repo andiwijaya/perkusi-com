@@ -49,9 +49,17 @@ const copy = {
     draftList: "Pilih draft cadangan",
     retention:
       "Cadangan tetap ada sampai kamu mengonfirmasi penghapusan. Maksimal 30 proyek asal dan draft gabungan, 256 KiB; perpindahan ditolak jika penuh.",
-    clear: "Hapus cadangan perpindahan",
+    clear: "Hapus semua cadangan perpindahan",
     clearConfirm:
-      "Hapus semua cadangan perpindahan? Unduh proyek asal dan draft cadangan lebih dulu. Proyek saat ini dan simpanan biasa tetap ada.",
+      "Hapus semua cadangan perpindahan di Beatbox dan Rhythm Studio? Unduh proyek asal dan draft cadangan lebih dulu. Proyek aktif dan proyek tersimpan tetap ada; file yang sudah diunduh juga tetap ada.",
+    cleared:
+      "Semua cadangan perpindahan sudah dihapus. Proyek aktif dan proyek tersimpan tetap ada.",
+    clearPending:
+      "Cadangan belum dihapus karena perpindahan masih tertunda. Selesaikan atau pulihkan perpindahan lebih dulu; proyek aktif dan proyek tersimpan tetap ada.",
+    clearChanged:
+      "Cadangan berubah saat konfirmasi terbuka. Cadangan baru tetap disimpan; periksa pilihannya sebelum menghapus lagi.",
+    clearFailure:
+      "Cadangan belum dapat dihapus. Proyek aktif dan proyek tersimpan tetap ada. Coba lagi atau unduh cadangan lebih dulu.",
     recoveryFailure:
       "Perpindahan belum selesai. Draft saat ini dipertahankan; salinan tertunda tidak akan menimpa edit baru saat refresh. Unduh salinan perpindahan untuk mengimpornya jika kamu memilih mengganti draft, atau mulai perpindahan baru. Proyek asal dan cadangan tetap tersimpan.",
     copy: "Unduh salinan perpindahan",
@@ -101,9 +109,17 @@ const copy = {
     draftList: "Choose a draft backup",
     retention:
       "Backups remain until you confirm clearing them. Up to 30 originals and drafts combined, 256 KiB; switching is refused when full.",
-    clear: "Clear transfer backups",
+    clear: "Delete all transfer backups",
     clearConfirm:
-      "Delete all transfer backups? Download originals and the draft backup first. Your current project and regular saved projects remain.",
+      "Delete all transfer backups in Beatbox and Rhythm Studio? Download originals and draft backups first. Your current project, saved projects and previously downloaded files remain.",
+    cleared:
+      "All transfer backups have been deleted. Your current project and saved projects remain.",
+    clearPending:
+      "Backups were not deleted because a transfer is still pending. Finish or recover it first; your current project and saved projects remain.",
+    clearChanged:
+      "The backups changed while confirmation was open. New backups are kept; review the choices before deleting again.",
+    clearFailure:
+      "Backups could not be deleted. Your current project and saved projects remain. Try again or download the backups first.",
     recoveryFailure:
       "The transfer did not finish. Your current draft is kept; the pending copy will not overwrite newer edits on reload. Download the transfer copy to import it if you choose to replace the draft, or start a new transfer. Originals and backups are kept.",
     copy: "Download transfer copy",
@@ -454,6 +470,56 @@ export function incomingTransfer(
     deliver,
   };
 }
+export function clearTransferBackups(
+  expectedRaw,
+  {
+    storage = globalThis.localStorage,
+    session = globalThis.sessionStorage,
+  } = {},
+) {
+  if (typeof expectedRaw !== "string" || storage.getItem(KEY) !== expectedRaw)
+    throw new ProjectError("transferChanged");
+  const record = read(storage);
+  if (record.pending) throw new ProjectError("transferPending");
+  const entries = [
+    { owner: session, key: MARKER },
+    ...["studio", "beatbox"].map((target) => ({
+      owner: storage,
+      key: transferReceiptKey(target),
+    })),
+  ].map((entry) => ({ ...entry, raw: entry.owner.getItem(entry.key) }));
+  const check = () => {
+    if (storage.getItem(KEY) !== expectedRaw)
+      throw new ProjectError("transferChanged");
+  };
+  try {
+    // Keep the archive until cleanup succeeds; failed metadata removal remains recoverable.
+    for (const entry of entries) {
+      check();
+      if (entry.owner.getItem(entry.key) !== entry.raw)
+        throw new ProjectError("transferChanged");
+      if (entry.raw !== null) entry.owner.removeItem(entry.key);
+    }
+    check();
+    storage.removeItem(KEY);
+  } catch (error) {
+    try {
+      const current = storage.getItem(KEY);
+      // Never restore old metadata over another tab's newer archive or receipt.
+      if (current === expectedRaw || current === null) {
+        if (current === null) storage.setItem(KEY, expectedRaw);
+        for (const entry of entries)
+          if (entry.raw !== null && entry.owner.getItem(entry.key) === null)
+            entry.owner.setItem(entry.key, entry.raw);
+      }
+    } catch {
+      // The protected active drafts and named saves are outside this cleanup's keys.
+    }
+    throw error instanceof ProjectError
+      ? error
+      : new ProjectError("storageUnavailable");
+  }
+}
 export function initModeTransfer({
   root,
   mode,
@@ -482,6 +548,8 @@ export function initModeTransfer({
   oldDraft.id = "mode-draft-backup";
   candidateCopy.id = "mode-candidate-copy";
   status.setAttribute("role", "status");
+  status.id = "mode-status";
+  status.setAttribute("aria-live", "polite");
   const recoveryPanel = document.createElement("section"),
     recoveryTitle = document.createElement("h3"),
     recoveryNote = document.createElement("p"),
@@ -541,7 +609,8 @@ export function initModeTransfer({
   panel.append(dialog);
   let original,
     why = [],
-    failed = false;
+    failed = false,
+    cleared = false;
   const life = new AbortController();
   const listen = (el, event, fn) =>
     el.addEventListener(event, fn, { signal: life.signal });
@@ -613,11 +682,20 @@ export function initModeTransfer({
     status.textContent =
       failed === "incoming"
         ? c.recoveryFailure
-        : failed
-          ? c.failure
-          : backup.hidden
-            ? ""
-            : c.saved;
+        : failed === "clearPending"
+          ? c.clearPending
+          : failed === "clearChanged"
+            ? c.clearChanged
+            : failed === "clear"
+              ? c.clearFailure
+              : failed
+                ? c.failure
+                : cleared
+                  ? c.cleared
+                  : backup.hidden
+                    ? ""
+                    : c.saved;
+    status.setAttribute("role", failed ? "alert" : "status");
   }
   function recovery() {
     try {
@@ -768,21 +846,32 @@ export function initModeTransfer({
       localize();
     }
   });
-  listen(clear, "click", () => {
+  listen(clear, "click", async () => {
     try {
-      const r = read(localStorage);
-      if (r?.pending) throw new ProjectError("storageUnavailable");
+      const expectedRaw = localStorage.getItem(KEY),
+        r = read(localStorage);
+      if (!r) throw new ProjectError("transferChanged");
+      if (r.pending) throw new ProjectError("transferPending");
       if (window.confirm(copy[language()].clearConfirm)) {
-        localStorage.removeItem(KEY);
-        sessionStorage.removeItem(MARKER);
-        for (const target of ["studio", "beatbox"])
-          localStorage.removeItem(transferReceiptKey(target));
+        // A native modal can delay another tab's storage updates in this document.
+        // Check in a fresh task after those queued updates can be processed.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        if (life.signal.aborted) return;
+        clearTransferBackups(expectedRaw);
         failed = false;
+        cleared = true;
         recovery();
+        button.focus();
       }
-    } catch {
-      failed = true;
-      localize();
+    } catch (error) {
+      cleared = false;
+      failed =
+        error.code === "transferPending"
+          ? "clearPending"
+          : error.code === "transferChanged"
+            ? "clearChanged"
+            : "clear";
+      recovery();
     }
   });
   listen(document, "perkusi:locale", localize);
