@@ -18,6 +18,8 @@ import { originalRegistry } from "../src/project/original-registry.js";
 import { pagePath } from "../src/app/routes.js";
 const recoveryOnly = process.argv.includes("--recovery");
 const clearOnly = process.argv.includes("--clear-backups");
+const deleteOnly = process.argv.includes("--delete-projects");
+const deleteCopy = process.env.PERKUSI_DELETE_COPY !== "0";
 const clearCopy = process.env.PERKUSI_CLEAR_COPY !== "0";
 const recoveryGuidance = process.env.PERKUSI_RECOVERY_GUIDANCE !== "0";
 const require = createRequire(import.meta.url);
@@ -29,11 +31,13 @@ try {
 }
 const output =
   process.env.PERKUSI_TRANSFER_QA_DIR ||
-  (clearOnly
-    ? "qa-artifacts/clear-backups"
-    : recoveryOnly
-      ? "qa-artifacts/transfer-recovery"
-      : "qa-artifacts/mode-transfer");
+  (deleteOnly
+    ? "qa-artifacts/delete-projects"
+    : clearOnly
+      ? "qa-artifacts/clear-backups"
+      : recoveryOnly
+        ? "qa-artifacts/transfer-recovery"
+        : "qa-artifacts/mode-transfer");
 await mkdir(output, { recursive: true });
 const remote = process.env.PERKUSI_TRANSFER_BASE_URL;
 const server = remote
@@ -125,6 +129,7 @@ const ids = (tool) =>
         save: "st-save",
         list: "st-saved",
         load: "st-load",
+        delete: "st-saved-delete",
         render: "st-render",
         result: "st-result",
         wav: "st-wav-download",
@@ -136,6 +141,7 @@ const ids = (tool) =>
         save: "project-save",
         list: "project-list",
         load: "project-load",
+        delete: "project-delete",
         render: "project-render",
         result: "project-result",
         wav: "project-download",
@@ -1357,9 +1363,325 @@ async function clearFailure(tool, kind) {
     await ctx.close();
   }
 }
+function savedDeleteSeed() {
+  const seed = clearSeed();
+  for (const tool of ["beatbox", "studio"]) {
+    const baseProject =
+      tool === "beatbox" ? beatbox("Simpanan — $&", 4) : advanced();
+    baseProject.title = "Simpanan — $&";
+    const items = ["target", "same-name", "other"].map((id, i) => {
+      const project = structuredClone(baseProject);
+      if (i === 2) project.title = "Simpanan lainnya";
+      project.master.volume = 0.21 + i * 0.1;
+      return { id, project };
+    });
+    seed[savedKey(tool)] = JSON.stringify({ version: 1, items });
+    seed[draftKey(tool)] = JSON.stringify(baseProject);
+  }
+  const original = beatbox("Protected transfer original", 4),
+    destinationDraft = seed[draftKey("studio")];
+  seed[KEY] = JSON.stringify({
+    version: 4,
+    id: "saved-delete-history",
+    target: "studio",
+    pending: false,
+    original,
+    originals: [original],
+    candidate: fromBeatbox(original),
+    destinationDraft,
+    drafts: [
+      { target: "studio", key: draftKey("studio"), raw: destinationDraft },
+    ],
+  });
+  return seed;
+}
+async function savedDeleteSetup(tool, locale, width) {
+  const seed = savedDeleteSeed(),
+    ctx = await context(width, seed),
+    page = await ctx.newPage();
+  await open(page, tool, locale);
+  await page.locator("#" + ids(tool).list).selectOption("target");
+  await page.locator("#" + ids(tool).load).click();
+  await page.waitForFunction(
+    (id) => !document.querySelector("#" + id).disabled,
+    ids(tool).file,
+  );
+  // Keep unsaved edits to the loaded project's beat while removing only its saved copy.
+  await page
+    .locator(
+      tool === "studio" ? '[data-st-step="kick:0"]' : '[data-role="kick"]',
+    )
+    .click();
+  return { seed, ctx, page };
+}
+async function confirmSavedDelete(
+  page,
+  tool,
+  accept,
+  title,
+  whileOpen = () => {},
+) {
+  page.removeAllListeners("dialog");
+  const event = page.waitForEvent("dialog"),
+    click = page.locator("#" + ids(tool).delete).click();
+  const dialog = await event;
+  assert.equal(dialog.type(), "confirm");
+  if (deleteCopy) {
+    assert(
+      dialog.message().includes(title),
+      "Delete confirmation must name the chosen project, including literal dollar signs",
+    );
+    assert(/aktif|current|active/i.test(dialog.message()));
+    assert(/lain|other/i.test(dialog.message()));
+  }
+  try {
+    await whileOpen();
+  } finally {
+    accept ? await dialog.accept() : await dialog.dismiss();
+  }
+  await click;
+  page.on("dialog", (d) => d.accept());
+}
+async function savedDraftReady(page, tool, expected) {
+  await page.waitForFunction(
+    ({ key, expected }) => {
+      const sorted = (value) =>
+        Array.isArray(value)
+          ? value.map(sorted)
+          : value && typeof value === "object"
+            ? Object.fromEntries(
+                Object.keys(value)
+                  .sort()
+                  .map((key) => [key, sorted(value[key])]),
+              )
+            : value;
+      try {
+        return (
+          JSON.stringify(sorted(JSON.parse(localStorage.getItem(key)))) ===
+          JSON.stringify(sorted(expected))
+        );
+      } catch {
+        return false;
+      }
+    },
+    { key: draftKey(tool), expected },
+  );
+}
+async function savedDeleteNormal(tool, locale, width) {
+  const name = `delete-${tool}-${locale}-${width}`,
+    { seed, ctx, page } = await savedDeleteSetup(tool, locale, width);
+  try {
+    const active = await project(page, tool, name + "-active-before"),
+      audio = await wav(page, tool, name + "-before");
+    await savedDraftReady(page, tool, active);
+    const saved = JSON.parse(seed[savedKey(tool)]),
+      unchangedKeys = [
+        ...protectedKeys.filter((key) => key !== savedKey(tool)),
+        KEY,
+      ];
+    const protectedBefore = await rawValues(page, unchangedKeys);
+    if (tool === "studio" && deleteCopy) {
+      for (const id of ["legacy0-protected-legacy", "legacy1-target"]) {
+        await page.locator("#st-saved").selectOption(id);
+        assert(await page.locator("#st-saved-delete").isDisabled());
+        assert(await page.locator("#st-saved-delete-hint").isVisible());
+        assert.equal(
+          await page.locator("#st-saved").getAttribute("aria-describedby"),
+          "st-saved-delete-hint",
+        );
+      }
+      await page.locator("#st-saved").selectOption("target");
+      assert(await page.locator("#st-saved-delete").isEnabled());
+      assert.equal(
+        await page.locator("#st-saved-delete").getAttribute("aria-describedby"),
+        null,
+      );
+    }
+    await confirmSavedDelete(page, tool, false, saved.items[0].project.title);
+    assert.equal(
+      (await rawValues(page, [savedKey(tool)]))[savedKey(tool)],
+      seed[savedKey(tool)],
+    );
+    await confirmSavedDelete(page, tool, true, saved.items[0].project.title);
+    await page.waitForFunction(
+      (key) =>
+        !JSON.parse(localStorage.getItem(key)).items.some(
+          (item) => item.id === "target",
+        ),
+      savedKey(tool),
+    );
+    assert.deepEqual(
+      JSON.parse((await rawValues(page, [savedKey(tool)]))[savedKey(tool)]),
+      { ...saved, items: saved.items.slice(1) },
+    );
+    assert.deepEqual(
+      await rawValues(page, unchangedKeys),
+      protectedBefore,
+      "Deleting a saved copy must preserve active drafts, other stores and transfer archives",
+    );
+    assert.deepEqual(await project(page, tool, name + "-active-after"), active);
+    await page.reload();
+    await ready(page, tool);
+    assert.deepEqual(
+      await project(page, tool, name + "-active-refresh"),
+      active,
+    );
+    const after = await wav(page, tool, name + "-after");
+    assert.equal(after.channels, audio.channels);
+    const metrics = Array.from({ length: audio.channels }, (_, channel) =>
+      sameAudio(after, audio, channel),
+    );
+    for (const item of saved.items.slice(1)) {
+      await page.locator("#" + ids(tool).list).selectOption(item.id);
+      await page.locator("#" + ids(tool).load).click();
+      await page.waitForFunction(
+        ({ id, title }) => document.querySelector("#" + id).value === title,
+        { id: ids(tool).title, title: item.project.title },
+      );
+      assert.deepEqual(
+        await project(page, tool, name + "-remaining-" + item.id),
+        item.project,
+      );
+    }
+    if (tool === "studio") {
+      await page.locator("#st-saved").selectOption("legacy0-protected-legacy");
+      await page.locator("#st-load").click();
+      const legacy = JSON.parse(seed["perkusi.projects.studio.v2"]).items[0]
+        .project;
+      await page.waitForFunction(
+        (title) => document.querySelector("#st-title").value === title,
+        legacy.title,
+      );
+      assert.deepEqual(
+        studioView(await project(page, tool, name + "-legacy")),
+        legacy,
+      );
+    }
+    await page.locator("#" + ids(tool).save).click();
+    assert.equal(
+      JSON.parse((await rawValues(page, [savedKey(tool)]))[savedKey(tool)])
+        .items.length,
+      3,
+    );
+    evidence.checks.push({
+      name,
+      result: "PASS",
+      metrics,
+      sameNameSiblingPreserved: true,
+    });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
+async function savedDeleteFailure(tool, kind) {
+  const name = `delete-${kind}-${tool}`,
+    { seed, ctx, page } = await savedDeleteSetup(tool, "id", 1440);
+  try {
+    const writer = kind === "denied" ? null : await ctx.newPage();
+    if (writer) {
+      await writer.goto(base + "/privacy.html");
+      await page.bringToFront();
+    }
+    const active = await project(page, tool, name + "-active-before");
+    await savedDraftReady(page, tool, active);
+    const before = await rawValues(page, [
+      ...protectedKeys.filter((key) => key !== savedKey(tool)),
+      KEY,
+    ]);
+    const saved = JSON.parse(seed[savedKey(tool)]);
+    let expected = structuredClone(saved);
+    if (kind === "sibling") {
+      expected.items.push({
+        id: "new-from-tab",
+        project: {
+          ...saved.items[2].project,
+          title: "New save from another tab",
+        },
+      });
+      expected.items[2].project.master.volume = 0.16;
+    } else if (kind === "changed") {
+      expected.items[0].project.title = "Updated chosen project";
+      expected.items[0].project.master.volume = 0.17;
+    } else if (kind === "missing")
+      expected.items = expected.items.filter((item) => item.id !== "target");
+    else
+      await page.evaluate((key) => {
+        const set = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (name, value) {
+          if (name === key)
+            throw new DOMException("Write denied", "QuotaExceededError");
+          return set.call(this, name, value);
+        };
+      }, savedKey(tool));
+    await confirmSavedDelete(
+      page,
+      tool,
+      true,
+      saved.items[0].project.title,
+      async () => {
+        if (writer)
+          await writer.evaluate(
+            ({ key, raw }) => localStorage.setItem(key, raw),
+            { key: savedKey(tool), raw: JSON.stringify(expected) },
+          );
+      },
+    );
+    if (kind === "sibling") {
+      expected.items = expected.items.filter((item) => item.id !== "target");
+      await page.waitForFunction(
+        (key) =>
+          !JSON.parse(localStorage.getItem(key)).items.some(
+            (item) => item.id === "target",
+          ),
+        savedKey(tool),
+      );
+    } else if (deleteCopy) {
+      await page.waitForFunction(
+        (id) =>
+          document.querySelector("#" + id).getAttribute("role") === "alert",
+        tool === "studio" ? "st-project-status" : "project-status",
+      );
+    }
+    assert.deepEqual(
+      JSON.parse((await rawValues(page, [savedKey(tool)]))[savedKey(tool)]),
+      expected,
+      "Only the confirmed unchanged project may be removed; other tabs' saves must survive",
+    );
+    assert.deepEqual(await rawValues(page, Object.keys(before)), before);
+    assert.deepEqual(await project(page, tool, name + "-active-after"), active);
+    evidence.checks.push({
+      name,
+      result: "PASS",
+      activeAndOtherSavesPreserved: true,
+    });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
 try {
   browser = await pw.chromium.launch({ channel: "chrome", headless: true });
   evidence.browser = browser.version();
+  if (deleteOnly) {
+    const only = process.env.PERKUSI_DELETE_CASE;
+    if (!only || only === "normal")
+      for (const [locale, width] of [
+        ["id", 1440],
+        ["en", 1440],
+        ["id", 390],
+      ])
+        for (const tool of ["beatbox", "studio"])
+          await savedDeleteNormal(tool, locale, width);
+    for (const kind of ["sibling", "changed", "missing", "denied"])
+      if (!only || only === kind)
+        for (const tool of ["beatbox", "studio"])
+          if (
+            !process.env.PERKUSI_DELETE_TOOL ||
+            process.env.PERKUSI_DELETE_TOOL === tool
+          )
+            await savedDeleteFailure(tool, kind);
+  }
   if (clearOnly) {
     const only = process.env.PERKUSI_CLEAR_CASE;
     if (!only || only === "normal")
@@ -1409,6 +1731,7 @@ try {
   if (
     !recoveryOnly &&
     !clearOnly &&
+    !deleteOnly &&
     process.env.PERKUSI_TRANSFER_CASE !== "failure"
   )
     for (const [locale, width] of [
@@ -1424,6 +1747,7 @@ try {
   if (
     !recoveryOnly &&
     !clearOnly &&
+    !deleteOnly &&
     (!process.env.PERKUSI_TRANSFER_CASE ||
       process.env.PERKUSI_TRANSFER_CASE === "failure")
   ) {

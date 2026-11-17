@@ -60,6 +60,11 @@ import {
 export function initStudio() {
   const root = document.querySelector(".studio-page"),
     $ = (id) => root.querySelector("#st-" + id);
+  const savedDeleteHint = document.createElement("p");
+  savedDeleteHint.id = "st-saved-delete-hint";
+  savedDeleteHint.className = "st-hint";
+  savedDeleteHint.hidden = true;
+  $("saved").closest("label").after(savedDeleteHint);
   const oldRequest = new URL(location.href).searchParams,
     retiredNotice =
       oldRequest.get("candidate") === "canonical" ||
@@ -205,7 +210,15 @@ export function initStudio() {
     select.value = selectedSave;
     selectedSave = select.value;
     $("load").disabled = busy || reading || receiving || !selectedSave;
-    $("saved-delete").disabled = busy || reading || receiving || !selectedSave;
+    const protectedOriginal = selectedSave.startsWith("legacy");
+    $("saved-delete").disabled =
+      busy || reading || receiving || !selectedSave || protectedOriginal;
+    savedDeleteHint.hidden = !protectedOriginal;
+    savedDeleteHint.textContent = c.protectedSave;
+    for (const control of [$("saved"), $("saved-delete")])
+      if (protectedOriginal)
+        control.setAttribute("aria-describedby", savedDeleteHint.id);
+      else control.removeAttribute("aria-describedby");
   }
   function saveDraft() {
     if (!draftAllowed || disposed || receiving) return;
@@ -973,14 +986,29 @@ export function initStudio() {
           )
             apply(store.load(selectedSave), true);
           break;
-        case "st-saved-delete":
-          if (window.confirm(c.deleteConfirm)) {
-            store.remove(selectedSave);
+        case "st-saved-delete": {
+          const id = selectedSave,
+            selected = store.load(id);
+          if (id.startsWith("legacy")) throw new ProjectError("legacyOriginal");
+          if (
+            window.confirm(
+              c.deleteConfirm.replace("{title}", () => selected.title),
+            )
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            if (disposed) return;
+            try {
+              store.remove(id, selected);
+            } catch (error) {
+              readSaves();
+              throw error;
+            }
             selectedSave = "";
             readSaves();
             message("deleted");
           }
           break;
+        }
         case "st-project-download": {
           const p = project();
           delivery.download(

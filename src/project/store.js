@@ -4,6 +4,25 @@ export const PROJECTS_KEY = "perkusi.projects.v1";
 export const DRAFT_KEY = "perkusi.draft.v1";
 export const MAX_SAVED_PROJECTS = 30;
 export const MAX_STORE_BYTES = 256 * 1024;
+export function assertSavedProjectUnchanged(item, expected) {
+  if (!item)
+    throw new ProjectError(
+      expected === undefined ? "missingProject" : "projectChanged",
+    );
+  if (expected === undefined) return;
+  const sorted = (value) =>
+    Array.isArray(value)
+      ? value.map(sorted)
+      : value && typeof value === "object"
+        ? Object.fromEntries(
+            Object.keys(value)
+              .sort()
+              .map((key) => [key, sorted(value[key])]),
+          )
+        : value;
+  if (JSON.stringify(sorted(item.project)) !== JSON.stringify(sorted(expected)))
+    throw new ProjectError("projectChanged");
+}
 export class ProjectStore {
   constructor(
     catalog,
@@ -75,10 +94,12 @@ export class ProjectStore {
     this.write([...items, { id, project: valid }]);
     return id;
   }
-  remove(id) {
+  remove(id, expected) {
     const items = this.read();
-    if (!items.some((x) => x.id === id))
-      throw new ProjectError("missingProject");
+    assertSavedProjectUnchanged(
+      items.find((x) => x.id === id),
+      expected,
+    );
     this.write(items.filter((x) => x.id !== id));
   }
   load(id) {

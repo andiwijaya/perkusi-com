@@ -1,4 +1,4 @@
-import { ProjectStore } from "./store.js";
+import { ProjectStore, assertSavedProjectUnchanged } from "./store.js";
 import { migrateProject, ProjectError } from "./schema.js";
 import { originalRegistry } from "./original-registry.js";
 export class CompositionStore extends ProjectStore {
@@ -23,12 +23,10 @@ export class CompositionStore extends ProjectStore {
     return [
       ...super.read(),
       ...this.legacy.flatMap((store, i) =>
-        store
-          .read()
-          .map((item) => ({
-            id: `legacy${i}-${item.id}`,
-            project: migrateProject(item.project, this.catalog),
-          })),
+        store.read().map((item) => ({
+          id: `legacy${i}-${item.id}`,
+          project: migrateProject(item.project, this.catalog),
+        })),
       ),
     ];
   }
@@ -47,11 +45,13 @@ export class CompositionStore extends ProjectStore {
     this.write([...items, { id, project: valid }]);
     return id;
   }
-  remove(id) {
+  remove(id, expected) {
     if (id.startsWith("legacy")) throw new ProjectError("legacyOriginal");
     const items = super.read();
-    if (!items.some((x) => x.id === id))
-      throw new ProjectError("missingProject");
+    assertSavedProjectUnchanged(
+      items.find((x) => x.id === id),
+      expected,
+    );
     this.write(items.filter((x) => x.id !== id));
   }
   readDraft() {

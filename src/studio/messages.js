@@ -131,8 +131,8 @@ const pairs = {
     "Project restored and paused. Tap Play.",
   ],
   deleted: [
-    "Simpanan dihapus. Sesi aktif tetap ada.",
-    "Saved project deleted. Your active session remains.",
+    "Simpanan terpilih dihapus. Proyek aktif dan simpanan lainnya tetap ada.",
+    "Selected saved project deleted. Your active project and other saves remain.",
   ],
   loading: ["Menyiapkan suara untuk WAV.", "Preparing sounds for WAV."],
   rendering: ["Menyusun rantai audio.", "Rendering the audio chain."],
@@ -166,8 +166,12 @@ const pairs = {
     "Up to 16 patterns and 8 chain bars. Keep at least one pattern and one bar.",
   ],
   deleteConfirm: [
-    "Hapus simpanan terpilih? File unduhan dan sesi aktif tetap ada.",
-    "Delete this saved project? Downloaded files and the active session remain.",
+    "Hapus simpanan “{title}”? Proyek aktif, simpanan lainnya, dan file unduhan tetap ada.",
+    "Delete saved project “{title}”? Your active project, other saved projects and downloaded files remain.",
+  ],
+  protectedSave: [
+    "Simpanan asal ini dilindungi di Studio. Muat lalu pilih Simpan proyek baru untuk membuat salinan yang dapat dikelola. Simpanan asal tetap ada.",
+    "This saved original is protected in Studio. Load it and choose Save new project to create a copy you can manage. The original is kept.",
   ],
   help: ["Panduan & pintasan", "Help & shortcuts"],
   helpCopy: [
