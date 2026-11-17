@@ -47,6 +47,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:delete-projects` checks deletion of a selected saved project while keeping unsaved active edits, same-title siblings, other stores and transfer archives. It tests ID/EN desktop and ID phone layouts, refreshing the active draft, loading remaining/legacy saves, saving again, cross-tab additions/edits/deletion and denied writes. It uses the same production/evidence environment variables as `test:transfer`. See `docs/features/SAVED-PROJECT-DELETE-REPORT.md`.
 
+`npm run test:load-projects` verifies named confirmation before every explicit saved-project load in both tools. It checks cancellation and refresh with restored music/title/mode/duration edits, confirmed project and WAV parity, legacy originals, changed/missing targets, denied reads and cancellation before autosave settles. It uses the same production/evidence environment variables as `test:transfer`. See `docs/features/SAVED-PROJECT-LOAD-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.

@@ -240,7 +240,35 @@ export function initProjectControls({
   listen(
     el("load"),
     "click",
-    () => void guarded(() => apply(store.load(el("list").value), "loaded")),
+    () =>
+      void guarded(async () => {
+        const id = el("list").value;
+        let selected;
+        try {
+          selected = store.load(id);
+        } catch (error) {
+          refreshList();
+          throw error;
+        }
+        if (
+          !globalThis.confirm(
+            copy.loadConfirm.replace("{title}", () => selected.title),
+          )
+        ) {
+          notify("loadCancelled");
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        if (disposed) return;
+        let project;
+        try {
+          project = store.load(id, selected);
+        } catch (error) {
+          refreshList();
+          throw error;
+        }
+        await apply(project, "loaded");
+      }),
   );
   listen(
     el("delete"),

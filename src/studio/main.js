@@ -975,17 +975,35 @@ export function initStudio() {
           message("saved");
           trackEvent("project_saved");
           break;
-        case "st-load":
+        case "st-load": {
+          const id = selectedSave;
+          let selected;
+          try {
+            selected = store.load(id);
+          } catch (error) {
+            readSaves();
+            throw error;
+          }
           if (
-            !history.past.length ||
-            window.confirm(
-              locale === "en"
-                ? "Load this project? Your current draft will be replaced. Download it first if you want to keep it."
-                : "Muat proyek ini? Draft saat ini akan diganti. Unduh dulu untuk menyimpannya.",
+            !window.confirm(
+              c.loadConfirm.replace("{title}", () => selected.title),
             )
-          )
-            apply(store.load(selectedSave), true);
+          ) {
+            message("loadCancelled");
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          if (disposed) return;
+          let loaded;
+          try {
+            loaded = store.load(id, selected);
+          } catch (error) {
+            readSaves();
+            throw error;
+          }
+          apply(loaded, true);
           break;
+        }
         case "st-saved-delete": {
           const id = selectedSave,
             selected = store.load(id);
