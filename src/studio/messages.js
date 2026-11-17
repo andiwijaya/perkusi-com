@@ -27,6 +27,22 @@ const pairs = {
   canonicalEntry: ["Studio terpadu Preview", "Unified Studio Preview"],
   canonicalRecovery: ["Pemulihan proyek Preview", "Preview project recovery"],
   clear: ["Kosongkan pola", "Clear pattern"],
+  clearConfirm: [
+    "Kosongkan semua ketukan, nada, dan loop pada pola “{pattern}” di proyek “{title}”? Pola lain, rantai, pengaturan, dan proyek tersimpan tetap ada. Simpan proyek aktif lebih dulu jika ingin mempertahankan pola ini.",
+    "Clear all hits, notes and loops in pattern “{pattern}” of project “{title}”? Other patterns, the chain, settings and saved projects remain. Save your active project first if you want to keep this pattern.",
+  ],
+  demoConfirm: [
+    "Muat demo dan ganti seluruh susunan proyek “{title}”, termasuk pola, rantai, dan pengaturannya? Proyek tersimpan tetap ada. Simpan proyek aktif lebih dulu jika ingin mempertahankan editnya.",
+    "Load a demo and replace the entire arrangement of project “{title}”, including its patterns, chain and settings? Saved projects remain. Save your active project first if you want to keep its edits.",
+  ],
+  deletePatternConfirm: [
+    "Hapus pola “{pattern}” dari proyek “{title}” beserta semua kemunculannya di rantai? Pola lain, pengaturan, dan proyek tersimpan tetap ada. Simpan proyek aktif lebih dulu jika ingin mempertahankan pola ini.",
+    "Delete pattern “{pattern}” from project “{title}” and all its occurrences in the chain? Other patterns, settings and saved projects remain. Save your active project first if you want to keep this pattern.",
+  ],
+  resetCancelled: [
+    "Perubahan dibatalkan. Proyek aktif dan editnya tetap ada.",
+    "Change cancelled. Your active project and edits remain.",
+  ],
   kit: ["Kit suara", "Sound kit"],
   demoKind: ["Demo groove", "Demo groove"],
   ruang: ["Ruang · hangat & organik", "Ruang · warm & organic"],

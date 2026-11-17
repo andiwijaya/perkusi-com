@@ -251,8 +251,8 @@ export const tutorialPairs = {
     "Want a ready-made example?",
   ],
   "tutorial.studio.demo": [
-    "Pilih “Demo groove”, lalu tekan “Muat demo”. Demo mengisi susunan untuk dipelajari dan dapat mengganti isi sesi; simpan pekerjaanmu dahulu. Setelah itu, dengarkan, ubah beberapa kotak, lalu ikuti langkah unduh WAV di atas.",
-    "Choose a “Demo groove”, then press “Load demo”. A demo fills an arrangement you can learn from and may replace your session; save your work first. Listen, change a few cells, then follow the WAV download steps above.",
+    "Pilih “Demo groove”, lalu tekan “Muat demo”. Simpan pekerjaanmu dahulu, lalu setujui konfirmasi untuk mengganti susunan sesi dengan demo. Pilih Batal agar edit tetap ada. Setelah itu, dengarkan, ubah beberapa kotak, lalu ikuti langkah unduh WAV di atas.",
+    "Choose a “Demo groove”, then press “Load demo”. Save your work first, then accept the confirmation to replace your session with the demo. Choose Cancel to keep your edits. Listen, change a few cells, then follow the WAV download steps above.",
   ],
   "tutorial.studio.trouble": [
     "Putar atau Buat WAV rantai belum aktif? Tunggu seluruh persiapan audio selesai dan gunakan “Coba lagi” jika gagal. Jika hasilnya senyap, periksa kotak yang aktif, isi rantai, Volume utama, serta Bisukan/Solo di Mixer. Jika WAV berbeda dari yang baru diedit, buat WAV lagi. Jika ekspor kekurangan memori, pendekkan rantai atau tutup tab lain.",
@@ -299,8 +299,8 @@ export const tutorialPairs = {
     "Pause or start over",
   ],
   "tutorial.beatbox.step4": [
-    "“Jeda” menghentikan musik sementara dan menyimpan posisi; tekan “Putar” untuk melanjutkan. “Mulai ulang” mengosongkan semua karakter dan kembali ke awal. Simpan proyek dahulu jika ingin memakai campuran yang sama lagi nanti.",
-    "“Pause” stops the music temporarily and keeps your position; press “Play” to resume. “Reset” clears all characters and returns to the beginning. Save a project first if you want to reuse the same mix later.",
+    "“Jeda” menghentikan musik sementara dan menyimpan posisi; tekan “Putar” untuk melanjutkan. “Mulai ulang” meminta konfirmasi sebelum mengosongkan karakter dan mengembalikan variasi ke A. Pilih Batal agar edit tetap ada. Simpan proyek dahulu jika ingin memakai campuran yang sama lagi nanti.",
+    "“Pause” stops the music temporarily and keeps your position; press “Play” to resume. “Reset” asks for confirmation before clearing characters and returning variations to A. Choose Cancel to keep your edits. Save a project first if you want to reuse the same mix later.",
   ],
   "tutorial.beatbox.step5Title": [
     "Simpan campuran dan unduh audio",

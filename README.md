@@ -49,6 +49,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:load-projects` verifies named confirmation before every explicit saved-project load in both tools. It checks cancellation and refresh with restored music/title/mode/duration edits, confirmed project and WAV parity, legacy originals, changed/missing targets, denied reads and cancellation before autosave settles. It uses the same production/evidence environment variables as `test:transfer`. See `docs/features/SAVED-PROJECT-LOAD-REPORT.md`.
 
+`npm run test:reset-projects` checks Beatbox Reset and Studio Clear pattern, Load demo, Delete pattern, New pattern and Return to start. It uses only public UI controls and browser storage in isolated synthetic contexts, with downloads disabled and no file import/export. It covers ID/EN desktop, ID phone layouts, restored drafts, cancellation before autosave settles, cancellation during playback, confirmed reset scope and protected saved/legacy/transfer data. Set `PERKUSI_RESET_BASE_URL=https://perkusi.com`, `PERKUSI_RESET_EXPECT_COMMIT` and `PERKUSI_RESET_QA_DIR` for production verification. See `docs/features/PROJECT-RESET-REPORT.md`.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.
