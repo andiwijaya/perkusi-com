@@ -210,6 +210,12 @@ async function project(page, tool, name) {
   );
 }
 async function beatboxControls(page, data) {
+  if (data.tracks.some((track) => track.enabled))
+    await page.waitForFunction(() =>
+      /Iramamu siap|Your groove is ready/.test(
+        document.querySelector("#bb-status").textContent,
+      ),
+    );
   assert.equal(
     Number(await page.locator("#bb-volume").inputValue()),
     data.master.volume,
@@ -481,6 +487,7 @@ async function forwardAndBack(locale, width) {
       await project(page, "beatbox", name + "-after-refresh"),
       edited,
     );
+    await beatboxControls(page, edited);
     await page.screenshot({ path: join(output, name + "-result.png") });
     evidence.checks.push({
       name,

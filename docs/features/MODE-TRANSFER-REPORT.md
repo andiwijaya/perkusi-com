@@ -10,6 +10,8 @@ The derived-copy dialog now states that Beatbox receives the loops heard in the 
 
 Protected-original menus now include the source tool and project title. Displaced-draft menus include readable project titles where valid; opaque or corrupt raw drafts keep the generic tool label and remain downloadable byte-for-byte. These changes do not rewrite archive data.
 
+Beatbox's stopped status now distinguishes a populated project from an empty stage. After receiving or restoring a populated project, it says the groove is ready and invites the user to press Play, in both Indonesian and English. Browser checks require this status after conversion and after refreshing newer edits.
+
 ## Verification method
 
 `npm run test:transfer` uses isolated Chrome contexts with synthetic source projects, named saves and destination drafts. It runs compatible round trips and explicit derived-copy journeys in Indonesian/English desktop layouts and an Indonesian phone viewport. It checks public UI controls and actual downloaded files, without private application hooks.
@@ -28,4 +30,4 @@ Evidence is under `qa-artifacts/mode-transfer-20261117/`. Phone checks use brows
 
 All eight browser journeys passed, with nine WAV downloads, 47 project/backup downloads and no browser errors. The quiet Bumi case now has identical compared PCM samples and a 0 dB level difference; the three-voice cases differ by less than 0.000001 dB. Original project fields, named-save bytes and displaced-draft raw bytes remain intact in the tested paths, including the failure cases.
 
-All 667 unit tests passed. Final lint and production build passed; the build receipt is `qa-artifacts/build-retention/runs/9fd3c068-9589-4d1a-8ad9-5a56cdef3bb5.json`.
+All 667 unit tests passed. Final lint and production build passed; the build receipt is `qa-artifacts/build-retention/runs/8d096121-80c6-4b3d-b8e9-b4f9afabe604.json`.
