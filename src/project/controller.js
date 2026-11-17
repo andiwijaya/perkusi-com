@@ -246,9 +246,24 @@ export function initProjectControls({
     el("delete"),
     "click",
     () =>
-      void guarded(() => {
-        if (!globalThis.confirm(copy.deleteConfirm)) return;
-        store.remove(el("list").value);
+      void guarded(async () => {
+        const id = el("list").value,
+          selected = store.load(id);
+        if (
+          !globalThis.confirm(
+            copy.deleteConfirm.replace("{title}", () => selected.title),
+          )
+        )
+          return;
+        // Let queued cross-tab storage changes arrive after the native prompt.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        if (disposed) return;
+        try {
+          store.remove(id, selected);
+        } catch (error) {
+          refreshList();
+          throw error;
+        }
         refreshList();
         notify("deleted");
       }),

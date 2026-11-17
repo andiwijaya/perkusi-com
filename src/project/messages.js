@@ -12,7 +12,7 @@ export const projectMessages = {
     load: "Muat proyek",
     remove: "Hapus proyek",
     deleteConfirm:
-      "Hapus proyek terpilih dari browser? File yang telah diunduh tetap ada.",
+      "Hapus simpanan “{title}” dari browser? Proyek aktif, simpanan lainnya, dan file yang telah diunduh tetap ada.",
     exportProject: "Unduh proyek",
     importProject: "Impor proyek",
     fileLabel: "Pilih file .perkusi.json",
@@ -32,7 +32,10 @@ export const projectMessages = {
     ready: "Proyek dan audio tetap di perangkatmu.",
     saved: "Proyek disimpan. Kamu bisa memuatnya setelah refresh.",
     loaded: "Proyek dimuat dan dijeda. Ketuk Putar untuk mulai.",
-    deleted: "Proyek tersimpan dihapus. Panggung aktif tetap ada.",
+    deleted:
+      "Simpanan terpilih dihapus. Proyek aktif dan simpanan lainnya tetap ada.",
+    projectChanged:
+      "Simpanan berubah atau sudah dihapus di tab lain. Daftar diperbarui; periksa pilihan sebelum menghapus lagi. Proyek aktif tetap ada.",
     imported: "File proyek dimuat dan dijeda. Ketuk Putar untuk mulai.",
     projectDownloaded: "File proyek siap diunduh. Simpan sebagai cadangan.",
     recovered: "Edit terakhir dipulihkan. Ketuk Putar untuk mulai.",
@@ -90,7 +93,7 @@ export const projectMessages = {
     load: "Load project",
     remove: "Delete project",
     deleteConfirm:
-      "Delete the selected project from this browser? Downloaded files remain available.",
+      "Delete saved project “{title}” from this browser? Your active project, other saved projects and downloaded files remain.",
     exportProject: "Download project",
     importProject: "Import project",
     fileLabel: "Choose a .perkusi.json file",
@@ -110,7 +113,10 @@ export const projectMessages = {
     ready: "Projects and audio stay on your device.",
     saved: "Project saved. Load it again after a refresh.",
     loaded: "Project loaded and paused. Tap Play to start.",
-    deleted: "Saved project deleted. Your active stage stays here.",
+    deleted:
+      "Selected saved project deleted. Your active project and other saves remain.",
+    projectChanged:
+      "The saved project changed or was deleted in another tab. The list has been refreshed; review your choice before deleting again. Your active project remains.",
     imported: "Project file loaded and paused. Tap Play to start.",
     projectDownloaded:
       "Project file is ready to download. Keep it as a backup.",
