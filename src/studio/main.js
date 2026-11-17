@@ -133,6 +133,8 @@ export function initStudio() {
     listen = (target, event, fn) =>
       target.addEventListener(event, fn, { signal: life.signal });
   const current = () => history.current;
+  const historySnapshot = () =>
+    studioProjectSnapshot(current(), engine.arrangement, lastPlayback);
   const project = () =>
     validateProject(
       studioProjectSnapshot(
@@ -246,6 +248,10 @@ export function initStudio() {
     }
   }
   function changed() {
+    const arrangement = current().playback?.mode !== "pattern",
+      modeChanged = engine.arrangement !== arrangement;
+    engine.arrangement = arrangement;
+    $("chain-mode").checked = arrangement;
     const invalidated =
       readyFile &&
       readyKey !==
@@ -258,17 +264,51 @@ export function initStudio() {
     }
     clearTimeout(draftTimer);
     if (!receiving) draftTimer = setTimeout(saveDraft, 250);
-    sync();
+    sync(modeChanged);
     if (invalidated) message("wavChanged");
     return invalidated;
   }
   function edit(fn) {
     if (reading || receiving) return;
     try {
-      if (history.edit(fn)) {
+      if (
+        history.edit((p) => {
+          fn(p);
+          p.playback = studioProjectSnapshot(
+            p,
+            p.playback?.mode !== "pattern",
+            lastPlayback,
+          ).playback;
+        }, historySnapshot())
+      ) {
         const invalidated = changed();
         message(invalidated ? "wavChanged" : "editSaved");
       }
+    } catch (e) {
+      fail(e);
+    }
+  }
+  function restorePlaybackLevel(p) {
+    const arrangement = p.playback?.mode !== "pattern";
+    lastPlayback =
+      p.playback?.programmeGain === undefined
+        ? null
+        : {
+            key: studioPlaybackKey(p, arrangement),
+            gain: p.playback.programmeGain,
+            arrangement,
+          };
+    engine.outputStage?.setProgrammeGain(p.playback?.programmeGain ?? 1);
+  }
+  function restoreHistory(direction) {
+    if (busy || reading || receiving || disposed) return;
+    try {
+      if (!history[direction](historySnapshot())) return;
+      // An unplayed score has no calibrated level yet. Keep it paused until
+      // Play prepares that score, rather than borrowing the later beat's gain.
+      if (current().playback?.programmeGain === undefined) engine.pause();
+      restorePlaybackLevel(current());
+      changed();
     } catch (e) {
       fail(e);
     }
@@ -283,14 +323,7 @@ export function initStudio() {
     engine.arrangement = valid.playback?.mode !== "pattern";
     $("chain-mode").checked = engine.arrangement;
     history.replace(valid);
-    lastPlayback =
-      valid.playback?.programmeGain === undefined
-        ? null
-        : {
-            key: studioPlaybackKey(valid, engine.arrangement),
-            gain: valid.playback.programmeGain,
-            arrangement: engine.arrangement,
-          };
+    restorePlaybackLevel(valid);
     readyFile = null;
     $("result").hidden = true;
     $("title").value = current().title;
@@ -302,7 +335,7 @@ export function initStudio() {
       saveDraft();
     }
   }
-  function sync() {
+  function sync(forcePlayback = false) {
     if (disposed) return;
     const p = current(),
       pattern = p.patterns.find((a) => a.id === p.activePattern);
@@ -310,6 +343,7 @@ export function initStudio() {
     playback.configure(
       p,
       studioCatalog.kits.findIndex((k) => k.id === p.pack.id) + 1,
+      forcePlayback,
     );
     if (engine.transport.running)
       lastPlayback = {
@@ -778,12 +812,7 @@ export function initStudio() {
     if (form || document.querySelector("dialog[open]")) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
       event.preventDefault();
-      if (
-        !busy &&
-        !reading &&
-        (event.shiftKey ? history.redo() : history.undo())
-      )
-        changed();
+      restoreHistory(event.shiftKey ? "redo" : "undo");
       return;
     }
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
@@ -893,7 +922,8 @@ export function initStudio() {
           break;
         case "st-demo":
           if (!confirmReplacement("demoConfirm")) break;
-          edit((p) =>
+          engine.rewind();
+          edit((p) => {
             Object.assign(
               p,
               withGuitar(
@@ -903,11 +933,9 @@ export function initStudio() {
                   ),
                 ),
               ),
-            ),
-          );
-          engine.rewind();
-          engine.arrangement = true;
-          $("chain-mode").checked = true;
+            );
+            p.playback = { mode: "chain" };
+          });
           $("title").value = current().title;
           break;
         case "st-clear":
@@ -973,10 +1001,10 @@ export function initStudio() {
           });
           break;
         case "st-undo":
-          if (!busy && !reading && history.undo()) changed();
+          restoreHistory("undo");
           break;
         case "st-redo":
-          if (!busy && !reading && history.redo()) changed();
+          restoreHistory("redo");
           break;
         case "st-save":
           selectedSave = store.save(project());
@@ -1102,13 +1130,7 @@ export function initStudio() {
     if (el.id === "st-pattern") edit((p) => (p.activePattern = el.value));
     if (el.id === "st-quantize") edit((p) => (p.timing.quantize = el.checked));
     if (el.id === "st-chain-mode") {
-      engine.arrangement = el.checked;
-      playback.configure(
-        current(),
-        studioCatalog.kits.findIndex((k) => k.id === current().pack.id) + 1,
-        true,
-      );
-      changed();
+      edit((p) => (p.playback = { mode: el.checked ? "chain" : "pattern" }));
     }
     if (el.id === "st-saved") {
       selectedSave = el.value;

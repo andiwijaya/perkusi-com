@@ -23,6 +23,7 @@
     "test:delete-projects": "node scripts/test-mode-transfer.mjs --delete-projects",
     "test:load-projects": "node scripts/test-mode-transfer.mjs --load-projects",
     "test:reset-projects": "node scripts/test-project-reset.mjs",
+    "test:studio-history": "node scripts/test-studio-history.mjs",
     "fixtures:audio": "python scripts/make-audio-fixtures.py",
     "format": "prettier --write index.html 404.html privacy.html en beatbox studio src tests scripts/test-browser.mjs public/privacy.css vite.config.js eslint.config.js package.json README.md"
   },

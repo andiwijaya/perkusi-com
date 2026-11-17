@@ -34,6 +34,7 @@ export default [
       "scripts/test-project-roundtrip.mjs",
       "scripts/test-mode-transfer.mjs",
       "scripts/test-project-reset.mjs",
+      "scripts/test-studio-history.mjs",
       "scripts/test-instrument-articles.mjs",
       "scripts/test-beatbox.mjs",
       "scripts/test-beatbox-repair.mjs",
