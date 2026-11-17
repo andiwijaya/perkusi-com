@@ -237,12 +237,14 @@ export function initBeatbox() {
         ? `${copy.waiting} ${selected.filter((stem) => stem.state === "ready").length}/${selected.length} ${copy.loadingProgress}`
         : s.status === "playing"
           ? `${active} ${copy.playing}${loading ? "; " + loading + " " + copy.stillLoading : ""}${failed ? "; " + failed + " " + copy.partial : ""}`
-          : copy[s.status] ||
-            (s.status === "error"
-              ? typeof window.AudioContext === "function"
-                ? copy.audioError
-                : copy.audioUnsupported
-              : copy.idle);
+          : s.status === "ready" && selected.length
+            ? copy.selectedReady
+            : copy[s.status] ||
+              (s.status === "error"
+                ? typeof window.AudioContext === "function"
+                  ? copy.audioError
+                  : copy.audioUnsupported
+                : copy.idle);
     text(document.querySelector("#bb-status"), status);
     text(
       document.querySelector("[data-play-label]"),
