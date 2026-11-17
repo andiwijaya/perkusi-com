@@ -49,6 +49,10 @@ import { projectMessages } from "../project/messages.js";
 import { trackEvent, exportFailureCategory } from "../analytics.js";
 import { wavSnapshotKey } from "../project/wav-snapshot.js";
 import {
+  studioPlaybackKey,
+  studioProjectSnapshot,
+} from "../project/studio-playback-state.js";
+import {
   legacyRecoveryHref,
   originalRecoveryHref,
 } from "../app/legacy-recovery-link.js";
@@ -126,7 +130,11 @@ export function initStudio() {
   const current = () => history.current;
   const project = () =>
     validateProject(
-      { ...structuredClone(current()), title: cleanTitle($("title").value) },
+      studioProjectSnapshot(
+        { ...current(), title: cleanTitle($("title").value) },
+        engine.arrangement,
+        lastPlayback,
+      ),
       studioCatalog,
     );
   const text = (el, value) => {
@@ -202,14 +210,21 @@ export function initStudio() {
   function saveDraft() {
     if (!draftAllowed || disposed || receiving) return;
     try {
-      store.saveDraft(current());
+      store.saveDraft(
+        studioProjectSnapshot(current(), engine.arrangement, lastPlayback),
+      );
     } catch {
       draftAllowed = false;
       message("storageUnavailable", true);
     }
   }
   function changed() {
-    const invalidated = readyFile && readyKey !== wavSnapshotKey(current());
+    const invalidated =
+      readyFile &&
+      readyKey !==
+        wavSnapshotKey(
+          studioProjectSnapshot(current(), engine.arrangement, lastPlayback),
+        );
     if (invalidated) {
       readyFile = null;
       $("result").hidden = true;
@@ -238,10 +253,17 @@ export function initStudio() {
       ),
     );
     engine.rewind();
-    engine.arrangement = true;
-    $("chain-mode").checked = true;
+    engine.arrangement = valid.playback?.mode !== "pattern";
+    $("chain-mode").checked = engine.arrangement;
     history.replace(valid);
-    lastPlayback = null;
+    lastPlayback =
+      valid.playback?.programmeGain === undefined
+        ? null
+        : {
+            key: studioPlaybackKey(valid, engine.arrangement),
+            gain: valid.playback.programmeGain,
+            arrangement: engine.arrangement,
+          };
     readyFile = null;
     $("result").hidden = true;
     $("title").value = current().title;
@@ -259,10 +281,9 @@ export function initStudio() {
     );
     if (engine.transport.running)
       lastPlayback = {
-        key: wavSnapshotKey(p),
+        key: studioPlaybackKey(p, engine.arrangement),
         gain: engine.outputStage.programmeGain,
         arrangement: engine.arrangement,
-        context: engine.context,
       };
     compositionPanel.update();
     livePads?.update();
@@ -533,7 +554,9 @@ export function initStudio() {
         JSON.stringify(project()) !== signature
       )
         return;
-      engine.outputStage.setProgrammeGain(measured.programmeCalibration.gain);
+      engine.outputStage.setProgrammeGain(
+        requested.playback?.programmeGain ?? measured.programmeCalibration.gain,
+      );
     } catch (e) {
       if (!disposed) fail(e);
       return;
@@ -554,13 +577,14 @@ export function initStudio() {
     if (!disposed) {
       if (engine.transport.running)
         lastPlayback = {
-          key: wavSnapshotKey(project()),
+          key: studioPlaybackKey(project(), engine.arrangement),
           gain: engine.outputStage.programmeGain,
           arrangement: engine.arrangement,
-          context: engine.context,
         };
       if (engine.stats.starts > before && engine.context?.state === "running")
         trackEvent("audio_started");
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(saveDraft, 250);
       renderStatus();
     }
   }
@@ -658,13 +682,9 @@ export function initStudio() {
     }
     if (!engine.arrangement && !window.confirm(c.previewExport)) return;
     const key = wavSnapshotKey(p);
-    const programmeGain =
-      engine.arrangement &&
-      lastPlayback?.arrangement &&
-      lastPlayback.context === engine.context &&
-      lastPlayback.key === key
-        ? lastPlayback.gain
-        : undefined;
+    const programmeGain = engine.arrangement
+      ? p.playback?.programmeGain
+      : undefined;
     ownFocus();
     readyFile = null;
     $("result").hidden = true;
@@ -1028,6 +1048,7 @@ export function initStudio() {
         studioCatalog.kits.findIndex((k) => k.id === current().pack.id) + 1,
         true,
       );
+      changed();
     }
     if (el.id === "st-saved") {
       selectedSave = el.value;

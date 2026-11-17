@@ -11,6 +11,7 @@ import {
 } from "./kendhang.js";
 import { BASS_PITCHES, BASS_CREDITS, bassUsed } from "./bass.js";
 import { GUITAR_PITCHES, GUITAR_CREDITS, guitarUsed } from "./guitar.js";
+import { PROGRAMME_MAX_GAIN } from "../audio/programme-level.js";
 export const CLIP_ROLES = [
   "kick",
   "snare",
@@ -104,6 +105,7 @@ export function studioView(p) {
   delete base.kendhang;
   delete base.bass;
   delete base.guitar;
+  delete base.playback;
   return {
     ...base,
     schemaVersion: 2,
@@ -152,9 +154,22 @@ export function validateComposition(v, catalog) {
     ...(Object.hasOwn(v, "kendhang") ? ["kendhang"] : []),
     ...(Object.hasOwn(v, "bass") ? ["bass"] : []),
     ...(Object.hasOwn(v, "guitar") ? ["guitar"] : []),
+    ...(Object.hasOwn(v, "playback") ? ["playback"] : []),
   ]);
   if (v.schemaVersion !== 3 || v.mode !== "composition")
     throw new ProjectError("unsupportedVersion");
+  if (Object.hasOwn(v, "playback")) {
+    const hasGain = Object.hasOwn(v.playback || {}, "programmeGain");
+    object(v.playback, ["mode", ...(hasGain ? ["programmeGain"] : [])]);
+    if (
+      !["chain", "pattern"].includes(v.playback.mode) ||
+      (hasGain &&
+        (!Number.isFinite(v.playback.programmeGain) ||
+          v.playback.programmeGain < 1 ||
+          v.playback.programmeGain > PROGRAMME_MAX_GAIN))
+    )
+      throw new ProjectError("invalidProject");
+  }
   object(v.clipPack, Object.keys(CLIP_PACK));
   if (Object.keys(CLIP_PACK).some((k) => v.clipPack[k] !== CLIP_PACK[k]))
     throw new ProjectError("unknownPack");
@@ -378,7 +393,8 @@ export function reverseReasons(p) {
       (p.guitar.volume !== 0.65 ||
         p.guitar.pan !== 0 ||
         p.guitar.mute ||
-        p.guitar.solo))
+        p.guitar.solo)) ||
+    (p.playback?.programmeGain !== undefined && p.playback.programmeGain !== 1)
   )
     reasons.push("mix");
   if (
