@@ -83,6 +83,25 @@ test("pattern preview level belongs to its selected pattern", () => {
   });
 });
 
+test("a valid pattern ID named chain cannot reuse the other playback mode's level", () => {
+  const p = withPatternLoops(newComposition());
+  p.patterns[0].id = "chain";
+  p.activePattern = "chain";
+  p.chain = ["chain"];
+  const preview = {
+    key: studioPlaybackKey(p, false),
+    gain: 3,
+    arrangement: false,
+  };
+  assert.deepEqual(studioProjectSnapshot(p, true, preview).playback, {
+    mode: "chain",
+  });
+  const chain = { key: studioPlaybackKey(p, true), gain: 4, arrangement: true };
+  assert.deepEqual(studioProjectSnapshot(p, false, chain).playback, {
+    mode: "pattern",
+  });
+});
+
 test("legacy projects remain valid and malformed playback metadata cannot enter a save", () => {
   const p = withPatternLoops(newComposition());
   assert.deepEqual(validateProject(p, compositionRegistry), p);
