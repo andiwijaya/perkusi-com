@@ -17,6 +17,8 @@ import { withGuitar } from "../src/project/guitar.js";
 import { originalRegistry } from "../src/project/original-registry.js";
 import { pagePath } from "../src/app/routes.js";
 const recoveryOnly = process.argv.includes("--recovery");
+const clearOnly = process.argv.includes("--clear-backups");
+const clearCopy = process.env.PERKUSI_CLEAR_COPY !== "0";
 const recoveryGuidance = process.env.PERKUSI_RECOVERY_GUIDANCE !== "0";
 const require = createRequire(import.meta.url);
 let pw;
@@ -27,9 +29,11 @@ try {
 }
 const output =
   process.env.PERKUSI_TRANSFER_QA_DIR ||
-  (recoveryOnly
-    ? "qa-artifacts/transfer-recovery"
-    : "qa-artifacts/mode-transfer");
+  (clearOnly
+    ? "qa-artifacts/clear-backups"
+    : recoveryOnly
+      ? "qa-artifacts/transfer-recovery"
+      : "qa-artifacts/mode-transfer");
 await mkdir(output, { recursive: true });
 const remote = process.env.PERKUSI_TRANSFER_BASE_URL;
 const server = remote
@@ -158,10 +162,10 @@ async function context(width, seed) {
       });
     });
   await ctx.addInitScript((seed) => {
-    if (!sessionStorage.getItem("__transferQASeed")) {
+    if (!localStorage.getItem("__transferQASeed")) {
       for (const [key, value] of Object.entries(seed))
         localStorage.setItem(key, value);
-      sessionStorage.setItem("__transferQASeed", "yes");
+      localStorage.setItem("__transferQASeed", "yes");
     }
     window.__transferStarts = 0;
     const start = AudioBufferSourceNode.prototype.start;
@@ -1050,9 +1054,331 @@ async function recoveryEdge(kind) {
     await ctx.close();
   }
 }
+const protectedKeys = [
+  draftKey("beatbox"),
+  draftKey("studio"),
+  "perkusi.draft.studio.v2",
+  savedKey("beatbox"),
+  savedKey("studio"),
+  "perkusi.projects.studio.v2",
+  "perkusi.qa.preference",
+];
+const receiptKeys = ["studio", "beatbox"].map(
+  (tool) => `perkusi.mode-transfer.receipt.${tool}.v1`,
+);
+function clearSeed() {
+  const b = beatbox("Saved Beatbox before clear", 4),
+    s = advanced(),
+    legacy = newStudioProject("Saved legacy Studio");
+  s.title = "Saved full Studio before clear";
+  legacy.timing.bpm = 123;
+  legacy.patterns[0].steps.kick[0] = 0.65;
+  return {
+    [draftKey("beatbox")]: JSON.stringify(b),
+    [draftKey("studio")]: JSON.stringify(s),
+    "perkusi.draft.studio.v2": JSON.stringify(legacy),
+    [savedKey("beatbox")]: JSON.stringify({
+      version: 1,
+      items: [{ id: "protected-bb", project: b }],
+    }),
+    [savedKey("studio")]: JSON.stringify({
+      version: 1,
+      items: [{ id: "protected-studio", project: s }],
+    }),
+    "perkusi.projects.studio.v2": JSON.stringify({
+      version: 1,
+      items: [{ id: "protected-legacy", project: legacy }],
+    }),
+    "perkusi.qa.preference": "keep-this-preference",
+  };
+}
+async function rawValues(page, keys) {
+  return page.evaluate(
+    (keys) =>
+      Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key)])),
+    keys,
+  );
+}
+async function clearSetup(tool, locale, width) {
+  const seed = clearSeed(),
+    ctx = await context(width, seed),
+    page = await ctx.newPage();
+  const source = tool === "studio" ? "beatbox" : "studio";
+  await open(page, source, locale);
+  const p =
+    source === "beatbox"
+      ? beatbox("Active project after switching", 4)
+      : advanced();
+  p.title = "Active project after switching";
+  await imported(page, source, p);
+  await transfer(
+    page,
+    tool,
+    locale,
+    `clear-${tool}-${locale}-${width}-setup`,
+    source === "studio",
+  );
+  return { seed, ctx, page, source };
+}
+async function confirmClear(page, accept, whileOpen = () => {}) {
+  page.removeAllListeners("dialog");
+  const event = page.waitForEvent("dialog"),
+    click = page.locator("#mode-clear-backups").click();
+  const dialog = await event;
+  assert.equal(dialog.type(), "confirm");
+  if (clearCopy) {
+    assert(
+      /Beatbox/.test(dialog.message()) &&
+        /Rhythm Studio/.test(dialog.message()),
+    );
+    assert(
+      /aktif|current/i.test(dialog.message()) &&
+        /tersimpan|saved/i.test(dialog.message()),
+    );
+  }
+  try {
+    await whileOpen();
+  } finally {
+    accept ? await dialog.accept() : await dialog.dismiss();
+  }
+  await click;
+}
+async function clearNormal(tool, locale, width) {
+  const name = `clear-${tool}-${locale}-${width}`,
+    { seed, ctx, page, source } = await clearSetup(tool, locale, width);
+  try {
+    const active = await project(page, tool, name + "-active-before"),
+      audio = await wav(page, tool, name + "-before");
+    await download(page, "#mode-original", name + "-original.perkusi.json");
+    await download(page, "#mode-draft-backup", name + "-draft.perkusi.json");
+    const protectedBefore = await rawValues(page, protectedKeys),
+      metadata = await rawValues(page, [KEY, ...receiptKeys]);
+    await page.locator("#mode-clear-backups").scrollIntoViewIfNeeded();
+    assert(
+      await page.locator("#mode-clear-backups").evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return r.left >= 0 && r.right <= innerWidth + 1;
+      }),
+      "The clear action must fit the phone viewport",
+    );
+    await page.screenshot({ path: join(output, name + "-before.png") });
+    await confirmClear(page, false);
+    assert.deepEqual(
+      await rawValues(page, [KEY, ...receiptKeys]),
+      metadata,
+      "Cancel must keep every transfer backup and receipt",
+    );
+    assert.deepEqual(await rawValues(page, protectedKeys), protectedBefore);
+    await confirmClear(page, true);
+    await page.waitForFunction(
+      () => document.querySelector("#mode-clear-backups").hidden,
+    );
+    for (const raw of Object.values(
+      await rawValues(page, [KEY, ...receiptKeys]),
+    ))
+      assert.equal(raw, null);
+    assert.equal(
+      await page.evaluate((key) => sessionStorage.getItem(key), MARKER),
+      null,
+    );
+    assert(await page.locator("#mode-recovery").isHidden());
+    assert(await page.locator("#mode-clear-backups").isHidden());
+    assert.deepEqual(
+      await rawValues(page, protectedKeys),
+      protectedBefore,
+      "Clear must not touch active drafts, named projects, legacy projects or preferences",
+    );
+    if (clearCopy) {
+      assert(
+        /dihapus|deleted/i.test(await page.locator("#mode-status").innerText()),
+      );
+      assert.equal(
+        await page.evaluate(() => document.activeElement.id),
+        "mode-transfer",
+      );
+    }
+    assert.deepEqual(await project(page, tool, name + "-active-after"), active);
+    if (clearCopy) await page.locator("#mode-status").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(output, name + "-after.png") });
+    await page.reload();
+    await ready(page, tool);
+    assert.deepEqual(
+      await project(page, tool, name + "-active-refresh"),
+      active,
+    );
+    await recoveryControls(page, tool, active);
+    const after = await wav(page, tool, name + "-after");
+    assert.equal(after.channels, audio.channels);
+    const metrics = Array.from({ length: audio.channels }, (_, channel) =>
+      sameAudio(after, audio, channel),
+    );
+    // Existing regular and legacy saves can still be loaded after deleting transfer archives.
+    for (const owner of [tool, source]) {
+      await open(page, owner, locale);
+      await page
+        .locator("#" + ids(owner).list)
+        .selectOption(owner === "studio" ? "protected-studio" : "protected-bb");
+      await page.locator("#" + ids(owner).load).click();
+      const expected = JSON.parse(seed[savedKey(owner)]).items[0].project;
+      await page.waitForFunction(
+        ({ id, title }) => document.querySelector("#" + id).value === title,
+        { id: ids(owner).title, title: expected.title },
+      );
+      assert.deepEqual(
+        await project(page, owner, name + "-saved-" + owner),
+        expected,
+      );
+      if (owner === "studio") {
+        await page
+          .locator("#st-saved")
+          .selectOption("legacy0-protected-legacy");
+        await page.locator("#st-load").click();
+        const legacy = JSON.parse(seed["perkusi.projects.studio.v2"]).items[0]
+          .project;
+        await page.waitForFunction(
+          (title) => document.querySelector("#st-title").value === title,
+          legacy.title,
+        );
+        assert.deepEqual(
+          studioView(await project(page, owner, name + "-saved-legacy")),
+          legacy,
+        );
+      }
+    }
+    for (const key of [
+      savedKey("studio"),
+      savedKey("beatbox"),
+      "perkusi.projects.studio.v2",
+    ])
+      assert.equal((await rawValues(page, [key]))[key], seed[key]);
+    // Starting a new transfer after clearing must work with a new, bounded archive.
+    await page.locator("#mode-transfer").click();
+    await page.locator("#mode-confirm").click();
+    await page.waitForURL((url) => url.pathname === pagePath(tool, locale));
+    await ready(page, tool);
+    const fresh = JSON.parse((await rawValues(page, [KEY]))[KEY]);
+    assert.equal(fresh.originals.length, 1);
+    assert.notEqual(fresh.id, JSON.parse(metadata[KEY]).id);
+    evidence.checks.push({
+      name,
+      result: "PASS",
+      metrics,
+      regularAndLegacySavesPreserved: true,
+    });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
+async function clearFailure(tool, kind) {
+  const name = `clear-${kind}-${tool}`,
+    { ctx, page } = await clearSetup(tool, "id", 1440);
+  try {
+    const writer = kind === "changed" ? await ctx.newPage() : null;
+    if (writer) {
+      await writer.goto(base + "/privacy.html");
+      await page.bringToFront();
+    }
+    const active = await project(page, tool, name + "-active-before"),
+      before = await rawValues(page, protectedKeys);
+    let raw = (await rawValues(page, [KEY]))[KEY];
+    if (kind === "pending") {
+      raw = JSON.stringify({ ...JSON.parse(raw), pending: true });
+      await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), {
+        key: KEY,
+        raw,
+      });
+      page.removeAllListeners("dialog");
+      let prompts = 0;
+      page.on("dialog", (d) => {
+        prompts++;
+        return d.dismiss();
+      });
+      await page.locator("#mode-clear-backups").click();
+      assert.equal(
+        prompts,
+        0,
+        "A pending transfer must refuse clear before confirmation",
+      );
+    } else if (kind === "changed") {
+      const record = JSON.parse(raw),
+        original = { ...record.original, title: "New source from another tab" };
+      raw = JSON.stringify({
+        ...record,
+        id: "new-transfer-while-confirming",
+        pending: true,
+        original,
+        originals: [...record.originals, original],
+        candidate: { ...record.candidate, title: original.title },
+      });
+      await confirmClear(page, true, () =>
+        writer.evaluate(({ key, raw }) => localStorage.setItem(key, raw), {
+          key: KEY,
+          raw,
+        }),
+      );
+      await writer.close();
+    } else {
+      await page.evaluate((key) => {
+        sessionStorage.setItem(key, "stale-clear-marker");
+        const remove = Storage.prototype.removeItem;
+        Storage.prototype.removeItem = function (name) {
+          if (this === sessionStorage && name === key)
+            throw new DOMException("Removal denied", "SecurityError");
+          return remove.call(this, name);
+        };
+      }, MARKER);
+      await confirmClear(page, true);
+      assert.equal(
+        await page.evaluate((key) => sessionStorage.getItem(key), MARKER),
+        "stale-clear-marker",
+      );
+    }
+    if (clearCopy)
+      await page.waitForFunction(
+        () =>
+          document.querySelector("#mode-status")?.getAttribute("role") ===
+          "alert",
+      );
+    assert.equal(
+      (await rawValues(page, [KEY]))[KEY] === raw,
+      true,
+      "Refused or failed clear must retain the transfer archive",
+    );
+    assert.deepEqual(await rawValues(page, protectedKeys), before);
+    assert.deepEqual(await project(page, tool, name + "-active-after"), active);
+    evidence.checks.push({
+      name,
+      result: "PASS",
+      activeAndSavedWorkPreserved: true,
+    });
+    console.log("PASS " + name);
+  } finally {
+    await ctx.close();
+  }
+}
 try {
   browser = await pw.chromium.launch({ channel: "chrome", headless: true });
   evidence.browser = browser.version();
+  if (clearOnly) {
+    const only = process.env.PERKUSI_CLEAR_CASE;
+    if (!only || only === "normal")
+      for (const [locale, width] of [
+        ["id", 1440],
+        ["en", 1440],
+        ["id", 390],
+      ])
+        for (const tool of ["beatbox", "studio"])
+          await clearNormal(tool, locale, width);
+    for (const kind of ["pending", "changed", "denied"])
+      if (!only || only === kind)
+        for (const tool of ["beatbox", "studio"])
+          if (
+            !process.env.PERKUSI_CLEAR_TOOL ||
+            process.env.PERKUSI_CLEAR_TOOL === tool
+          )
+            await clearFailure(tool, kind);
+  }
   if (recoveryOnly) {
     for (const [locale, width] of [
       ["id", 1440],
@@ -1080,7 +1406,11 @@ try {
       await recoveryEdge("unreadable");
     }
   }
-  if (!recoveryOnly && process.env.PERKUSI_TRANSFER_CASE !== "failure")
+  if (
+    !recoveryOnly &&
+    !clearOnly &&
+    process.env.PERKUSI_TRANSFER_CASE !== "failure"
+  )
     for (const [locale, width] of [
       ["id", 1440],
       ["en", 1440],
@@ -1093,6 +1423,7 @@ try {
     }
   if (
     !recoveryOnly &&
+    !clearOnly &&
     (!process.env.PERKUSI_TRANSFER_CASE ||
       process.env.PERKUSI_TRANSFER_CASE === "failure")
   ) {
