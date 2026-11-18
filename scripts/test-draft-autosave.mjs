@@ -759,6 +759,20 @@ async function reopenConflictCopy(
     });
   }
 
+  // A saved-library read error on reload must not block draft recovery.
+  await editor.addInitScript((key) => {
+    const get = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (name) {
+      if (this === window.localStorage && name === key) {
+        window.qaSavedProjectReadRejected = true;
+        throw new DOMException(
+          "QA blocked reading saved projects",
+          "SecurityError",
+        );
+      }
+      return get.call(this, name);
+    };
+  }, savedKey);
   const reload = editor.waitForEvent("domcontentloaded");
   const confirm = editor.waitForEvent("dialog", { timeout: 5000 });
   const back = pressReturn();
@@ -774,8 +788,12 @@ async function reopenConflictCopy(
     afterSharedEdit.title,
   );
   assert.equal(new URL(editor.url()).searchParams.has("draft"), false);
+  assert.equal(
+    await editor.evaluate(() => window.qaSavedProjectReadRejected),
+    true,
+  );
   assert.equal(await raw(editor, key), sharedRaw);
-  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+  assert.equal(await raw(newer, savedKey), savedLibraryRaw);
   await editor.close();
 
   const reopened = await open();
@@ -794,6 +812,7 @@ async function reopenConflictCopy(
     returnWarning: warning,
     saveFailureAfterCancel: saveError,
     rejectedSavePreservedCopyAndDraft: true,
+    latestDraftOpenedWithSavedListUnavailable: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,

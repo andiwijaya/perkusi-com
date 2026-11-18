@@ -42,6 +42,7 @@ export function initProjectControls({
     status = "ready",
     isError = false,
     warning = false,
+    savedListUnavailable = false,
     draftEnabled = true,
     draftIssue = "",
     lastSignature = "",
@@ -96,7 +97,7 @@ export function initProjectControls({
     if (el("status").textContent !== copy[status])
       el("status").textContent = copy[status];
     el("status").setAttribute("role", isError ? "alert" : "status");
-    el("storage-warning").hidden = !warning;
+    el("storage-warning").hidden = !warning && !savedListUnavailable;
     el("storage-warning").textContent = copy.storageUnavailable;
     el("cancel").hidden = !busy;
     el("cancel").disabled = status === "cancelling";
@@ -157,6 +158,7 @@ export function initProjectControls({
   }
   function refreshList(selected = "") {
     const options = store.read();
+    savedListUnavailable = false;
     el("list").replaceChildren(new Option(copy.choose, ""));
     for (const item of options) {
       const { title } = item.project;
@@ -240,7 +242,12 @@ export function initProjectControls({
   const ready = (async () => {
     try {
       lastSignature = JSON.stringify(current());
-      refreshList();
+      try {
+        refreshList();
+      } catch {
+        savedListUnavailable = true;
+        render();
+      }
       let source;
       try {
         source = await draft.open();
