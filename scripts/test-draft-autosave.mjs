@@ -810,9 +810,9 @@ async function reopenConflictCopy(
     name: locale === "id" ? "Muat ulang daftar proyek" : "Reload project list",
     exact: true,
   });
-  const savedOption = editor
-    .locator(library[tool].list)
-    .locator(`option[value="${updated.id}"]`);
+  const savedList = editor.locator(library[tool].list);
+  const savedOption = savedList.locator(`option[value="${updated.id}"]`);
+  const loadProject = editor.locator(library[tool].load);
   await retryList.waitFor({ state: "visible" });
   assert.equal(await savedOption.count(), 0);
   await editor.bringToFront();
@@ -851,6 +851,8 @@ async function reopenConflictCopy(
   );
   assert.equal(await raw(editor, key), sharedRaw);
   assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+  await savedList.selectOption(updated.id);
+  assert.equal(await loadProject.isEnabled(), true);
 
   for (const page of [editor, newer]) {
     const session = await page.context().newCDPSession(page);
@@ -876,6 +878,8 @@ async function reopenConflictCopy(
       ? /^Daftar proyek belum bisa dibaca/
       : /^The saved project list couldn't be read/,
   );
+  assert.equal(await loadProject.isEnabled(), false);
+  assert.equal(await savedOption.count(), 0);
   assert.equal(await retryList.isEnabled(), true);
   assert.equal(await raw(editor, key), sharedRaw);
   assert.equal(await raw(newer, savedKey), savedLibraryRaw);
@@ -917,6 +921,7 @@ async function reopenConflictCopy(
     blockedRetryReportedFailure: true,
     savedListRestoredWithoutReload: true,
     repeatedSavedListFailureDetectedOnTabReturn: true,
+    unavailableSavedListOffersNoStaleProject: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,
