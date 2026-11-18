@@ -18,7 +18,7 @@ export function createSavedListRecovery(select, readList, listen) {
     message.textContent = copy[statusKey];
   }
   function retry(manual = false) {
-    if (notice.hidden) return;
+    if (manual && notice.hidden) return;
     const restoreFocus = document.activeElement === button;
     readList();
     if (notice.hidden && restoreFocus) select.focus({ preventScroll: true });

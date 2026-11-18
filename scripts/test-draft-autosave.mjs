@@ -851,6 +851,50 @@ async function reopenConflictCopy(
   );
   assert.equal(await raw(editor, key), sharedRaw);
   assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+
+  for (const page of [editor, newer]) {
+    const session = await page.context().newCDPSession(page);
+    await session.send("Emulation.setFocusEmulationEnabled", {
+      enabled: false,
+    });
+  }
+  await newer.bringToFront();
+  await editor.waitForFunction(() => !document.hasFocus());
+  await editor.evaluate((flag) => {
+    window.qaSavedProjectReadRejected = false;
+    sessionStorage.setItem(flag, "1");
+  }, readDeniedKey);
+  await editor.bringToFront();
+  await retryList.waitFor({ state: "visible" });
+  assert.equal(
+    await editor.evaluate(() => window.qaSavedProjectReadRejected),
+    true,
+  );
+  assert.match(
+    await editor.locator(".saved-list-recovery [role=status]").innerText(),
+    locale === "id"
+      ? /^Daftar proyek belum bisa dibaca/
+      : /^The saved project list couldn't be read/,
+  );
+  assert.equal(await retryList.isEnabled(), true);
+  assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(newer, savedKey), savedLibraryRaw);
+
+  await newer.bringToFront();
+  await editor.waitForFunction(() => !document.hasFocus());
+  await editor.evaluate(
+    (flag) => sessionStorage.removeItem(flag),
+    readDeniedKey,
+  );
+  await editor.bringToFront();
+  await retryList.waitFor({ state: "hidden" });
+  await savedOption.waitFor({ state: "attached" });
+  assert.equal(
+    await editor.evaluate(() => performance.timeOrigin),
+    beforeListRetry,
+  );
+  assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
   await editor.close();
 
   const reopened = await open();
@@ -872,6 +916,7 @@ async function reopenConflictCopy(
     latestDraftOpenedWithSavedListUnavailable: true,
     blockedRetryReportedFailure: true,
     savedListRestoredWithoutReload: true,
+    repeatedSavedListFailureDetectedOnTabReturn: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,
