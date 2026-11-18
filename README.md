@@ -57,6 +57,8 @@ Content lives in `src/instruments/content/`, with 16 ID/EN modules and direct ed
 
 `npm run test:autosave -- --concurrent` checks two tabs editing the same project's draft. It covers stale editors saving a separate copy, simultaneous edits, recovery after refresh or close while a write is queued, and autosave after a mode transfer. The same browser settings apply.
 
+`npm run test:autosave -- --conflict-copy` checks saving a conflict copy, opening it in a fresh tab, refreshing it, and returning to the latest shared draft. It also covers unmarked saves and failure to write the separate tab's copy. The same browser settings apply.
+
 ## Retired engineering tooling
 
 The old internal audio/sound-lab pages, prototype build mode and experimental browser drivers are removed. Ordinary audio engine tests remain in `tests/audio.test.js`; ordinary asset and Beatbox tests remain in the main suite. The three technical fixtures, their generator and provenance remain as media/recipe records, outside the production build.

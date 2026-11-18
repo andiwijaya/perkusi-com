@@ -18,6 +18,7 @@ import {
 } from "./composition-panel.js";
 import { initModeTransfer } from "../project/mode-transfer.js";
 import { CompositionStore } from "../project/composition-store.js";
+import { isSeparateSave } from "../project/store.js";
 import { studioCatalog, studioPack, instrumentPack } from "./pack.js";
 import { kendhangPack, kendhangNotices } from "./kendhang-pack.js";
 import { withKendhang, emptyKendhang } from "../project/kendhang.js";
@@ -120,7 +121,7 @@ export function initStudio() {
     projectStatus = "idle",
     statusError = false,
     draftAllowed = true,
-    draftConflict = false,
+    draftIssue = "",
     frame,
     lastFrame = 0,
     keyboard = false,
@@ -138,7 +139,14 @@ export function initStudio() {
   const historySnapshot = () =>
     studioProjectSnapshot(current(), engine.arrangement, lastPlayback);
   const draft = createDraftSession(store, draftFailed);
-  const draftNotice = createDraftNotice(root, "st-save");
+  const draftNotice = createDraftNotice(root, "st-save", () => {
+    try {
+      draft.leaveSeparate();
+      window.location.reload();
+    } catch {
+      message("storageUnavailable", true);
+    }
+  });
   const project = () =>
     validateProject(
       studioProjectSnapshot(
@@ -225,11 +233,21 @@ export function initStudio() {
   function updateSaves() {
     const select = $("saved");
     select.replaceChildren(new Option(c.choose, ""));
-    for (const item of savedItems)
-      select.add(new Option(item.project.title, item.id));
+    for (const item of savedItems) {
+      const { title } = item.project;
+      select.add(
+        new Option(
+          isSeparateSave(item.id)
+            ? `${title} · ${errors.separateLabel}`
+            : title,
+          item.id,
+        ),
+      );
+    }
     select.value = selectedSave;
     selectedSave = select.value;
     $("load").disabled = busy || reading || receiving || !selectedSave;
+    $("open-separate").disabled = $("load").disabled;
     const protectedOriginal = selectedSave.startsWith("legacy");
     $("saved-delete").disabled =
       busy || reading || receiving || !selectedSave || protectedOriginal;
@@ -245,13 +263,17 @@ export function initStudio() {
     draft.save(historySnapshot());
   }
   function draftFailed(error) {
-    if (disposed) return;
-    draftAllowed = false;
     const code = error?.code;
+    if (disposed || (draft.isSeparate && code === "draftConflict")) return;
+    draftAllowed = false;
     if (code === "draftConflict" || code === "draftAutosaveUnavailable") {
-      draftConflict = true;
+      draftIssue = code;
       draftNotice.show(code);
     } else message("storageUnavailable", true);
+  }
+  function showSeparate() {
+    draftAllowed = true;
+    draftNotice.show("separateDraft");
   }
   function changed({ autosave = true } = {}) {
     const arrangement = current().playback?.mode !== "pattern",
@@ -333,7 +355,7 @@ export function initStudio() {
     // Recovery reads the existing draft, and transfers have already written it.
     changed({ autosave: false });
     message("loaded");
-    if (restoreDraft && !draftConflict) {
+    if (restoreDraft && (!draftIssue || draft.isSeparate)) {
       // Explicit recovery may replace an unreadable draft that disabled autosave.
       draftAllowed = true;
       saveDraft();
@@ -1013,13 +1035,21 @@ export function initStudio() {
           restoreHistory("redo");
           break;
         case "st-save":
-          selectedSave = store.save(project());
+          selectedSave = store.save(project(), {
+            separate:
+              draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
+          });
           readSaves();
           message("saved");
           trackEvent("project_saved");
           break;
-        case "st-load": {
+        case "st-load":
+        case "st-open-separate": {
           const id = selectedSave;
+          const separate =
+            target.id === "st-open-separate" ||
+            draft.isSeparate ||
+            isSeparateSave(id);
           let selected;
           try {
             selected = store.load(id);
@@ -1029,7 +1059,10 @@ export function initStudio() {
           }
           if (
             !window.confirm(
-              c.loadConfirm.replace("{title}", () => selected.title),
+              (separate ? errors.separateLoadConfirm : c.loadConfirm).replace(
+                "{title}",
+                () => selected.title,
+              ),
             )
           ) {
             message("loadCancelled");
@@ -1043,6 +1076,10 @@ export function initStudio() {
           } catch (error) {
             readSaves();
             throw error;
+          }
+          if (separate) {
+            draft.openSeparate(loaded);
+            showSeparate();
           }
           apply(loaded, true);
           break;
@@ -1274,7 +1311,9 @@ export function initStudio() {
       }
       if (disposed) return;
       try {
-        const project = store.readDraft(source);
+        const separate = draft.readSeparate();
+        if (separate) showSeparate();
+        const project = separate || store.readDraft(source);
         if (project) apply(project);
       } catch {
         draftAllowed = false;
@@ -1289,8 +1328,10 @@ export function initStudio() {
       if (!value && !disposed) root.dataset.ready = "true";
     },
     apply: (p) => {
+      const wasSeparate = draft.isSeparate;
       draft.adopt();
-      if (!draftConflict) draftAllowed = true;
+      if (wasSeparate) draftNotice.hide();
+      if (!draftIssue) draftAllowed = true;
       apply(p);
     },
     delivery,
