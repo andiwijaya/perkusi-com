@@ -1,0 +1,22 @@
+.draft-notice {
+  position: fixed;
+  inset-inline-end: 0.75rem;
+  inset-block-end: max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 8;
+  width: min(24rem, calc(100% - 1.5rem));
+  padding: 0.75rem 1rem;
+  border: 1px solid #dfaf68;
+  border-radius: 0.75rem;
+  background: #262219;
+  color: #fff4e2;
+  font-size: 0.875rem;
+  box-shadow: 0 0.4rem 1rem #0006;
+}
+
+.draft-notice p {
+  margin: 0 0 0.3rem;
+}
+.draft-notice a {
+  color: #ffe0ab;
+  text-decoration: underline;
+}

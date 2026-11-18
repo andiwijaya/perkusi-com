@@ -1,4 +1,6 @@
 import "../project/mode-transfer.css";
+import { createDraftSession } from "../project/draft-session.js";
+import { createDraftNotice } from "../project/draft-notice.js";
 import "./style.css";
 import { createStudioPlayback } from "./playback.js";
 import { StudioWavExporter } from "../audio/studio-exporter.js";
@@ -118,6 +120,7 @@ export function initStudio() {
     projectStatus = "idle",
     statusError = false,
     draftAllowed = true,
+    draftConflict = false,
     frame,
     lastFrame = 0,
     keyboard = false,
@@ -134,6 +137,8 @@ export function initStudio() {
   const current = () => history.current;
   const historySnapshot = () =>
     studioProjectSnapshot(current(), engine.arrangement, lastPlayback);
+  const draft = createDraftSession(store, draftFailed);
+  const draftNotice = createDraftNotice(root, "st-save");
   const project = () =>
     validateProject(
       studioProjectSnapshot(
@@ -237,12 +242,16 @@ export function initStudio() {
   }
   function saveDraft() {
     if (!draftAllowed || disposed || receiving) return;
-    try {
-      store.saveDraft(historySnapshot());
-    } catch {
-      draftAllowed = false;
-      message("storageUnavailable", true);
-    }
+    draft.save(historySnapshot());
+  }
+  function draftFailed(error) {
+    if (disposed) return;
+    draftAllowed = false;
+    const code = error?.code;
+    if (code === "draftConflict" || code === "draftAutosaveUnavailable") {
+      draftConflict = true;
+      draftNotice.show(code);
+    } else message("storageUnavailable", true);
   }
   function changed({ autosave = true } = {}) {
     const arrangement = current().playback?.mode !== "pattern",
@@ -324,7 +333,7 @@ export function initStudio() {
     // Recovery reads the existing draft, and transfers have already written it.
     changed({ autosave: false });
     message("loaded");
-    if (restoreDraft) {
+    if (restoreDraft && !draftConflict) {
       // Explicit recovery may replace an unreadable draft that disabled autosave.
       draftAllowed = true;
       saveDraft();
@@ -548,6 +557,7 @@ export function initStudio() {
     for (const link of root.querySelectorAll("[data-st-recovery]"))
       link.href = legacyRecoveryHref(locale);
     errors = { ...projectMessages[locale], ...compositionMessages[locale] };
+    draftNotice.localize();
     root
       .querySelectorAll("[data-st-copy]")
       .forEach((el) => text(el, c[el.dataset.stCopy]));
@@ -1187,6 +1197,7 @@ export function initStudio() {
   function dispose() {
     if (disposed) return;
     disposed = true;
+    draft.close();
     preload.dispose();
     cancelAnimationFrame(preloadFrame);
     cancelAnimationFrame(preloadStartFrame);
@@ -1246,14 +1257,6 @@ export function initStudio() {
     .forEach((el) => (el.disabled = false));
   localize();
   readSaves();
-  try {
-    const draft = store.readDraft();
-    if (draft) apply(draft);
-  } catch {
-    draftAllowed = false;
-    message("recoveryError", true);
-  }
-  if (!storeAvailable) message("storageUnavailable", true);
   const transfer = initModeTransfer({
     root,
     mode: "studio",
@@ -1262,19 +1265,37 @@ export function initStudio() {
       await new Promise((resolve) => setTimeout(resolve, 8));
     },
     current: project,
+    async beforeReceive() {
+      let source;
+      try {
+        source = await draft.open();
+      } catch (error) {
+        draftFailed(error);
+      }
+      if (disposed) return;
+      try {
+        const project = store.readDraft(source);
+        if (project) apply(project);
+      } catch {
+        draftAllowed = false;
+        message("recoveryError", true);
+      }
+      if (!storeAvailable) message("storageUnavailable", true);
+    },
     onReceiving(value) {
       receiving = value;
       $("title").disabled = value;
       sync();
+      if (!value && !disposed) root.dataset.ready = "true";
     },
     apply: (p) => {
-      draftAllowed = true;
+      draft.adopt();
+      if (!draftConflict) draftAllowed = true;
       apply(p);
     },
     delivery,
     locked: () => busy || reading || receiving || disposed,
   });
-  root.dataset.ready = "true";
   renderPreload();
   preloadFrame = requestAnimationFrame(() => {
     preloadStartFrame = requestAnimationFrame(() => {
