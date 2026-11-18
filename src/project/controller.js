@@ -1,6 +1,6 @@
 import { projectMessages } from "./messages.js";
 import { captureBeatboxProject, applyBeatboxProject } from "./beatbox-model.js";
-import { ProjectStore } from "./store.js";
+import { ProjectStore, isSeparateSave } from "./store.js";
 import { FileDelivery, safeFilename, readProjectFile } from "./files.js";
 import { serializeProject } from "./schema.js";
 import { exportFailureCategory } from "../analytics.js";
@@ -21,7 +21,15 @@ export function initProjectControls({
     store = new ProjectStore(catalog),
     delivery = new FileDelivery(),
     draft = createDraftSession(store, draftFailed),
-    draftNotice = createDraftNotice(panel.closest("main"), "project-save");
+    draftNotice = createDraftNotice(
+      panel.closest("main"),
+      "project-save",
+      () =>
+        void guarded(() => {
+          draft.leaveSeparate();
+          window.location.reload();
+        }),
+    );
   let copy,
     disposed = false,
     busy = false,
@@ -34,7 +42,7 @@ export function initProjectControls({
     isError = false,
     warning = false,
     draftEnabled = true,
-    draftConflict = false,
+    draftIssue = "",
     lastSignature = "",
     progress = null,
     keyboardFocus = false,
@@ -111,6 +119,7 @@ export function initProjectControls({
       el(id).disabled =
         busy || loading || receiving || (id === "render" && !audioReady());
     el("load").disabled = loading || receiving || !el("list").value;
+    el("open-separate").disabled = el("load").disabled;
     el("delete").disabled = loading || receiving || !el("list").value;
     el("result").hidden = !file;
     el("filename").textContent = file?.name || "";
@@ -136,23 +145,35 @@ export function initProjectControls({
       .querySelectorAll("[data-project-copy]")
       .forEach((node) => (node.textContent = copy[node.dataset.projectCopy]));
     el("title").placeholder = copy.untitled;
-    if (el("list").options[0]) el("list").options[0].textContent = copy.choose;
+    for (const option of el("list").options) {
+      if (!option.value) option.textContent = copy.choose;
+      else if (option.dataset.separateTitle)
+        option.textContent = `${option.dataset.separateTitle} · ${copy.separateLabel}`;
+    }
     draftNotice.localize();
     render();
   }
   function refreshList(selected = "") {
     const options = store.read();
     el("list").replaceChildren(new Option(copy.choose, ""));
-    for (const item of options)
-      el("list").append(new Option(item.project.title, item.id));
+    for (const item of options) {
+      const { title } = item.project;
+      const option = new Option(title, item.id);
+      if (isSeparateSave(item.id)) {
+        option.dataset.separateTitle = title;
+        option.textContent = `${title} · ${copy.separateLabel}`;
+      }
+      el("list").append(option);
+    }
     el("list").value = selected;
     render();
   }
   function draftFailed(error) {
-    draftEnabled = false;
     const code = error?.code;
+    if (disposed || (draft.isSeparate && code === "draftConflict")) return;
+    draftEnabled = false;
     if (code === "draftConflict" || code === "draftAutosaveUnavailable") {
-      draftConflict = true;
+      draftIssue = code;
       draftNotice.show(code);
     } else warning = true;
     render();
@@ -197,7 +218,7 @@ export function initProjectControls({
       // Incoming transfers already commit the draft before applying it.
       if (
         !receiving &&
-        !draftConflict &&
+        (!draftIssue || draft.isSeparate) &&
         (code === "imported" || code === "loaded")
       ) {
         draftEnabled = true;
@@ -225,56 +246,73 @@ export function initProjectControls({
         draftFailed(error);
       }
       if (disposed) return;
-      const project = store.readDraft(source);
+      const separate = draft.readSeparate();
+      if (separate) showSeparate();
+      const project = separate || store.readDraft(source);
       if (project) await guarded(() => apply(project, "recovered"));
     } catch (error) {
       draftFailed(error);
     }
   })();
+  function showSeparate() {
+    draftEnabled = true;
+    warning = false;
+    draftNotice.show("separateDraft");
+  }
   listen(
     el("save"),
     "click",
     () =>
       void guarded(() => {
-        const id = store.save(current());
+        const id = store.save(current(), {
+          separate:
+            draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
+        });
         refreshList(id);
         trackEvent("project_saved");
         notify("saved");
       }),
   );
-  listen(
-    el("load"),
-    "click",
-    () =>
-      void guarded(async () => {
-        const id = el("list").value;
-        let selected;
-        try {
-          selected = store.load(id);
-        } catch (error) {
-          refreshList();
-          throw error;
-        }
-        if (
-          !globalThis.confirm(
-            copy.loadConfirm.replace("{title}", () => selected.title),
-          )
-        ) {
-          notify("loadCancelled");
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        if (disposed) return;
-        let project;
-        try {
-          project = store.load(id, selected);
-        } catch (error) {
-          refreshList();
-          throw error;
-        }
-        await apply(project, "loaded");
-      }),
-  );
+  function loadSaved(separately) {
+    void guarded(async () => {
+      const id = el("list").value;
+      const separate = separately || draft.isSeparate || isSeparateSave(id);
+      let selected;
+      try {
+        selected = store.load(id);
+      } catch (error) {
+        refreshList();
+        throw error;
+      }
+      if (
+        !globalThis.confirm(
+          (separate ? copy.separateLoadConfirm : copy.loadConfirm).replace(
+            "{title}",
+            () => selected.title,
+          ),
+        )
+      ) {
+        notify("loadCancelled");
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (disposed) return;
+      let project;
+      try {
+        project = store.load(id, selected);
+      } catch (error) {
+        refreshList();
+        throw error;
+      }
+      if (separate) {
+        draft.openSeparate(project);
+        showSeparate();
+      }
+      await apply(project, "loaded");
+    });
+  }
+  listen(el("load"), "click", () => loadSaved(false));
+  listen(el("open-separate"), "click", () => loadSaved(true));
   listen(
     el("delete"),
     "click",
@@ -439,8 +477,10 @@ export function initProjectControls({
       render();
     },
     applyTransferred(project) {
+      const wasSeparate = draft.isSeparate;
       draft.adopt();
-      if (!draftConflict) {
+      if (wasSeparate) draftNotice.hide();
+      if (!draftIssue) {
         draftEnabled = true;
         warning = false;
       }

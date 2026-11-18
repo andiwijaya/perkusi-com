@@ -106,6 +106,7 @@ const pairs = {
   save: ["Simpan proyek baru", "Save a new project"],
   choose: ["Pilih proyek tersimpan", "Choose a saved project"],
   load: ["Muat", "Load"],
+  openSeparate: ["Buka terpisah", "Open separately"],
   loadConfirm: [
     "Muat simpanan “{title}” dan ganti proyek aktif beserta editnya? Simpan atau unduh proyek aktif lebih dulu jika ingin mempertahankannya.",
     "Load saved project “{title}” and replace your active project and edits? Save or download your active project first if you want to keep it.",

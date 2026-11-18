@@ -27,6 +27,8 @@ const out =
   process.env.PERKUSI_AUTOSAVE_QA_DIR || "qa-artifacts/draft-autosave";
 const probe = process.argv.includes("--probe");
 const concurrentProbe = process.argv.includes("--concurrent-probe");
+const copyProbe = process.argv.includes("--conflict-copy-probe");
+const copyRoundtrip = process.argv.includes("--conflict-copy");
 const concurrent = process.argv.includes("--concurrent");
 const server = remote
   ? null
@@ -37,6 +39,24 @@ const base = remote || "http://127.0.0.1:4189";
 const origin = new URL(base).origin;
 const keys = { beatbox: "perkusi.draft.v1", studio: "perkusi.draft.studio.v3" };
 const titles = { beatbox: "#project-title", studio: "#st-title" };
+const library = {
+  beatbox: {
+    key: "perkusi.projects.v1",
+    list: "#project-list",
+    load: "#project-load",
+    separate: "#project-open-separate",
+    save: "#project-save",
+    status: "#project-status",
+  },
+  studio: {
+    key: "perkusi.projects.studio.v3",
+    list: "#st-saved",
+    load: "#st-load",
+    separate: "#st-open-separate",
+    save: "#st-save",
+    status: "#st-project-status",
+  },
+};
 const evidence = {
   base,
   probe,
@@ -381,6 +401,26 @@ async function waitForTitle(page, key, title) {
   );
 }
 
+async function loadNamed(
+  page,
+  tool,
+  id,
+  title,
+  { accept = true, button = library[tool].load } = {},
+) {
+  await page.locator(library[tool].list).selectOption(id);
+  const waiting = page.waitForEvent("dialog", { timeout: 5000 });
+  const click = page.locator(button).click();
+  const dialog = await waiting;
+  assert.equal(dialog.type(), "confirm");
+  const text = dialog.message();
+  assert(text.includes(title));
+  if (accept) await dialog.accept();
+  else await dialog.dismiss();
+  await click;
+  return text;
+}
+
 async function conflictingEdit(tool, locale, width) {
   await scenario(tool, locale, width, async ({ open, seed, initial, key }) => {
     const older = await open();
@@ -416,6 +456,27 @@ async function conflictingEdit(tool, locale, width) {
     await older.locator(selector).click();
     await older.locator(notice).waitFor({ state: "visible" });
     await older.locator(titles[tool]).fill(copy.title);
+    if (copyRoundtrip) {
+      if (tool === "studio") {
+        await older.locator("#st-bpm").fill("137");
+        await older.locator("#st-swing").fill("0.18");
+        const chainMode = older.locator("#st-chain-mode");
+        await chainMode.evaluate((control) =>
+          control.scrollIntoView({ block: "center", behavior: "instant" }),
+        );
+        await chainMode.check();
+        copy.timing.bpm = 137;
+        copy.timing.swing = 0.18;
+        copy.playback.mode = "chain";
+      } else {
+        await older
+          .locator('[data-variant-role="kick"][data-variant="2"]')
+          .click();
+        await older.locator("#project-bars").selectOption("4");
+        copy.tracks.find((track) => track.role === "kick").variant = 2;
+        copy.export.bars = 4;
+      }
+    }
     assert.match(
       await older.locator(notice).innerText(),
       locale === "id" ? /di tab lain/ : /in another tab/,
@@ -441,6 +502,53 @@ async function conflictingEdit(tool, locale, width) {
     );
     assert.deepEqual(saved.items.at(-1).project, copy);
     assert.deepEqual(JSON.parse(await raw(newer, key)), latest);
+    if (copyProbe) {
+      const reopened = await open();
+      assert.equal(
+        await reopened.locator(titles[tool]).inputValue(),
+        latest.title,
+      );
+      await loadNamed(reopened, tool, saved.items.at(-1).id, copy.title);
+      await reopened.waitForFunction(
+        ({ key, title }) => {
+          const input = document.querySelector(title);
+          return (
+            input?.value === "Separate edit from older tab" &&
+            !Object.keys(localStorage).some((name) =>
+              name.startsWith(`${key}.pending.`),
+            )
+          );
+        },
+        { key, title: titles[tool] },
+      );
+      const recovered = JSON.parse(await raw(reopened, key));
+      const preserved = recovered.title === latest.title;
+      assert.deepEqual(recovered, preserved ? latest : copy);
+      record(
+        `${tool}-conflict-copy-load-before-fix`,
+        preserved ? "MATCH" : "MISMATCH",
+        {
+          conflictCopySavedExactly: true,
+          before: latest.title,
+          after: recovered.title,
+        },
+      );
+      return;
+    }
+    if (copyRoundtrip) {
+      await older.close();
+      await reopenConflictCopy(tool, locale, width, {
+        open,
+        newer,
+        seed,
+        key,
+        latest,
+        saved,
+        savedKey,
+        copy,
+      });
+      return;
+    }
     await older.reload({ waitUntil: "domcontentloaded" });
     await ready(older, tool);
     assert.equal(await older.locator(titles[tool]).inputValue(), latest.title);
@@ -458,6 +566,190 @@ async function conflictingEdit(tool, locale, width) {
       newestDraftProtected: true,
       separateCopyVerified: true,
       editsResumeAfterReload: true,
+    });
+  });
+}
+
+async function assertCopy(page, tool, key, expected) {
+  await page.locator(`${notice} button`).waitFor({ state: "visible" });
+  assert.equal(new URL(page.url()).searchParams.get("draft"), "copy");
+  const actual = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(`${key}.copy`)),
+    key,
+  );
+  assert.deepEqual(actual, expected);
+  assert.equal(await page.locator(titles[tool]).inputValue(), expected.title);
+  if (tool === "studio") {
+    assert.equal(
+      await page.locator("#st-bpm").inputValue(),
+      String(expected.timing.bpm),
+    );
+    assert.equal(
+      await page.locator("#st-chain-mode").isChecked(),
+      expected.playback.mode === "chain",
+    );
+    assert.equal(
+      await page
+        .locator('[data-st-step="snare:4"]')
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+  } else {
+    assert.equal(
+      await page.locator("#project-bars").inputValue(),
+      String(expected.export.bars),
+    );
+    assert.equal(
+      await page.locator('[data-role="kick"]').getAttribute("aria-pressed"),
+      "false",
+    );
+    assert.equal(
+      await page
+        .locator('[data-variant-role="kick"][data-variant="2"]')
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+  }
+}
+
+async function reopenConflictCopy(
+  tool,
+  locale,
+  width,
+  { open, newer, seed, key, latest, saved, savedKey, copy },
+) {
+  const editor = await open();
+  const first = saved.items.at(-1);
+  assert(first.id.startsWith("separate-"));
+  assert.equal(await editor.locator(titles[tool]).inputValue(), latest.title);
+  const selection = editor
+    .locator(library[tool].list)
+    .locator(`option[value="${first.id}"]`);
+  assert.match(
+    await selection.textContent(),
+    locale === "id" ? /Salinan terpisah/ : /Separate copy/,
+  );
+  const text = await loadNamed(editor, tool, first.id, copy.title, {
+    accept: false,
+  });
+  assert.match(
+    text,
+    locale === "id" ? /Draft bersama/ : /shared browser draft/,
+  );
+  assert.equal(await editor.locator(titles[tool]).inputValue(), latest.title);
+  assert.equal(new URL(editor.url()).searchParams.has("draft"), false);
+  const latestRaw = await raw(newer, key);
+  await loadNamed(editor, tool, first.id, copy.title);
+  await assertCopy(editor, tool, key, copy);
+  assert.equal(await raw(newer, key), latestRaw);
+
+  const afterSharedEdit = { ...latest, title: "Draft terbaru dari tab lain" };
+  await newer.locator(titles[tool]).fill(afterSharedEdit.title);
+  await waitForTitle(newer, key, afterSharedEdit.title);
+  const sharedRaw = await raw(newer, key);
+  assert.deepEqual(JSON.parse(sharedRaw), afterSharedEdit);
+
+  const afterCopyEdit = { ...copy, title: "Salinan konflik setelah edit" };
+  await editor.locator(titles[tool]).fill(afterCopyEdit.title);
+  await editor.reload({ waitUntil: "domcontentloaded" });
+  await ready(editor, tool);
+  await assertCopy(editor, tool, key, afterCopyEdit);
+  assert.equal(await raw(newer, key), sharedRaw);
+
+  await editor.locator(library[tool].save).click();
+  const updatedLibrary = JSON.parse(await raw(editor, savedKey));
+  assert.deepEqual(updatedLibrary.items.slice(0, -1), saved.items);
+  const updated = updatedLibrary.items.at(-1);
+  assert(updated.id.startsWith("separate-"));
+  assert.deepEqual(updated.project, afterCopyEdit);
+  const reload = editor.waitForEvent("domcontentloaded");
+  const confirm = editor.waitForEvent("dialog", { timeout: 5000 });
+  const back = editor.locator(`${notice} button`).click();
+  await (await confirm).accept();
+  await back;
+  await reload;
+  await ready(editor, tool);
+  assert.equal(
+    await editor.locator(titles[tool]).inputValue(),
+    afterSharedEdit.title,
+  );
+  assert.equal(new URL(editor.url()).searchParams.has("draft"), false);
+  assert.equal(await raw(editor, key), sharedRaw);
+  await editor.close();
+
+  const reopened = await open();
+  await loadNamed(reopened, tool, updated.id, afterCopyEdit.title);
+  await assertCopy(reopened, tool, key, afterCopyEdit);
+  assert.equal(await raw(reopened, key), sharedRaw);
+  assert.deepEqual(JSON.parse(await raw(reopened, savedKey)), updatedLibrary);
+  const { [savedKey]: originalLibrary, ...protectedSeed } = seed;
+  assert(originalLibrary);
+  await unchanged(reopened, protectedSeed, key);
+  record(`${tool}-${locale}-${width}-conflict-copy-roundtrip`, "PASS", {
+    savedAndLoadedExactly: true,
+    survivesRefreshAndReopen: true,
+    latestDraftProtected: true,
+  });
+}
+
+async function olderCopy(tool) {
+  await scenario(tool, "id", 1440, async ({ open, initial, key, seed }) => {
+    const page = await open();
+    const option = JSON.parse(seed[library[tool].key]).items[0];
+    await page.locator(titles[tool]).fill("Draft sebelum salinan lama");
+    await waitForTitle(page, key, "Draft sebelum salinan lama");
+    await loadNamed(page, tool, option.id, initial.title);
+    await waitForTitle(page, key, initial.title);
+    assert.equal(new URL(page.url()).searchParams.has("draft"), false);
+    await page.locator(titles[tool]).fill("Draft yang harus tetap aman");
+    await waitForTitle(page, key, "Draft yang harus tetap aman");
+    const newest = await raw(page, key);
+
+    await page.evaluate((key) => {
+      const save = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (name, value) {
+        if (this === sessionStorage && name === `${key}.copy`)
+          throw new DOMException(
+            "Copy storage disabled by QA",
+            "QuotaExceededError",
+          );
+        return save.call(this, name, value);
+      };
+      window.restoreCopyStorageQA = () => (Storage.prototype.setItem = save);
+    }, key);
+    await loadNamed(page, tool, option.id, initial.title, {
+      button: library[tool].separate,
+    });
+    await page.waitForFunction(
+      (selector) =>
+        document.querySelector(selector).getAttribute("role") === "alert",
+      library[tool].status,
+    );
+    assert.equal(
+      await page.locator(titles[tool]).inputValue(),
+      "Draft yang harus tetap aman",
+    );
+    assert.equal(await raw(page, key), newest);
+    await page.evaluate(() => window.restoreCopyStorageQA());
+
+    await loadNamed(page, tool, option.id, initial.title, {
+      button: library[tool].separate,
+    });
+    await page.locator(`${notice} button`).waitFor({ state: "visible" });
+    assert.equal(await page.locator(titles[tool]).inputValue(), initial.title);
+    assert.deepEqual(
+      await page.evaluate(
+        (key) => JSON.parse(sessionStorage.getItem(`${key}.copy`)),
+        key,
+      ),
+      initial,
+    );
+    assert.equal(await raw(page, key), newest);
+    await unchanged(page, seed, key);
+    record(`${tool}-untagged-copy-and-storage-failure`, "PASS", {
+      ordinaryLoadStillWorks: true,
+      olderCopiesSupported: true,
+      failedCopyOpenPreservesDraft: true,
     });
   });
 }
@@ -530,7 +822,7 @@ async function simultaneous(tool) {
       assert.deepEqual(winner, { ...initial, title: winner.title });
       const loser = winner.title === "Concurrent A" ? tabB : tabA;
       await loser.locator(notice).waitFor({ state: "visible" });
-    await observer.waitForFunction(() => window.sharedDraftWrites.length > 0);
+      await observer.waitForFunction(() => window.sharedDraftWrites.length > 0);
       assert.deepEqual(
         await observer.evaluate(() =>
           window.sharedDraftWrites.map((raw) => JSON.parse(raw)),
@@ -683,6 +975,19 @@ try {
   }
   if (concurrentProbe) {
     for (const tool of Object.keys(keys)) await probeConcurrentEdit(tool);
+  } else if (copyProbe) {
+    for (const tool of Object.keys(keys))
+      await conflictingEdit(tool, "id", 1440);
+  } else if (copyRoundtrip) {
+    for (const tool of Object.keys(keys)) {
+      for (const [locale, width] of [
+        ["id", 1440],
+        ["en", 1440],
+        ["id", 390],
+      ])
+        await conflictingEdit(tool, locale, width);
+      await olderCopy(tool);
+    }
   } else if (concurrent) {
     for (const tool of Object.keys(keys)) {
       for (const [locale, width] of [
@@ -717,7 +1022,7 @@ try {
   assert.equal(evidence.downloadEvents, 0);
   assert.equal(evidence.fileChoosers, 0);
   assert.deepEqual(evidence.errors, []);
-  evidence.result = probe || concurrentProbe ? "PROBED" : "PASS";
+  evidence.result = probe || concurrentProbe || copyProbe ? "PROBED" : "PASS";
 } catch (error) {
   evidence.result = "FAIL";
   evidence.failure = error.stack;

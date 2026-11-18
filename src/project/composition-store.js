@@ -30,20 +30,13 @@ export class CompositionStore extends ProjectStore {
       ),
     ];
   }
-  save(project) {
-    // ProjectStore.save dispatches this.read; exclude untouched legacy copies.
-    const valid = migrateProject(project, this.catalog),
-      items = super.read();
-    if (items.length >= 30) throw new ProjectError("storageFull");
-    const id = this.makeId();
-    if (
-      typeof id !== "string" ||
-      !/^[a-z0-9-]{1,64}$/.test(id) ||
-      items.some((x) => x.id === id)
-    )
-      throw new ProjectError("storageUnavailable");
-    this.write([...items, { id, project: valid }]);
-    return id;
+  save(project, { separate = false } = {}) {
+    // The saved originals from other stores are read-only in Studio.
+    return this.addSavedItem(
+      migrateProject(project, this.catalog),
+      super.read(),
+      separate,
+    );
   }
   remove(id, expected) {
     if (id.startsWith("legacy")) throw new ProjectError("legacyOriginal");

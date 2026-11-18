@@ -4,6 +4,8 @@ export const PROJECTS_KEY = "perkusi.projects.v1";
 export const DRAFT_KEY = "perkusi.draft.v1";
 export const MAX_SAVED_PROJECTS = 30;
 export const MAX_STORE_BYTES = 256 * 1024;
+const SEPARATE_SAVE_PREFIX = "separate-";
+export const isSeparateSave = (id) => id.startsWith(SEPARATE_SAVE_PREFIX);
 export function assertSavedProjectUnchanged(item, expected) {
   if (!item)
     throw new ProjectError(
@@ -79,19 +81,23 @@ export class ProjectStore {
       throw new ProjectError("storageUnavailable");
     }
   }
-  save(project) {
-    const valid = validateProject(project, this.catalog),
-      items = this.read();
+  save(project, { separate = false } = {}) {
+    return this.addSavedItem(
+      validateProject(project, this.catalog),
+      this.read(),
+      separate,
+    );
+  }
+  addSavedItem(project, items, separate) {
     if (items.length >= MAX_SAVED_PROJECTS)
       throw new ProjectError("storageFull");
-    const id = this.makeId();
-    if (
-      typeof id !== "string" ||
-      !/^[a-z0-9-]{1,64}$/.test(id) ||
-      items.some((x) => x.id === id)
-    )
+    const base = this.makeId();
+    if (typeof base !== "string" || !/^[a-z0-9-]{1,64}$/.test(base))
       throw new ProjectError("storageUnavailable");
-    this.write([...items, { id, project: valid }]);
+    const id = separate ? SEPARATE_SAVE_PREFIX + base : base;
+    if (id.length > 64 || items.some((x) => x.id === id))
+      throw new ProjectError("storageUnavailable");
+    this.write([...items, { id, project }]);
     return id;
   }
   remove(id, expected) {

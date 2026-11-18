@@ -10,6 +10,15 @@ export const projectMessages = {
     savedList: "Proyek di browser ini",
     choose: "Pilih proyek tersimpan",
     load: "Muat proyek",
+    openSeparate: "Buka terpisah",
+    separateLabel: "Salinan terpisah",
+    separateLoadConfirm:
+      "Buka “{title}” di tab ini? Proyek aktif di tab ini akan diganti. Draft bersama di browser tetap aman.",
+    separateDraft:
+      "Kamu sedang mengedit salinan di tab ini. Simpan proyek baru agar edit bisa dibuka lagi setelah tab ditutup.",
+    returnToDraft: "Buka draft terbaru",
+    returnToDraftConfirm:
+      "Buka draft terbaru di tab ini? Gunakan Simpan proyek baru dahulu jika ingin menyimpan edit salinan ini.",
     loadConfirm:
       "Muat simpanan “{title}” dan ganti proyek aktif beserta editnya? Simpan atau unduh proyek aktif lebih dulu jika ingin mempertahankannya.",
     loadCancelled: "Pemuatan dibatalkan. Proyek aktif dan editnya tetap ada.",
@@ -98,6 +107,15 @@ export const projectMessages = {
     savedList: "Projects in this browser",
     choose: "Choose a saved project",
     load: "Load project",
+    openSeparate: "Open separately",
+    separateLabel: "Separate copy",
+    separateLoadConfirm:
+      "Open “{title}” in this tab? It will replace this tab's active project. The shared browser draft stays safe.",
+    separateDraft:
+      "You're editing a copy in this tab. Use Save a new project to keep your changes after closing the tab.",
+    returnToDraft: "Open latest draft",
+    returnToDraftConfirm:
+      "Open the latest draft in this tab? Use Save a new project first if you want to keep this copy's edits.",
     loadConfirm:
       "Load saved project “{title}” and replace your active project and edits? Save or download your active project first if you want to keep it.",
     loadCancelled: "Loading cancelled. Your active project and edits remain.",
