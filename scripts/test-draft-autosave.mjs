@@ -760,19 +760,31 @@ async function reopenConflictCopy(
   }
 
   // A saved-library read error on reload must not block draft recovery.
-  await editor.addInitScript((key) => {
-    const get = Storage.prototype.getItem;
-    Storage.prototype.getItem = function (name) {
-      if (this === window.localStorage && name === key) {
-        window.qaSavedProjectReadRejected = true;
-        throw new DOMException(
-          "QA blocked reading saved projects",
-          "SecurityError",
-        );
-      }
-      return get.call(this, name);
-    };
-  }, savedKey);
+  const readDeniedKey = "__qa_saved_library_read_denied";
+  await editor.evaluate(
+    (flag) => sessionStorage.setItem(flag, "1"),
+    readDeniedKey,
+  );
+  await editor.addInitScript(
+    ({ key, flag }) => {
+      const get = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (name) {
+        if (
+          this === window.localStorage &&
+          name === key &&
+          get.call(window.sessionStorage, flag)
+        ) {
+          window.qaSavedProjectReadRejected = true;
+          throw new DOMException(
+            "QA blocked reading saved projects",
+            "SecurityError",
+          );
+        }
+        return get.call(this, name);
+      };
+    },
+    { key: savedKey, flag: readDeniedKey },
+  );
   const reload = editor.waitForEvent("domcontentloaded");
   const confirm = editor.waitForEvent("dialog", { timeout: 5000 });
   const back = pressReturn();
@@ -794,6 +806,36 @@ async function reopenConflictCopy(
   );
   assert.equal(await raw(editor, key), sharedRaw);
   assert.equal(await raw(newer, savedKey), savedLibraryRaw);
+  const retryList = editor.getByRole("button", {
+    name: locale === "id" ? "Muat ulang daftar proyek" : "Reload project list",
+    exact: true,
+  });
+  const savedOption = editor
+    .locator(library[tool].list)
+    .locator(`option[value="${updated.id}"]`);
+  await retryList.waitFor({ state: "visible" });
+  assert.equal(await savedOption.count(), 0);
+  await editor.bringToFront();
+  await editor.waitForFunction(() => document.hasFocus());
+  const beforeListRetry = await editor.evaluate(() => performance.timeOrigin);
+  await editor.evaluate(
+    (flag) => sessionStorage.removeItem(flag),
+    readDeniedKey,
+  );
+  if (width < 600) await retryList.tap();
+  else await retryList.click();
+  await savedOption.waitFor({ state: "attached" });
+  assert.equal(await retryList.isVisible(), false);
+  assert.equal(
+    await editor.evaluate(() => performance.timeOrigin),
+    beforeListRetry,
+  );
+  assert.equal(
+    await editor.locator(titles[tool]).inputValue(),
+    afterSharedEdit.title,
+  );
+  assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
   await editor.close();
 
   const reopened = await open();
@@ -813,6 +855,7 @@ async function reopenConflictCopy(
     saveFailureAfterCancel: saveError,
     rejectedSavePreservedCopyAndDraft: true,
     latestDraftOpenedWithSavedListUnavailable: true,
+    savedListRestoredWithoutReload: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,

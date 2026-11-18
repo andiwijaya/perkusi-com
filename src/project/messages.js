@@ -14,6 +14,9 @@ export const projectMessages = {
     untitled: "Iramaku",
     save: "Simpan proyek baru",
     savedList: "Proyek di browser ini",
+    savedListUnavailable:
+      "Daftar proyek belum bisa dibaca. Coba lagi setelah akses penyimpanan browser pulih.",
+    reloadSavedList: "Muat ulang daftar proyek",
     choose: "Pilih proyek tersimpan",
     load: "Muat proyek",
     openSeparate: "Buka terpisah",
@@ -115,6 +118,9 @@ export const projectMessages = {
     untitled: "My beat",
     save: "Save a new project",
     savedList: "Projects in this browser",
+    savedListUnavailable:
+      "The saved project list couldn't be read. Try again when browser storage is available.",
+    reloadSavedList: "Reload project list",
     choose: "Choose a saved project",
     load: "Load project",
     openSeparate: "Open separately",

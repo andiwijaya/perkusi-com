@@ -1,6 +1,7 @@
 import "../project/mode-transfer.css";
 import { createDraftSession } from "../project/draft-session.js";
 import { createDraftNotice } from "../project/draft-notice.js";
+import { createSavedListRecovery } from "../project/saved-list-recovery.js";
 import "./style.css";
 import { createStudioPlayback } from "./playback.js";
 import { StudioWavExporter } from "../audio/studio-exporter.js";
@@ -126,8 +127,7 @@ export function initStudio() {
     lastFrame = 0,
     keyboard = false,
     restoreFocus = null;
-  let savedItems = [],
-    storeAvailable = true;
+  let savedItems = [];
   const padTimers = new Set();
   let livePads = null;
   let preload, observedContext, preloadFrame, preloadStartFrame;
@@ -135,6 +135,11 @@ export function initStudio() {
   const life = new AbortController(),
     listen = (target, event, fn) =>
       target.addEventListener(event, fn, { signal: life.signal });
+  const savedListRecovery = createSavedListRecovery(
+    $("saved"),
+    readSaves,
+    listen,
+  );
   const current = () => history.current;
   const historySnapshot = () =>
     studioProjectSnapshot(current(), engine.arrangement, lastPlayback);
@@ -234,11 +239,10 @@ export function initStudio() {
   function readSaves() {
     try {
       savedItems = store.read();
-      storeAvailable = true;
+      savedListRecovery.setUnavailable(false);
     } catch {
       savedItems = [];
-      storeAvailable = false;
-      message("storageUnavailable", true);
+      savedListRecovery.setUnavailable(true);
     }
     updateSaves();
   }
@@ -592,6 +596,7 @@ export function initStudio() {
       link.href = legacyRecoveryHref(locale);
     errors = { ...projectMessages[locale], ...compositionMessages[locale] };
     draftNotice.localize();
+    savedListRecovery.localize(errors);
     root
       .querySelectorAll("[data-st-copy]")
       .forEach((el) => text(el, c[el.dataset.stCopy]));
@@ -1340,7 +1345,6 @@ export function initStudio() {
         draftAllowed = false;
         message("recoveryError", true);
       }
-      if (!storeAvailable) message("storageUnavailable", true);
     },
     onReceiving(value) {
       receiving = value;
