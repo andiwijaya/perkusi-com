@@ -1,3 +1,9 @@
+export function copySaveErrorCode(code) {
+  if (code === "storageUnavailable") return "copySaveUnavailable";
+  if (code === "storageFull") return "copySaveFull";
+  return code;
+}
+
 export const projectMessages = {
   id: {
     heading: "Simpan iramamu. Bawa pulang musiknya.",
@@ -16,6 +22,10 @@ export const projectMessages = {
       "Buka “{title}” di tab ini? Proyek aktif di tab ini akan diganti. Draft bersama di browser tetap aman.",
     separateDraft:
       "Kamu sedang mengedit salinan di tab ini. Simpan proyek baru agar edit bisa dibuka lagi setelah tab ditutup.",
+    copySaveUnavailable:
+      "Salinan belum tersimpan. Edit masih ada di tab ini. Biarkan tab tetap terbuka, periksa ruang dan izin penyimpanan browser, lalu coba Simpan proyek baru lagi.",
+    copySaveFull:
+      "Penyimpanan proyek penuh. Salinan belum tersimpan dan edit masih ada di tab ini. Biarkan tab tetap terbuka. Coba Simpan proyek baru lagi setelah ada ruang.",
     returnToDraft: "Buka draft terbaru",
     returnToDraftConfirm:
       "Buka draft terbaru di tab ini? Jika lanjut, edit salinan yang belum disimpan sebagai proyek akan hilang. Untuk menyimpannya, batalkan lalu pilih Simpan proyek baru.",
@@ -113,6 +123,10 @@ export const projectMessages = {
       "Open “{title}” in this tab? It will replace this tab's active project. The shared browser draft stays safe.",
     separateDraft:
       "You're editing a copy in this tab. Use Save a new project to keep your changes after closing the tab.",
+    copySaveUnavailable:
+      "The copy could not be saved. Your edits are still in this tab. Keep it open, check available browser storage and site permissions, then try Save a new project again.",
+    copySaveFull:
+      "Project storage is full. The copy was not saved and your edits are still in this tab. Keep it open and try Save a new project again when there is room.",
     returnToDraft: "Open latest draft",
     returnToDraftConfirm:
       "Open the latest draft in this tab? If you continue, edits to this copy that you haven't saved as a project will be lost. To keep them, cancel and choose Save a new project.",

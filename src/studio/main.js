@@ -48,7 +48,7 @@ import {
   readProjectFile,
   safeFilename,
 } from "../project/files.js";
-import { projectMessages } from "../project/messages.js";
+import { copySaveErrorCode, projectMessages } from "../project/messages.js";
 import { trackEvent, exportFailureCategory } from "../analytics.js";
 import { wavSnapshotKey } from "../project/wav-snapshot.js";
 import {
@@ -139,14 +139,19 @@ export function initStudio() {
   const historySnapshot = () =>
     studioProjectSnapshot(current(), engine.arrangement, lastPlayback);
   const draft = createDraftSession(store, draftFailed);
-  const draftNotice = createDraftNotice(root, "st-save", () => {
-    try {
-      draft.leaveSeparate();
-      window.location.reload();
-    } catch {
-      message("storageUnavailable", true);
-    }
-  });
+  const draftNotice = createDraftNotice(
+    root,
+    "st-save",
+    $("project-status"),
+    () => {
+      try {
+        draft.leaveSeparate();
+        window.location.reload();
+      } catch {
+        message("storageUnavailable", true);
+      }
+    },
+  );
   const project = () =>
     validateProject(
       studioProjectSnapshot(
@@ -196,11 +201,18 @@ export function initStudio() {
     void preload.start().catch(() => {});
     observeContext();
   }
-  function message(key, error = false) {
+  function message(key, error = false, { besideSave = false } = {}) {
     projectStatus = key;
     statusError = error;
-    text($("project-status"), c[key] || errors[key] || errors.invalidProject);
-    $("project-status").setAttribute("role", error ? "alert" : "status");
+    draftNotice.positionSaveStatus(besideSave);
+    renderProjectStatus();
+  }
+  function renderProjectStatus() {
+    text(
+      $("project-status"),
+      c[projectStatus] || errors[projectStatus] || errors.invalidProject,
+    );
+    $("project-status").setAttribute("role", statusError ? "alert" : "status");
   }
   function fail(error) {
     message(error.code || "invalidProject", true);
@@ -600,7 +612,7 @@ export function initStudio() {
       .setAttribute("aria-label", c.sequencer);
     root.querySelector(".st-transport").setAttribute("aria-label", c.tempo);
     $("file").setAttribute("aria-label", c.file);
-    message(projectStatus, statusError);
+    renderProjectStatus();
     text(
       $("share").querySelector("span"),
       readyFile && delivery.canShare(readyFile) ? c.share : c.shareDownload,
@@ -1035,10 +1047,19 @@ export function initStudio() {
           restoreHistory("redo");
           break;
         case "st-save":
-          selectedSave = store.save(project(), {
-            separate:
-              draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
-          });
+          try {
+            selectedSave = store.save(project(), {
+              separate:
+                draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
+            });
+          } catch (error) {
+            if (!draft.isSeparate) throw error;
+            message(copySaveErrorCode(error.code || "invalidProject"), true, {
+              besideSave: true,
+            });
+            $("project-status").scrollIntoView({ block: "center" });
+            break;
+          }
           readSaves();
           message("saved");
           trackEvent("project_saved");
