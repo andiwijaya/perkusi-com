@@ -107,20 +107,27 @@ export class ProjectStore {
     assertSavedProjectUnchanged(item, expected);
     return item.project;
   }
-  readDraft() {
+  draftSnapshot() {
     try {
-      const text = this.storage().getItem(this.keys.draft);
-      return text ? parseProject(text, this.catalog) : null;
+      const key = this.keys.draft;
+      return { key, raw: this.storage().getItem(key) };
     } catch {
       throw new ProjectError("storageUnavailable");
     }
   }
+  readDraft({ raw } = this.draftSnapshot()) {
+    try {
+      return raw ? parseProject(raw, this.catalog) : null;
+    } catch {
+      throw new ProjectError("storageUnavailable");
+    }
+  }
+  draftText(project) {
+    return JSON.stringify(validateProject(project, this.catalog));
+  }
   saveDraft(project) {
     try {
-      this.storage().setItem(
-        this.keys.draft,
-        JSON.stringify(validateProject(project, this.catalog)),
-      );
+      this.storage().setItem(this.keys.draft, this.draftText(project));
     } catch {
       throw new ProjectError("storageUnavailable");
     }

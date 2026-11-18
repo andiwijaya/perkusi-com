@@ -67,6 +67,10 @@ export const projectMessages = {
     fileReadFailed: "File belum bisa dibaca. Pilih lagi file proyeknya.",
     storageUnavailable:
       "Penyimpanan browser tidak tersedia atau datanya tidak valid. Kamu tetap bisa bermain dan mengunduh proyek/WAV.",
+    draftConflict:
+      "Draft sudah berubah di tab lain. Simpan edit dari tab ini sebagai proyek terpisah sebelum memuat ulang untuk membuka draft terbaru.",
+    draftAutosaveUnavailable:
+      "Autosave antar tab tidak tersedia di browser ini. Simpan edit sebagai proyek sebelum meninggalkan halaman.",
     storageFull:
       "Penyimpanan penuh (maksimal 30 proyek). Unduh cadangan, lalu hapus proyek yang tidak diperlukan.",
     missingProject: "Pilih proyek tersimpan terlebih dahulu.",
@@ -153,6 +157,10 @@ export const projectMessages = {
       "The file could not be read. Choose the project file again.",
     storageUnavailable:
       "Browser storage is unavailable or its data is invalid. You can still play and download projects/WAV files.",
+    draftConflict:
+      "The draft changed in another tab. Save the edits in this tab as a separate project before reloading to open the latest draft.",
+    draftAutosaveUnavailable:
+      "Autosave across tabs is unavailable in this browser. Save your edits as a project before leaving this page.",
     storageFull:
       "Storage is full (up to 30 projects). Download a backup, then delete projects you no longer need.",
     missingProject: "Choose a saved project first.",

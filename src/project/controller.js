@@ -5,6 +5,8 @@ import { FileDelivery, safeFilename, readProjectFile } from "./files.js";
 import { serializeProject } from "./schema.js";
 import { exportFailureCategory } from "../analytics.js";
 import { wavSnapshotKey } from "./wav-snapshot.js";
+import { createDraftSession } from "./draft-session.js";
+import { createDraftNotice } from "./draft-notice.js";
 
 export function initProjectControls({
   engine,
@@ -17,7 +19,9 @@ export function initProjectControls({
   const panel = document.querySelector(".project-panel"),
     el = (id) => document.querySelector("#project-" + id),
     store = new ProjectStore(catalog),
-    delivery = new FileDelivery();
+    delivery = new FileDelivery(),
+    draft = createDraftSession(store, draftFailed),
+    draftNotice = createDraftNotice(panel.closest("main"), "project-save");
   let copy,
     disposed = false,
     busy = false,
@@ -30,6 +34,7 @@ export function initProjectControls({
     isError = false,
     warning = false,
     draftEnabled = true,
+    draftConflict = false,
     lastSignature = "",
     progress = null,
     keyboardFocus = false,
@@ -132,6 +137,7 @@ export function initProjectControls({
       .forEach((node) => (node.textContent = copy[node.dataset.projectCopy]));
     el("title").placeholder = copy.untitled;
     if (el("list").options[0]) el("list").options[0].textContent = copy.choose;
+    draftNotice.localize();
     render();
   }
   function refreshList(selected = "") {
@@ -142,15 +148,14 @@ export function initProjectControls({
     el("list").value = selected;
     render();
   }
-  function saveDraft(project) {
-    try {
-      store.saveDraft(project);
-      warning = false;
-    } catch {
-      warning = true;
-      draftEnabled = false;
-      render();
-    }
+  function draftFailed(error) {
+    draftEnabled = false;
+    const code = error?.code;
+    if (code === "draftConflict" || code === "draftAutosaveUnavailable") {
+      draftConflict = true;
+      draftNotice.show(code);
+    } else warning = true;
+    render();
   }
   function update() {
     if (disposed || loading || receiving) return;
@@ -167,7 +172,7 @@ export function initProjectControls({
       file = null;
       notify("wavChanged");
     }
-    if (draftEnabled) saveDraft(project);
+    if (draftEnabled) draft.save(project);
   }
   async function guarded(fn) {
     try {
@@ -190,9 +195,14 @@ export function initProjectControls({
       const snapshot = current();
       lastSignature = JSON.stringify(snapshot);
       // Incoming transfers already commit the draft before applying it.
-      if (!receiving && (code === "imported" || code === "loaded")) {
+      if (
+        !receiving &&
+        !draftConflict &&
+        (code === "imported" || code === "loaded")
+      ) {
         draftEnabled = true;
-        saveDraft(snapshot);
+        warning = false;
+        draft.save(snapshot);
       }
       onChange();
       await pending;
@@ -203,20 +213,24 @@ export function initProjectControls({
       render();
     }
   }
-  let ready = Promise.resolve();
   localize();
-  try {
-    lastSignature = JSON.stringify(current());
-    refreshList();
-    const draft = store.readDraft();
-    if (draft) {
-      ready = guarded(() => apply(draft, "recovered"));
+  const ready = (async () => {
+    try {
+      lastSignature = JSON.stringify(current());
+      refreshList();
+      let source;
+      try {
+        source = await draft.open();
+      } catch (error) {
+        draftFailed(error);
+      }
+      if (disposed) return;
+      const project = store.readDraft(source);
+      if (project) await guarded(() => apply(project, "recovered"));
+    } catch (error) {
+      draftFailed(error);
     }
-  } catch {
-    warning = true;
-    draftEnabled = false;
-    render();
-  }
+  })();
   listen(
     el("save"),
     "click",
@@ -410,6 +424,7 @@ export function initProjectControls({
   function dispose() {
     if (disposed) return;
     disposed = true;
+    draft.close();
     exporter.dispose();
     delivery.dispose();
     file = null;
@@ -424,8 +439,11 @@ export function initProjectControls({
       render();
     },
     applyTransferred(project) {
-      draftEnabled = true;
-      warning = false;
+      draft.adopt();
+      if (!draftConflict) {
+        draftEnabled = true;
+        warning = false;
+      }
       return apply(project, "loaded");
     },
     apply: (project) => apply(project, "loaded"),

@@ -54,10 +54,10 @@ export class CompositionStore extends ProjectStore {
     );
     this.write(items.filter((x) => x.id !== id));
   }
-  readDraft() {
-    const current = super.readDraft();
-    if (current) return current;
-    const old = this.legacy[0].readDraft();
-    return old ? migrateProject(old, this.catalog) : null;
+  draftSnapshot() {
+    const current = super.draftSnapshot();
+    if (current.raw) return current;
+    const old = this.legacy[0].draftSnapshot();
+    return old.raw ? old : current;
   }
 }

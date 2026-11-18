@@ -26,6 +26,8 @@ const remote = process.env.PERKUSI_AUTOSAVE_BASE_URL;
 const out =
   process.env.PERKUSI_AUTOSAVE_QA_DIR || "qa-artifacts/draft-autosave";
 const probe = process.argv.includes("--probe");
+const concurrentProbe = process.argv.includes("--concurrent-probe");
+const concurrent = process.argv.includes("--concurrent");
 const server = remote
   ? null
   : await preview({
@@ -157,6 +159,7 @@ async function scenario(tool, locale, width, fn) {
       seed,
       initial: JSON.parse(seed[keys[tool]]),
       key: keys[tool],
+      ctx,
     });
   } finally {
     await ctx.close();
@@ -200,11 +203,17 @@ async function exitAfterInput(page, selector, value, key, exit, open, tool) {
   const input = page.locator(selector);
   await input.evaluate((field, key) => {
     document.addEventListener("input", (event) => {
-      if (event.target === field)
+      if (event.target === field) {
+        const slot = Object.keys(localStorage).find((name) =>
+          name.startsWith(`${key}.pending.`),
+        );
         field.autosaveQA = {
           focused: document.activeElement === field,
-          raw: localStorage.getItem(key),
+          raw: slot
+            ? JSON.parse(localStorage.getItem(slot)).raw
+            : localStorage.getItem(key),
         };
+      }
     });
   }, key);
   await input.fill(value);
@@ -329,6 +338,298 @@ async function staleTab(tool) {
   });
 }
 
+async function probeConcurrentEdit(tool) {
+  await scenario(tool, "id", 1440, async ({ open, initial, key }) => {
+    const older = await open();
+    const newer = await open();
+    await newer.locator(titles[tool]).fill("Newer draft from the other tab");
+    const volume = tool === "studio" ? "#st-master" : "#bb-volume";
+    await newer.locator(volume).fill("0.45");
+    const latest = JSON.parse(await raw(newer, key));
+    assert.equal(latest.title, "Newer draft from the other tab");
+    assert.equal(latest.master.volume, 0.45);
+    const beat =
+      tool === "studio" ? '[data-st-step="snare:4"]' : '[data-role="kick"]';
+    await older.locator(beat).click();
+    const actual = JSON.parse(await raw(newer, key));
+    const restored = await open();
+    assert.equal(
+      await restored.locator(titles[tool]).inputValue(),
+      actual.title,
+    );
+    record(
+      `${tool}-stale-edit-before-fix`,
+      actual.title === latest.title &&
+        actual.master.volume === latest.master.volume
+        ? "MATCH"
+        : "MISMATCH",
+      {
+        latest: { title: latest.title, volume: latest.master.volume },
+        afterStaleEdit: { title: actual.title, volume: actual.master.volume },
+        originalTitle: initial.title,
+      },
+    );
+  });
+}
+
+const notice = ".draft-notice";
+
+async function waitForTitle(page, key, title) {
+  await page.waitForFunction(
+    ({ key, title }) => JSON.parse(localStorage.getItem(key))?.title === title,
+    { key, title },
+  );
+}
+
+async function conflictingEdit(tool, locale, width) {
+  await scenario(tool, locale, width, async ({ open, seed, initial, key }) => {
+    const older = await open();
+    const newer = await open();
+    const latest = structuredClone(initial);
+    latest.title = "Shared latest draft";
+    latest.master.volume = 0.45;
+    if (tool === "studio") latest.playback = { mode: "pattern" };
+    await newer.locator(titles[tool]).fill(latest.title);
+    await newer
+      .locator(tool === "studio" ? "#st-master" : "#bb-volume")
+      .fill("0.45");
+    await newer.waitForFunction(
+      ({ key, latest }) => {
+        const current = JSON.parse(localStorage.getItem(key));
+        return (
+          current.title === latest.title &&
+          current.master.volume === latest.master.volume
+        );
+      },
+      { key, latest },
+    );
+    assert.deepEqual(JSON.parse(await raw(newer, key)), latest);
+
+    const selector =
+      tool === "studio" ? '[data-st-step="snare:4"]' : '[data-role="kick"]';
+    const copy = structuredClone(initial);
+    copy.title = "Separate edit from older tab";
+    if (tool === "studio") {
+      copy.patterns[1].steps.snare[4] = 1;
+      copy.playback = { mode: "pattern" };
+    } else copy.tracks.find((track) => track.role === "kick").enabled = false;
+    await older.locator(selector).click();
+    await older.locator(notice).waitFor({ state: "visible" });
+    await older.locator(titles[tool]).fill(copy.title);
+    assert.match(
+      await older.locator(notice).innerText(),
+      locale === "id" ? /di tab lain/ : /in another tab/,
+    );
+    assert.deepEqual(JSON.parse(await raw(newer, key)), latest);
+    await unchanged(newer, seed, key);
+
+    const button = tool === "studio" ? "#st-save" : "#project-save";
+    const savedKey =
+      tool === "studio" ? "perkusi.projects.studio.v3" : "perkusi.projects.v1";
+    await older.locator(`${notice} a`).click();
+    assert.equal(
+      await older
+        .locator(button)
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await older.locator(button).press("Enter");
+    const saved = JSON.parse(await raw(older, savedKey));
+    assert.deepEqual(
+      saved.items.slice(0, -1),
+      JSON.parse(seed[savedKey]).items,
+    );
+    assert.deepEqual(saved.items.at(-1).project, copy);
+    assert.deepEqual(JSON.parse(await raw(newer, key)), latest);
+    await older.reload({ waitUntil: "domcontentloaded" });
+    await ready(older, tool);
+    assert.equal(await older.locator(titles[tool]).inputValue(), latest.title);
+    assert.equal(await older.locator(notice).isVisible(), false);
+    await older.locator(titles[tool]).fill("New edit after reload");
+    await waitForTitle(older, key, "New edit after reload");
+    assert.deepEqual(JSON.parse(await raw(newer, key)), {
+      ...latest,
+      title: "New edit after reload",
+    });
+    const { [savedKey]: writtenCopy, ...protectedSeed } = seed;
+    assert(writtenCopy);
+    await unchanged(older, protectedSeed, key);
+    record(`${tool}-${locale}-${width}-conflict-copy-and-reload`, "PASS", {
+      newestDraftProtected: true,
+      separateCopyVerified: true,
+      editsResumeAfterReload: true,
+    });
+  });
+}
+
+async function holdCommit(ctx, key) {
+  const observer = await ctx.newPage();
+  await observer.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+  await observer.evaluate(
+    (key) =>
+      new Promise((resolve, reject) => {
+        const gate = new Promise(
+          (release) => (window.releaseDraftQA = release),
+        );
+        void navigator.locks
+          .request(`${key}.write`, () => {
+            resolve();
+            return gate;
+          })
+          .catch(reject);
+      }),
+    key,
+  );
+  return observer;
+}
+
+async function pending(page, key) {
+  return page.evaluate(
+    (key) =>
+      Object.keys(localStorage)
+        .filter((name) => name.startsWith(`${key}.pending.`))
+        .map((name) => JSON.parse(localStorage.getItem(name))),
+    key,
+  );
+}
+
+async function simultaneous(tool) {
+  await scenario(
+    tool,
+    "id",
+    1440,
+    async ({ open, seed, initial, key, ctx }) => {
+      const tabA = await open();
+      const tabB = await open();
+      const observer = await holdCommit(ctx, key);
+      await observer.evaluate((key) => {
+        window.sharedDraftWrites = [];
+        window.addEventListener("storage", (event) => {
+          if (event.key === key) window.sharedDraftWrites.push(event.newValue);
+        });
+      }, key);
+      await Promise.all([
+        tabA.locator(titles[tool]).fill("Concurrent A"),
+        tabB.locator(titles[tool]).fill("Concurrent B"),
+      ]);
+      const titlesQueued = (await pending(observer, key))
+        .map(({ raw }) => JSON.parse(raw).title)
+        .sort();
+      assert.deepEqual(titlesQueued, ["Concurrent A", "Concurrent B"]);
+      assert.equal(await raw(observer, key), seed[key]);
+      await observer.evaluate(() => window.releaseDraftQA());
+      await observer.waitForFunction(
+        (key) =>
+          !Object.keys(localStorage).some((name) =>
+            name.startsWith(`${key}.pending.`),
+          ),
+        key,
+      );
+      const winner = JSON.parse(await raw(observer, key));
+      assert(titlesQueued.includes(winner.title));
+      assert.deepEqual(winner, { ...initial, title: winner.title });
+      const loser = winner.title === "Concurrent A" ? tabB : tabA;
+      await loser.locator(notice).waitFor({ state: "visible" });
+    await observer.waitForFunction(() => window.sharedDraftWrites.length > 0);
+      assert.deepEqual(
+        await observer.evaluate(() =>
+          window.sharedDraftWrites.map((raw) => JSON.parse(raw)),
+        ),
+        [winner],
+      );
+      await loser.locator(titles[tool]).fill("Repeated stale edit");
+      await loser.close();
+      const reopened = await open();
+      assert.equal(
+        await reopened.locator(titles[tool]).inputValue(),
+        winner.title,
+      );
+      assert.deepEqual(JSON.parse(await raw(reopened, key)), winner);
+      await unchanged(reopened, seed, key);
+      record(`${tool}-two-edits-queued-together`, "PASS", {
+        exactlyOneSharedWrite: true,
+        secondTabProtected: true,
+      });
+    },
+  );
+}
+
+async function transferThenEdit(tool) {
+  await scenario(tool, "id", 1440, async ({ open, seed, key, ctx }) => {
+    const older = await open();
+    const sourceTool = tool === "studio" ? "beatbox" : "studio";
+    const incoming = await ctx.newPage();
+    await incoming.goto(`${base}/${sourceTool}/?lang=id`, {
+      waitUntil: "domcontentloaded",
+    });
+    await ready(incoming, sourceTool);
+    const archiveKey = "perkusi.mode-transfer.v3";
+    await incoming.locator("#mode-transfer").click();
+    const arrived = incoming.waitForURL((url) => url.pathname === `/${tool}/`);
+    await incoming.locator("#mode-confirm").click();
+    await arrived;
+    await ready(incoming, tool);
+    const transferred = JSON.parse(await raw(incoming, key));
+    const archive = JSON.parse(await raw(incoming, archiveKey));
+    assert.equal(archive.pending, false);
+    assert.equal(archive.target, tool);
+    assert.equal(transferred.title, JSON.parse(seed[keys[sourceTool]]).title);
+    await older.locator(titles[tool]).fill("Old edit after incoming transfer");
+    await older.locator(notice).waitFor({ state: "visible" });
+    assert.deepEqual(JSON.parse(await raw(incoming, key)), transferred);
+    const title = "Edit after accepting transfer";
+    await incoming.locator(titles[tool]).fill(title);
+    await waitForTitle(incoming, key, title);
+    assert.equal(await incoming.locator(notice).isVisible(), false);
+    const after = JSON.parse(await raw(incoming, key));
+    assert.equal(after.title, title);
+    assert.deepEqual(after.master, transferred.master);
+    assert.equal(await raw(incoming, keys[sourceTool]), seed[keys[sourceTool]]);
+    record(`${tool}-edit-after-receiving-transfer`, "PASS", {
+      staleTabBlocked: true,
+      receivingTabAutosaveContinues: true,
+    });
+  });
+}
+
+async function pendingExit(tool, exit) {
+  await scenario(
+    tool,
+    "id",
+    1440,
+    async ({ open, seed, initial, key, ctx }) => {
+      const editor = await open();
+      const observer = await holdCommit(ctx, key);
+      const latest = {
+        ...initial,
+        title: `Recover while waiting to save (${exit})`,
+      };
+      await editor.locator(titles[tool]).fill(latest.title);
+      assert.equal(await raw(observer, key), seed[key]);
+      const staged = await pending(observer, key);
+      assert.equal(staged.length, 1);
+      assert.deepEqual(JSON.parse(staged[0].raw), latest);
+      if (exit === "refresh")
+        await editor.reload({ waitUntil: "domcontentloaded" });
+      else await editor.close();
+      await observer.evaluate(() => window.releaseDraftQA());
+      const restored = exit === "refresh" ? editor : await open();
+      await ready(restored, tool);
+      assert.equal(
+        await restored.locator(titles[tool]).inputValue(),
+        latest.title,
+      );
+      assert.deepEqual(JSON.parse(await raw(restored, key)), latest);
+      assert.deepEqual(await pending(restored, key), []);
+      await unchanged(restored, seed, key);
+      record(`${tool}-pending-${exit}`, "PASS", {
+        pendingEditRecovered: true,
+        protectedDataUnchanged: true,
+      });
+    },
+  );
+}
+
 async function controlRecovery(tool, exit) {
   await scenario(tool, "id", 390, async ({ open, seed, initial, key }) => {
     const page = await open();
@@ -380,27 +681,43 @@ try {
       );
     await ctx.close();
   }
-  for (const [locale, width] of probe
-    ? [["id", 1440]]
-    : [
+  if (concurrentProbe) {
+    for (const tool of Object.keys(keys)) await probeConcurrentEdit(tool);
+  } else if (concurrent) {
+    for (const tool of Object.keys(keys)) {
+      for (const [locale, width] of [
         ["id", 1440],
         ["en", 1440],
         ["id", 390],
-      ]) {
-    for (const exit of ["refresh", "close"]) {
-      await inputRecovery("beatbox", locale, width, "title", exit);
-      await inputRecovery("studio", locale, width, "title", exit);
-      await inputRecovery("studio", locale, width, "tempo", exit);
+      ])
+        await conflictingEdit(tool, locale, width);
+      await simultaneous(tool);
+      for (const exit of ["refresh", "close"]) await pendingExit(tool, exit);
+      await transferThenEdit(tool);
     }
+  } else {
+    for (const [locale, width] of probe
+      ? [["id", 1440]]
+      : [
+          ["id", 1440],
+          ["en", 1440],
+          ["id", 390],
+        ]) {
+      for (const exit of ["refresh", "close"]) {
+        await inputRecovery("beatbox", locale, width, "title", exit);
+        await inputRecovery("studio", locale, width, "title", exit);
+        await inputRecovery("studio", locale, width, "tempo", exit);
+      }
+    }
+    if (!probe)
+      for (const exit of ["refresh", "close"])
+        for (const tool of Object.keys(keys)) await controlRecovery(tool, exit);
+    for (const tool of Object.keys(keys)) await staleTab(tool);
   }
-  if (!probe)
-    for (const exit of ["refresh", "close"])
-      for (const tool of Object.keys(keys)) await controlRecovery(tool, exit);
-  for (const tool of Object.keys(keys)) await staleTab(tool);
   assert.equal(evidence.downloadEvents, 0);
   assert.equal(evidence.fileChoosers, 0);
   assert.deepEqual(evidence.errors, []);
-  evidence.result = probe ? "PROBED" : "PASS";
+  evidence.result = probe || concurrentProbe ? "PROBED" : "PASS";
 } catch (error) {
   evidence.result = "FAIL";
   evidence.failure = error.stack;

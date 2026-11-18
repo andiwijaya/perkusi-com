@@ -1862,8 +1862,13 @@ async function savedLoadFailure(tool, kind) {
               const input = document.querySelector("#" + titleId);
               input.value = title;
               input.dispatchEvent(new Event("input", { bubbles: true }));
-              const persisted =
-                JSON.parse(localStorage.getItem(key)).title === title;
+              const slot = Object.keys(localStorage).find((name) =>
+                name.startsWith(`${key}.pending.`),
+              );
+              const raw = slot
+                ? JSON.parse(localStorage.getItem(slot)).raw
+                : localStorage.getItem(key);
+              const persisted = JSON.parse(raw)?.title === title;
               document.querySelector("#" + loadId).click();
               return persisted;
             },

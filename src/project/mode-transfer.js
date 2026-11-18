@@ -11,6 +11,7 @@ import { originalRegistry } from "./original-registry.js";
 import { safeFilename } from "./files.js";
 import { trackEvent } from "../analytics.js";
 import { navigationHref } from "../app/routes.js";
+import { withDraftLock } from "./draft-session.js";
 const KEY = "perkusi.mode-transfer.v3",
   MARKER = "perkusi.mode-transfer.pending.v3";
 const copy = {
@@ -460,7 +461,10 @@ export function incomingTransfer(
     return { applied: true };
   }
   let deliveryPromise;
-  const deliver = (apply) => (deliveryPromise ||= performDelivery(apply));
+  const deliver = (apply) =>
+    (deliveryPromise ||= withDraftLock(draftKeys(target)[0], () =>
+      performDelivery(apply),
+    ));
   return {
     id: record.id,
     pending: record.pending,

@@ -307,8 +307,13 @@ async function confirmAction(page, selector, title, accept, immediateTitle) {
           const input = document.getElementById(titleId);
           input.value = "QA immediate edit — $&";
           input.dispatchEvent(new Event("input", { bubbles: true }));
-          const persisted =
-            JSON.parse(localStorage.getItem(key)).title === input.value;
+          const slot = Object.keys(localStorage).find((name) =>
+            name.startsWith(`${key}.pending.`),
+          );
+          const raw = slot
+            ? JSON.parse(localStorage.getItem(slot)).raw
+            : localStorage.getItem(key);
+          const persisted = JSON.parse(raw)?.title === input.value;
           document.querySelector(selector).click();
           return persisted;
         },
