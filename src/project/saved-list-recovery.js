@@ -1,6 +1,6 @@
 import "./saved-list-recovery.css";
 
-export function createSavedListRecovery(select, readList, listen) {
+export function createSavedListRecovery(select, readList, listen, projectKeys) {
   const notice = document.createElement("div");
   notice.className = "saved-list-recovery";
   notice.hidden = true;
@@ -31,6 +31,15 @@ export function createSavedListRecovery(select, readList, listen) {
   listen(window, "focus", () => retry());
   listen(document, "visibilitychange", () => {
     if (!document.hidden) retry();
+  });
+  listen(window, "storage", ({ key, storageArea }) => {
+    if (key !== null && !projectKeys.includes(key)) return;
+    try {
+      if (storageArea !== window.localStorage) return;
+    } catch {
+      // Let the list read handle unavailable local storage.
+    }
+    retry();
   });
 
   return {

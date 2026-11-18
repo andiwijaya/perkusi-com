@@ -139,6 +139,7 @@ export function initStudio() {
     $("saved"),
     readSaves,
     listen,
+    [store.keys.projects, ...store.legacy.map((source) => source.keys.projects)],
   );
   const current = () => history.current;
   const historySnapshot = () =>
@@ -261,6 +262,7 @@ export function initStudio() {
       );
     }
     select.value = selectedSave;
+    if (select.selectedIndex < 0) select.selectedIndex = 0;
     selectedSave = select.value;
     $("load").disabled = busy || reading || receiving || !selectedSave;
     $("open-separate").disabled = $("load").disabled;
