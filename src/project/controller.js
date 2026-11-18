@@ -7,6 +7,7 @@ import { exportFailureCategory } from "../analytics.js";
 import { wavSnapshotKey } from "./wav-snapshot.js";
 import { createDraftSession } from "./draft-session.js";
 import { createDraftNotice } from "./draft-notice.js";
+import { createSavedListRecovery } from "./saved-list-recovery.js";
 
 export function initProjectControls({
   engine,
@@ -42,7 +43,6 @@ export function initProjectControls({
     status = "ready",
     isError = false,
     warning = false,
-    savedListUnavailable = false,
     draftEnabled = true,
     draftIssue = "",
     lastSignature = "",
@@ -54,6 +54,11 @@ export function initProjectControls({
     target.addEventListener(name, fn);
     listeners.push(() => target.removeEventListener(name, fn));
   };
+  const savedListRecovery = createSavedListRecovery(
+    el("list"),
+    rereadSavedList,
+    listen,
+  );
   const unfocused = (target) =>
     !target || target === document.body || target === document.documentElement;
   listen(document, "keydown", () => (keyboardFocus = true));
@@ -97,7 +102,7 @@ export function initProjectControls({
     if (el("status").textContent !== copy[status])
       el("status").textContent = copy[status];
     el("status").setAttribute("role", isError ? "alert" : "status");
-    el("storage-warning").hidden = !warning && !savedListUnavailable;
+    el("storage-warning").hidden = !warning;
     el("storage-warning").textContent = copy.storageUnavailable;
     el("cancel").hidden = !busy;
     el("cancel").disabled = status === "cancelling";
@@ -154,11 +159,17 @@ export function initProjectControls({
         option.textContent = `${option.dataset.separateTitle} · ${copy.separateLabel}`;
     }
     draftNotice.localize();
+    savedListRecovery.localize(copy);
     render();
   }
   function refreshList(selected = "") {
-    const options = store.read();
-    savedListUnavailable = false;
+    let options;
+    try {
+      options = store.read();
+    } catch (error) {
+      savedListRecovery.setUnavailable(true);
+      throw error;
+    }
     el("list").replaceChildren(new Option(copy.choose, ""));
     for (const item of options) {
       const { title } = item.project;
@@ -170,7 +181,15 @@ export function initProjectControls({
       el("list").append(option);
     }
     el("list").value = selected;
+    savedListRecovery.setUnavailable(false);
     render();
+  }
+  function rereadSavedList() {
+    try {
+      refreshList(el("list").value);
+    } catch {
+      // Keep the retry notice available while the list cannot be read.
+    }
   }
   function draftFailed(error) {
     const code = error?.code;
@@ -242,12 +261,7 @@ export function initProjectControls({
   const ready = (async () => {
     try {
       lastSignature = JSON.stringify(current());
-      try {
-        refreshList();
-      } catch {
-        savedListUnavailable = true;
-        render();
-      }
+      rereadSavedList();
       let source;
       try {
         source = await draft.open();

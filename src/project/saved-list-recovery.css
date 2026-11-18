@@ -1,0 +1,14 @@
+.saved-list-recovery {
+  margin-block: 0.65rem;
+}
+
+.saved-list-recovery p {
+  margin: 0 0 0.45rem;
+  color: #ffe0ab;
+  font-size: 0.85rem;
+}
+
+.saved-list-recovery button {
+  min-height: 44px;
+  max-width: 100%;
+}
