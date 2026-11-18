@@ -1,7 +1,11 @@
 import "./draft-notice.css";
 import { projectMessages } from "./messages.js";
 
-export function createDraftNotice(root, saveId, returnToDraft) {
+export function createDraftNotice(root, saveId, projectStatus, returnToDraft) {
+  const saveButton = document.getElementById(saveId);
+  const saveActions = saveButton.parentElement;
+  const statusParent = projectStatus.parentElement;
+  const statusNext = projectStatus.nextSibling;
   const notice = document.createElement("aside");
   notice.className = "draft-notice";
   notice.setAttribute("role", "status");
@@ -15,11 +19,9 @@ export function createDraftNotice(root, saveId, returnToDraft) {
   });
   save.href = `#${saveId}`;
   save.addEventListener("click", (event) => {
-    const button = document.getElementById(saveId);
-    if (!button) return;
     event.preventDefault();
-    button.scrollIntoView({ block: "center" });
-    button.focus({ preventScroll: true });
+    saveButton.scrollIntoView({ block: "center" });
+    saveButton.focus({ preventScroll: true });
   });
   notice.append(message, save, back);
   root.append(notice);
@@ -35,6 +37,14 @@ export function createDraftNotice(root, saveId, returnToDraft) {
   }
   return {
     localize,
+    positionSaveStatus(besideSave) {
+      if (besideSave) {
+        if (saveActions.nextElementSibling !== projectStatus)
+          saveActions.after(projectStatus);
+      } else if (projectStatus.parentElement !== statusParent) {
+        statusParent.insertBefore(projectStatus, statusNext);
+      }
+    },
     show(code) {
       issue = code;
       back.hidden = code !== "separateDraft";

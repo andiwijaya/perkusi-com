@@ -710,6 +710,55 @@ async function reopenConflictCopy(
   assert.equal(await raw(editor, savedKey), savedLibraryRaw);
   assert.equal(await raw(newer, key), sharedRaw);
 
+  await editor.evaluate((key) => {
+    const set = Storage.prototype.setItem;
+    window.restoreSavedProjectWrites = () => {
+      Storage.prototype.setItem = set;
+    };
+    Storage.prototype.setItem = function (name, value) {
+      if (this === window.localStorage && name === key)
+        throw new DOMException("QA blocked saving the copy", "SecurityError");
+      return set.call(this, name, value);
+    };
+  }, savedKey);
+  const save = editor.locator(library[tool].save);
+  const saveStatus = editor.locator(library[tool].status);
+  let saveError;
+  try {
+    if (width < 600) await save.tap();
+    else await save.click();
+    assert.equal(await saveStatus.getAttribute("role"), "alert");
+    saveError = await saveStatus.innerText();
+    assert.match(
+      saveError,
+      locale === "id"
+        ? /Salinan belum tersimpan.*Edit masih ada di tab ini.*coba Simpan proyek baru lagi/
+        : /The copy could not be saved.*Your edits are still in this tab.*try Save a new project again/,
+    );
+    await editor.waitForFunction(
+      ({ status, save }) => {
+        const element = document.querySelector(status);
+        const button = document.querySelector(save);
+        const { top, bottom } = element.getBoundingClientRect();
+        return (
+          element.previousElementSibling?.contains(button) &&
+          top >= 0 &&
+          bottom <= window.innerHeight
+        );
+      },
+      library[tool],
+      { timeout: 5000 },
+    );
+    await assertCopy(editor, tool, key, unsavedCopy);
+    assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+    assert.equal(await raw(newer, key), sharedRaw);
+  } finally {
+    await editor.evaluate(() => {
+      window.restoreSavedProjectWrites();
+      delete window.restoreSavedProjectWrites;
+    });
+  }
+
   const reload = editor.waitForEvent("domcontentloaded");
   const confirm = editor.waitForEvent("dialog", { timeout: 5000 });
   const back = pressReturn();
@@ -743,6 +792,8 @@ async function reopenConflictCopy(
   await unchanged(reopened, protectedSeed, key);
   record(`${tool}-${locale}-${width}-conflict-copy-roundtrip`, "PASS", {
     returnWarning: warning,
+    saveFailureAfterCancel: saveError,
+    rejectedSavePreservedCopyAndDraft: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,

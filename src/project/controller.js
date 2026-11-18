@@ -1,4 +1,4 @@
-import { projectMessages } from "./messages.js";
+import { copySaveErrorCode, projectMessages } from "./messages.js";
 import { captureBeatboxProject, applyBeatboxProject } from "./beatbox-model.js";
 import { ProjectStore, isSeparateSave } from "./store.js";
 import { FileDelivery, safeFilename, readProjectFile } from "./files.js";
@@ -24,6 +24,7 @@ export function initProjectControls({
     draftNotice = createDraftNotice(
       panel.closest("main"),
       "project-save",
+      el("status"),
       () =>
         void guarded(() => {
           draft.leaveSeparate();
@@ -70,10 +71,11 @@ export function initProjectControls({
       el("title").value || copy.untitled,
       Number(el("bars").value),
     );
-  function notify(code, error = false) {
+  function notify(code, error = false, { besideSave = false } = {}) {
     if (disposed) return;
     status = Object.hasOwn(copy, code) ? code : "exportFailed";
     isError = error;
+    draftNotice.positionSaveStatus(besideSave);
     render();
   }
   function render() {
@@ -264,10 +266,20 @@ export function initProjectControls({
     "click",
     () =>
       void guarded(() => {
-        const id = store.save(current(), {
-          separate:
-            draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
-        });
+        let id;
+        try {
+          id = store.save(current(), {
+            separate:
+              draftIssue === "draftConflict" || draft.shouldSaveSeparate(),
+          });
+        } catch (error) {
+          if (!draft.isSeparate) throw error;
+          notify(copySaveErrorCode(error.code || "exportFailed"), true, {
+            besideSave: true,
+          });
+          el("status").scrollIntoView({ block: "center" });
+          return;
+        }
         refreshList(id);
         trackEvent("project_saved");
         notify("saved");
