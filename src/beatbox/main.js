@@ -124,7 +124,6 @@ export function initBeatbox() {
   }
   function render() {
     if (disposed) return;
-    projects?.update();
     projects?.render();
     renderPreload(!!projects?.snapshot().loading);
     const s = engine.snapshot(),
@@ -280,9 +279,10 @@ export function initBeatbox() {
       .style.setProperty("--bar-progress", String((s.beat % 4) / 4));
   }
   const run = (action) => {
-    if (projects?.snapshot().loading) return;
+    if (disposed || projects?.snapshot().loading) return;
     try {
       const pending = action();
+      projects?.update();
       render();
       Promise.resolve(pending).then(render, () => {
         announce(copy.audioError);
@@ -364,11 +364,10 @@ export function initBeatbox() {
       return engine.play();
     }),
   );
-  document
-    .querySelector("#bb-volume")
-    .addEventListener("input", (event) =>
-      engine.setVolume(Number(event.target.value)),
-    );
+  document.querySelector("#bb-volume").addEventListener("input", (event) => {
+    engine.setVolume(Number(event.target.value));
+    projects?.update();
+  });
   document.addEventListener("keydown", (event) => {
     if (
       event.ctrlKey ||
