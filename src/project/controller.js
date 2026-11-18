@@ -58,6 +58,7 @@ export function initProjectControls({
     el("list"),
     rereadSavedList,
     listen,
+    [store.keys.projects],
   );
   const unfocused = (target) =>
     !target || target === document.body || target === document.documentElement;
@@ -163,16 +164,17 @@ export function initProjectControls({
     render();
   }
   function refreshList(selected = "") {
+    const list = el("list");
     let options;
     try {
       options = store.read();
     } catch (error) {
-      el("list").replaceChildren(new Option(copy.choose, ""));
+      list.replaceChildren(new Option(copy.choose, ""));
       savedListRecovery.setUnavailable(true);
       render();
       throw error;
     }
-    el("list").replaceChildren(new Option(copy.choose, ""));
+    list.replaceChildren(new Option(copy.choose, ""));
     for (const item of options) {
       const { title } = item.project;
       const option = new Option(title, item.id);
@@ -180,9 +182,10 @@ export function initProjectControls({
         option.dataset.separateTitle = title;
         option.textContent = `${title} · ${copy.separateLabel}`;
       }
-      el("list").append(option);
+      list.append(option);
     }
-    el("list").value = selected;
+    list.value = selected;
+    if (list.selectedIndex < 0) list.selectedIndex = 0;
     savedListRecovery.setUnavailable(false);
     render();
   }

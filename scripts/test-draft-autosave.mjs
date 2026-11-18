@@ -44,6 +44,7 @@ const library = {
     key: "perkusi.projects.v1",
     list: "#project-list",
     load: "#project-load",
+    remove: "#project-delete",
     separate: "#project-open-separate",
     save: "#project-save",
     status: "#project-status",
@@ -52,6 +53,7 @@ const library = {
     key: "perkusi.projects.studio.v3",
     list: "#st-saved",
     load: "#st-load",
+    remove: "#st-saved-delete",
     separate: "#st-open-separate",
     save: "#st-save",
     status: "#st-project-status",
@@ -899,6 +901,46 @@ async function reopenConflictCopy(
   );
   assert.equal(await raw(editor, key), sharedRaw);
   assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+
+  const deleteProject = editor.locator(library[tool].remove);
+  const removedOption = savedList.locator(`option[value="${first.id}"]`);
+  await savedList.selectOption(first.id);
+  assert.equal(await loadProject.isEnabled(), true);
+  assert.equal(await deleteProject.isEnabled(), true);
+  await newer.bringToFront();
+  await editor.waitForFunction(() => !document.hasFocus());
+  await newer.locator(library[tool].list).selectOption(first.id);
+  await editor.evaluate((key) => {
+    window.addEventListener("storage", (event) => {
+      if (event.key === key && event.storageArea === localStorage)
+        window.qaCrossTabSavedUpdate = true;
+    });
+  }, savedKey);
+  const confirmDelete = newer.waitForEvent("dialog", { timeout: 5000 });
+  const remove = newer.locator(library[tool].remove);
+  const deleting = width < 600 ? remove.tap() : remove.click();
+  const deleteDialog = await confirmDelete;
+  assert.equal(deleteDialog.type(), "confirm");
+  assert(deleteDialog.message().includes(copy.title));
+  await deleteDialog.accept();
+  await deleting;
+  await editor.waitForFunction(
+    () => window.qaCrossTabSavedUpdate === true,
+    undefined,
+    { polling: 50, timeout: 5000 },
+  );
+  await removedOption.waitFor({ state: "detached", timeout: 5000 });
+  assert.equal(await editor.evaluate(() => document.hasFocus()), false);
+  assert.equal(await savedList.evaluate((list) => list.selectedIndex), 0);
+  assert.equal(await loadProject.isEnabled(), false);
+  assert.equal(await deleteProject.isEnabled(), false);
+  assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(newer, key), sharedRaw);
+  const remainingLibrary = {
+    ...updatedLibrary,
+    items: updatedLibrary.items.filter(({ id }) => id !== first.id),
+  };
+  assert.deepEqual(JSON.parse(await raw(editor, savedKey)), remainingLibrary);
   await editor.close();
 
   const reopened = await open();
@@ -909,7 +951,7 @@ async function reopenConflictCopy(
     "false",
   );
   assert.equal(await raw(reopened, key), sharedRaw);
-  assert.deepEqual(JSON.parse(await raw(reopened, savedKey)), updatedLibrary);
+  assert.deepEqual(JSON.parse(await raw(reopened, savedKey)), remainingLibrary);
   const { [savedKey]: originalLibrary, ...protectedSeed } = seed;
   assert(originalLibrary);
   await unchanged(reopened, protectedSeed, key);
@@ -922,6 +964,7 @@ async function reopenConflictCopy(
     savedListRestoredWithoutReload: true,
     repeatedSavedListFailureDetectedOnTabReturn: true,
     unavailableSavedListOffersNoStaleProject: true,
+    crossTabDeletionClearedSelectionAndDisabledActions: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,
