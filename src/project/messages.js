@@ -18,7 +18,7 @@ export const projectMessages = {
       "Kamu sedang mengedit salinan di tab ini. Simpan proyek baru agar edit bisa dibuka lagi setelah tab ditutup.",
     returnToDraft: "Buka draft terbaru",
     returnToDraftConfirm:
-      "Buka draft terbaru di tab ini? Gunakan Simpan proyek baru dahulu jika ingin menyimpan edit salinan ini.",
+      "Buka draft terbaru di tab ini? Jika lanjut, edit salinan yang belum disimpan sebagai proyek akan hilang. Untuk menyimpannya, batalkan lalu pilih Simpan proyek baru.",
     loadConfirm:
       "Muat simpanan “{title}” dan ganti proyek aktif beserta editnya? Simpan atau unduh proyek aktif lebih dulu jika ingin mempertahankannya.",
     loadCancelled: "Pemuatan dibatalkan. Proyek aktif dan editnya tetap ada.",
@@ -115,7 +115,7 @@ export const projectMessages = {
       "You're editing a copy in this tab. Use Save a new project to keep your changes after closing the tab.",
     returnToDraft: "Open latest draft",
     returnToDraftConfirm:
-      "Open the latest draft in this tab? Use Save a new project first if you want to keep this copy's edits.",
+      "Open the latest draft in this tab? If you continue, edits to this copy that you haven't saved as a project will be lost. To keep them, cancel and choose Save a new project.",
     loadConfirm:
       "Load saved project “{title}” and replace your active project and edits? Save or download your active project first if you want to keep it.",
     loadCancelled: "Loading cancelled. Your active project and edits remain.",

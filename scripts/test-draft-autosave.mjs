@@ -657,35 +657,94 @@ async function reopenConflictCopy(
   assert.equal(await raw(newer, key), sharedRaw);
 
   await editor.locator(library[tool].save).click();
-  const updatedLibrary = JSON.parse(await raw(editor, savedKey));
+  const savedLibraryRaw = await raw(editor, savedKey);
+  const updatedLibrary = JSON.parse(savedLibraryRaw);
   assert.deepEqual(updatedLibrary.items.slice(0, -1), saved.items);
   const updated = updatedLibrary.items.at(-1);
   assert(updated.id.startsWith("separate-"));
   assert.deepEqual(updated.project, afterCopyEdit);
+
+  const unsavedCopy = structuredClone(afterCopyEdit);
+  unsavedCopy.title = "Edit salinan yang belum disimpan";
+  const beatSelector =
+    tool === "studio" ? '[data-st-step="snare:6"]' : '[data-role="snare"]';
+  const beat = editor.locator(beatSelector);
+  if (tool === "studio") {
+    const pattern = unsavedCopy.patterns.find(
+      ({ id }) => id === unsavedCopy.activePattern,
+    );
+    pattern.steps.snare[6] = 1;
+    await beat.evaluate((control) =>
+      control.scrollIntoView({ block: "center", behavior: "instant" }),
+    );
+  } else {
+    unsavedCopy.tracks.find(({ role }) => role === "snare").enabled = true;
+  }
+  assert.equal(await beat.getAttribute("aria-pressed"), "false");
+  await beat.click();
+  await editor.locator(titles[tool]).fill(unsavedCopy.title);
+  await assertCopy(editor, tool, key, unsavedCopy);
+  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+
+  const returnButton = editor.locator(notice).getByRole("button", {
+    name: locale === "id" ? "Buka draft terbaru" : "Open latest draft",
+  });
+  const pressReturn = () =>
+    width < 600 ? returnButton.tap() : returnButton.click();
+  const warningReady = editor.waitForEvent("dialog", { timeout: 5000 });
+  const firstAttempt = pressReturn();
+  const firstWarning = await warningReady;
+  const warning = firstWarning.message();
+  const dialogType = firstWarning.type();
+  await firstWarning.dismiss();
+  await firstAttempt;
+  assert.equal(dialogType, "confirm");
+  assert.match(
+    warning,
+    locale === "id"
+      ? /belum disimpan sebagai proyek akan hilang.*batalkan lalu pilih Simpan proyek baru/
+      : /haven't saved as a project will be lost.*cancel and choose Save a new project/,
+  );
+  await assertCopy(editor, tool, key, unsavedCopy);
+  assert.equal(await beat.getAttribute("aria-pressed"), "true");
+  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
+  assert.equal(await raw(newer, key), sharedRaw);
+
   const reload = editor.waitForEvent("domcontentloaded");
   const confirm = editor.waitForEvent("dialog", { timeout: 5000 });
-  const back = editor.locator(`${notice} button`).click();
-  await (await confirm).accept();
+  const back = pressReturn();
+  const secondWarning = await confirm;
+  const confirmedWarning = secondWarning.message();
+  await secondWarning.accept();
   await back;
   await reload;
   await ready(editor, tool);
+  assert.equal(confirmedWarning, warning);
   assert.equal(
     await editor.locator(titles[tool]).inputValue(),
     afterSharedEdit.title,
   );
   assert.equal(new URL(editor.url()).searchParams.has("draft"), false);
   assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(editor, savedKey), savedLibraryRaw);
   await editor.close();
 
   const reopened = await open();
   await loadNamed(reopened, tool, updated.id, afterCopyEdit.title);
   await assertCopy(reopened, tool, key, afterCopyEdit);
+  assert.equal(
+    await reopened.locator(beatSelector).getAttribute("aria-pressed"),
+    "false",
+  );
   assert.equal(await raw(reopened, key), sharedRaw);
   assert.deepEqual(JSON.parse(await raw(reopened, savedKey)), updatedLibrary);
   const { [savedKey]: originalLibrary, ...protectedSeed } = seed;
   assert(originalLibrary);
   await unchanged(reopened, protectedSeed, key);
   record(`${tool}-${locale}-${width}-conflict-copy-roundtrip`, "PASS", {
+    returnWarning: warning,
+    unsavedCopyPreservedOnCancel: true,
+    savedEditsRetainedAfterReturn: true,
     savedAndLoadedExactly: true,
     survivesRefreshAndReopen: true,
     latestDraftProtected: true,
