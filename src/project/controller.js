@@ -167,7 +167,9 @@ export function initProjectControls({
     try {
       options = store.read();
     } catch (error) {
+      el("list").replaceChildren(new Option(copy.choose, ""));
       savedListRecovery.setUnavailable(true);
+      render();
       throw error;
     }
     el("list").replaceChildren(new Option(copy.choose, ""));
