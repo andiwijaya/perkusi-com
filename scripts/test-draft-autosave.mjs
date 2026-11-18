@@ -735,18 +735,19 @@ async function reopenConflictCopy(
         ? /Salinan belum tersimpan.*Edit masih ada di tab ini.*coba Simpan proyek baru lagi/
         : /The copy could not be saved.*Your edits are still in this tab.*try Save a new project again/,
     );
-    assert.equal(
-      await saveStatus.evaluate((element, buttonSelector) => {
+    await editor.waitForFunction(
+      ({ status, save }) => {
+        const element = document.querySelector(status);
+        const button = document.querySelector(save);
         const { top, bottom } = element.getBoundingClientRect();
-        const button = document.querySelector(buttonSelector);
         return (
           element.previousElementSibling?.contains(button) &&
           top >= 0 &&
           bottom <= window.innerHeight
         );
-      }, library[tool].save),
-      true,
-      "Save failure should be visible without manual scrolling",
+      },
+      library[tool],
+      { timeout: 5000 },
     );
     await assertCopy(editor, tool, key, unsavedCopy);
     assert.equal(await raw(editor, savedKey), savedLibraryRaw);
