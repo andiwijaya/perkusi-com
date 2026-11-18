@@ -818,6 +818,21 @@ async function reopenConflictCopy(
   await editor.bringToFront();
   await editor.waitForFunction(() => document.hasFocus());
   const beforeListRetry = await editor.evaluate(() => performance.timeOrigin);
+  if (width < 600) await retryList.tap();
+  else await retryList.click();
+  await editor.waitForFunction(
+    (expected) =>
+      document
+        .querySelector(".saved-list-recovery [role=status]")
+        .textContent.startsWith(expected),
+    locale === "id"
+      ? "Gagal memuat ulang daftar proyek."
+      : "Couldn't reload the saved project list.",
+  );
+  assert.equal(await retryList.isEnabled(), true);
+  assert.equal(await savedOption.count(), 0);
+  assert.equal(await raw(editor, key), sharedRaw);
+  assert.equal(await raw(newer, savedKey), savedLibraryRaw);
   await editor.evaluate(
     (flag) => sessionStorage.removeItem(flag),
     readDeniedKey,
@@ -855,6 +870,7 @@ async function reopenConflictCopy(
     saveFailureAfterCancel: saveError,
     rejectedSavePreservedCopyAndDraft: true,
     latestDraftOpenedWithSavedListUnavailable: true,
+    blockedRetryReportedFailure: true,
     savedListRestoredWithoutReload: true,
     unsavedCopyPreservedOnCancel: true,
     savedEditsRetainedAfterReturn: true,

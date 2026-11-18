@@ -12,25 +12,38 @@ export function createSavedListRecovery(select, readList, listen) {
   notice.append(message, button);
   (select.closest("label") || select).after(notice);
 
-  function retry() {
+  let copy;
+  let statusKey = "savedListUnavailable";
+  function renderStatus() {
+    message.textContent = copy[statusKey];
+  }
+  function retry(manual = false) {
     if (notice.hidden) return;
     const restoreFocus = document.activeElement === button;
     readList();
     if (notice.hidden && restoreFocus) select.focus({ preventScroll: true });
+    if (manual && !notice.hidden) {
+      statusKey = "reloadSavedListFailed";
+      renderStatus();
+    }
   }
-  listen(button, "click", retry);
-  listen(window, "focus", retry);
+  listen(button, "click", () => retry(true));
+  listen(window, "focus", () => retry());
   listen(document, "visibilitychange", () => {
     if (!document.hidden) retry();
   });
 
   return {
-    localize(copy) {
-      message.textContent = copy.savedListUnavailable;
+    localize(messages) {
+      copy = messages;
       button.textContent = copy.reloadSavedList;
+      renderStatus();
     },
     setUnavailable(unavailable) {
+      if (notice.hidden === !unavailable) return;
       notice.hidden = !unavailable;
+      statusKey = "savedListUnavailable";
+      renderStatus();
     },
   };
 }
