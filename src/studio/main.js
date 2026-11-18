@@ -118,7 +118,6 @@ export function initStudio() {
     projectStatus = "idle",
     statusError = false,
     draftAllowed = true,
-    draftTimer,
     frame,
     lastFrame = 0,
     keyboard = false,
@@ -239,15 +238,13 @@ export function initStudio() {
   function saveDraft() {
     if (!draftAllowed || disposed || receiving) return;
     try {
-      store.saveDraft(
-        studioProjectSnapshot(current(), engine.arrangement, lastPlayback),
-      );
+      store.saveDraft(historySnapshot());
     } catch {
       draftAllowed = false;
       message("storageUnavailable", true);
     }
   }
-  function changed() {
+  function changed({ autosave = true } = {}) {
     const arrangement = current().playback?.mode !== "pattern",
       modeChanged = engine.arrangement !== arrangement;
     engine.arrangement = arrangement;
@@ -262,10 +259,9 @@ export function initStudio() {
       readyFile = null;
       $("result").hidden = true;
     }
-    clearTimeout(draftTimer);
-    if (!receiving) draftTimer = setTimeout(saveDraft, 250);
     sync(modeChanged);
     if (invalidated) message("wavChanged");
+    if (autosave) saveDraft();
     return invalidated;
   }
   function edit(fn) {
@@ -282,7 +278,7 @@ export function initStudio() {
         }, historySnapshot())
       ) {
         const invalidated = changed();
-        message(invalidated ? "wavChanged" : "editSaved");
+        if (draftAllowed) message(invalidated ? "wavChanged" : "editSaved");
       }
     } catch (e) {
       fail(e);
@@ -320,14 +316,13 @@ export function initStudio() {
       ),
     );
     engine.rewind();
-    engine.arrangement = valid.playback?.mode !== "pattern";
-    $("chain-mode").checked = engine.arrangement;
     history.replace(valid);
     restorePlaybackLevel(valid);
     readyFile = null;
     $("result").hidden = true;
     $("title").value = current().title;
-    changed();
+    // Recovery reads the existing draft, and transfers have already written it.
+    changed({ autosave: false });
     message("loaded");
     if (restoreDraft) {
       // Explicit recovery may replace an unreadable draft that disabled autosave.
@@ -354,7 +349,7 @@ export function initStudio() {
     compositionPanel.update();
     livePads?.update();
     $("kit").value = p.pack.id;
-    $("bpm").value = p.timing.bpm;
+    if ($("bpm").valueAsNumber !== p.timing.bpm) $("bpm").value = p.timing.bpm;
     $("swing").value = p.timing.swing;
     $("master").value = p.master.volume;
     $("quantize").checked = p.timing.quantize;
@@ -641,16 +636,17 @@ export function initStudio() {
     renderStatus();
     await job;
     if (!disposed) {
-      if (engine.transport.running)
+      if (engine.transport.running) {
         lastPlayback = {
           key: studioPlaybackKey(project(), engine.arrangement),
           gain: engine.outputStage.programmeGain,
           arrangement: engine.arrangement,
         };
+        if (lastPlayback.gain !== requested.playback?.programmeGain)
+          saveDraft();
+      }
       if (engine.stats.starts > before && engine.context?.state === "running")
         trackEvent("audio_started");
-      clearTimeout(draftTimer);
-      draftTimer = setTimeout(saveDraft, 250);
       renderStatus();
     }
   }
@@ -1110,6 +1106,13 @@ export function initStudio() {
       }
       return;
     }
+    if (el.id === "st-bpm") {
+      const bpm = el.valueAsNumber;
+      // Do not commit an empty or partial number while the user is typing.
+      if (bpm >= Number(el.min) && bpm <= Number(el.max))
+        edit((p) => (p.timing.bpm = bpm));
+      return;
+    }
     if (el.dataset.stVolume || el.dataset.stPan) {
       const field = el.dataset.stVolume ? "volume" : "pan",
         role = el.dataset.stVolume || el.dataset.stPan;
@@ -1126,7 +1129,12 @@ export function initStudio() {
     const el = event.target;
     if (reading && el.id !== "st-file") return;
     if (el.id === "st-kit") edit((p) => (p.pack.id = el.value));
-    if (el.id === "st-bpm") edit((p) => (p.timing.bpm = Number(el.value)));
+    if (el.id === "st-bpm") {
+      if (el.valueAsNumber !== current().timing.bpm) {
+        edit((p) => (p.timing.bpm = el.valueAsNumber));
+        el.value = current().timing.bpm;
+      }
+    }
     if (el.id === "st-pattern") edit((p) => (p.activePattern = el.value));
     if (el.id === "st-quantize") edit((p) => (p.timing.quantize = el.checked));
     if (el.id === "st-chain-mode") {
@@ -1173,18 +1181,15 @@ export function initStudio() {
   listen(document, "visibilitychange", () => {
     if (document.hidden) {
       engine.pause();
-      saveDraft();
       renderStatus();
     }
   });
   function dispose() {
     if (disposed) return;
-    saveDraft();
     disposed = true;
     preload.dispose();
     cancelAnimationFrame(preloadFrame);
     cancelAnimationFrame(preloadStartFrame);
-    clearTimeout(draftTimer);
     for (const timer of padTimers) clearTimeout(timer);
     padTimers.clear();
     importLocks.clear();
@@ -1259,7 +1264,6 @@ export function initStudio() {
     current: project,
     onReceiving(value) {
       receiving = value;
-      if (value) clearTimeout(draftTimer);
       $("title").disabled = value;
       sync();
     },

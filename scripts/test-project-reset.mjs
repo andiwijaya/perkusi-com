@@ -307,10 +307,10 @@ async function confirmAction(page, selector, title, accept, immediateTitle) {
           const input = document.getElementById(titleId);
           input.value = "QA immediate edit — $&";
           input.dispatchEvent(new Event("input", { bubbles: true }));
-          const pending =
-            JSON.parse(localStorage.getItem(key)).title !== input.value;
+          const persisted =
+            JSON.parse(localStorage.getItem(key)).title === input.value;
           document.querySelector(selector).click();
-          return pending;
+          return persisted;
         },
         {
           titleId: ids(immediateTitle).title,
@@ -327,12 +327,12 @@ async function confirmAction(page, selector, title, accept, immediateTitle) {
   );
   if (accept) await dialog.accept();
   else await dialog.dismiss();
-  const pending = await action;
+  const persisted = await action;
   if (immediateTitle)
     assert.equal(
-      pending,
+      persisted,
       true,
-      "Edit must still be pending autosave when prompt opens",
+      "The latest edit must already be in the draft when the prompt opens",
     );
 }
 async function reloadExact(page, tool, expected) {
@@ -501,7 +501,7 @@ async function immediate(tool, selector) {
     assert.deepEqual(await ui(page, tool), visible);
     await protectedData(page, seed, before, tool);
     check(`${tool}-${selector.slice(1)}-immediate-cancel`, {
-      pendingAutosaveVerified: true,
+      immediateAutosaveVerified: true,
       fullProjectPreserved: true,
       refreshPassed: true,
     });

@@ -30,7 +30,6 @@ export function initProjectControls({
     isError = false,
     warning = false,
     draftEnabled = true,
-    draftTimer,
     lastSignature = "",
     progress = null,
     keyboardFocus = false,
@@ -143,8 +142,18 @@ export function initProjectControls({
     el("list").value = selected;
     render();
   }
+  function saveDraft(project) {
+    try {
+      store.saveDraft(project);
+      warning = false;
+    } catch {
+      warning = true;
+      draftEnabled = false;
+      render();
+    }
+  }
   function update() {
-    if (disposed || receiving) return;
+    if (disposed || loading || receiving) return;
     let project;
     try {
       project = current();
@@ -158,18 +167,7 @@ export function initProjectControls({
       file = null;
       notify("wavChanged");
     }
-    clearTimeout(draftTimer);
-    if (draftEnabled)
-      draftTimer = setTimeout(() => {
-        if (disposed) return;
-        try {
-          store.saveDraft(project);
-        } catch {
-          warning = true;
-          draftEnabled = false;
-          render();
-        }
-      }, 300);
+    if (draftEnabled) saveDraft(project);
   }
   async function guarded(fn) {
     try {
@@ -181,7 +179,6 @@ export function initProjectControls({
   async function apply(project, code) {
     loading = true;
     file = null;
-    clearTimeout(draftTimer);
     render();
     try {
       const pending = applyBeatboxProject(engine, project, catalog);
@@ -190,23 +187,16 @@ export function initProjectControls({
       document.querySelector("#bb-volume").value = String(
         project.master.volume,
       );
+      const snapshot = current();
+      lastSignature = JSON.stringify(snapshot);
+      // Incoming transfers already commit the draft before applying it.
+      if (!receiving && (code === "imported" || code === "loaded")) {
+        draftEnabled = true;
+        saveDraft(snapshot);
+      }
       onChange();
       await pending;
       if (disposed) return;
-      if (code === "imported" || code === "loaded") {
-        // A validated, explicitly chosen project replaces a failed draft recovery.
-        // Persist it now so an immediate reload keeps the recovered work too.
-        try {
-          store.saveDraft(current());
-          draftEnabled = true;
-          warning = false;
-        } catch {
-          draftEnabled = false;
-          warning = true;
-        }
-      }
-      lastSignature = "";
-      update();
       notify(code);
     } finally {
       loading = false;
@@ -216,6 +206,7 @@ export function initProjectControls({
   let ready = Promise.resolve();
   localize();
   try {
+    lastSignature = JSON.stringify(current());
     refreshList();
     const draft = store.readDraft();
     if (draft) {
@@ -418,15 +409,7 @@ export function initProjectControls({
   listen(document, "perkusi:locale", localize);
   function dispose() {
     if (disposed) return;
-    if (draftEnabled && !receiving) {
-      try {
-        store.saveDraft(current());
-      } catch {
-        /* Recovery remains best effort. */
-      }
-    }
     disposed = true;
-    clearTimeout(draftTimer);
     exporter.dispose();
     delivery.dispose();
     file = null;
@@ -437,7 +420,6 @@ export function initProjectControls({
     ready,
     setReceiving(value) {
       receiving = value;
-      if (value) clearTimeout(draftTimer);
       el("title").disabled = value;
       render();
     },

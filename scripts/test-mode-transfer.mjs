@@ -1848,8 +1848,8 @@ async function savedLoadFailure(tool, kind) {
     await page.locator("#" + ids(tool).list).selectOption("target");
     const selected = JSON.parse(seed[savedKey(tool)]).items[0].project;
     if (kind === "immediate") {
-      active.title = "Fresh edit before autosave — $&";
-      const pending = await confirmSavedLoad(
+      active.title = "Fresh edit before Load — $&";
+      const persisted = await confirmSavedLoad(
         page,
         tool,
         false,
@@ -1862,10 +1862,10 @@ async function savedLoadFailure(tool, kind) {
               const input = document.querySelector("#" + titleId);
               input.value = title;
               input.dispatchEvent(new Event("input", { bubbles: true }));
-              const pending =
-                JSON.parse(localStorage.getItem(key)).title !== title;
+              const persisted =
+                JSON.parse(localStorage.getItem(key)).title === title;
               document.querySelector("#" + loadId).click();
-              return pending;
+              return persisted;
             },
             {
               titleId: ids(tool).title,
@@ -1876,9 +1876,9 @@ async function savedLoadFailure(tool, kind) {
           ),
       );
       assert.equal(
-        pending,
+        persisted,
         true,
-        "The cancelled load must protect an edit before its draft timer runs",
+        "The fresh edit must be saved before the Load confirmation opens",
       );
       assert.deepEqual(await project(page, tool, name + "-cancelled"), active);
       await page.reload();
