@@ -1,3 +1,97 @@
+.tutorial-hub {
+  padding-block: clamp(32px, 6vw, 72px) clamp(48px, 7vw, 88px);
+  min-height: 60vh;
+}
+.tutorial-hub-intro {
+  margin-bottom: 32px;
+}
+.tutorial-hub-intro h1 {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+.tutorial-hub-intro p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.tutorial-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.tutorial-hub .tutorial-hub-card {
+  display: flex;
+  padding: 0;
+  border-radius: 12px;
+}
+.tutorial-hub-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: inherit;
+}
+.tutorial-hub-preview {
+  aspect-ratio: 2.15;
+  margin: 12px 12px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #1b211b top left / cover no-repeat;
+}
+.tutorial-hub-preview--pads {
+  background-image: url("/images/tutorials/pads-drums-id.webp");
+}
+.tutorial-hub-preview--studio {
+  background-image: url("/images/tutorials/studio-chain-id.webp");
+}
+.tutorial-hub-preview--beatbox {
+  background-image: url("/images/tutorials/beatbox-mix-id.webp");
+}
+.tutorial-hub-preview--pads:lang(en) {
+  background-image: url("/images/tutorials/pads-drums-en.webp");
+}
+.tutorial-hub-preview--studio:lang(en) {
+  background-image: url("/images/tutorials/studio-chain-en.webp");
+}
+.tutorial-hub-preview--beatbox:lang(en) {
+  background-image: url("/images/tutorials/beatbox-mix-en.webp");
+}
+.tutorial-hub-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px;
+}
+.tutorial-hub-card-body h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.7vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.tutorial-hub .tutorial-hub-card p {
+  min-height: 0;
+  margin: 8px 0 16px;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.tutorial-hub-action {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: auto;
+  color: var(--green);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (max-width: 700px) {
+  .tutorial-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .tool-tutorial {
   margin-block: 0 28px;
   border: 1px solid #4c6049;

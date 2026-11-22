@@ -43,7 +43,11 @@ export function initLocalization() {
       el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
     });
     document.querySelectorAll("[data-route]").forEach((el) => {
-      el.href = navigationHref(el.dataset.route, locale);
+      el.href = navigationHref(
+        el.dataset.route,
+        locale,
+        el.dataset.routeAnchor,
+      );
     });
     document.querySelectorAll("[data-home-anchor]").forEach((el) => {
       el.href =

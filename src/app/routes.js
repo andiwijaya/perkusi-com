@@ -5,6 +5,7 @@ export const pages = [
   "beatbox",
   "studio",
   "pads",
+  "tutorials",
   "privacy",
   "notFound",
   "instruments",
@@ -15,6 +16,7 @@ const basePaths = {
   beatbox: "/beatbox/",
   studio: "/studio/",
   pads: "/pad-station/",
+  tutorials: "/tutorial/",
   privacy: "/privacy.html",
   notFound: "/404.html",
   instruments: "/instrumen/",
@@ -45,6 +47,7 @@ export function pageFromPath(pathname) {
   if (base === "/beatbox" || base === "/beatbox/") return "beatbox";
   if (base === "/studio" || base === "/studio/") return "studio";
   if (base === "/pad-station" || base === "/pad-station/") return "pads";
+  if (base === "/tutorial" || base === "/tutorial/") return "tutorials";
   const instrumentPath = base.endsWith("/") ? base : base + "/";
   const instrumentPage = Object.entries(basePaths).find(
     ([key, path]) =>

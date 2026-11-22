@@ -116,17 +116,21 @@ test("missing EN uses id and reports the bug; unknown keys never disappear", () 
   assert.throws(() => t("unknown"), /Unknown translation/);
 });
 test("route entries cover static localized pages and legacy privacy aliases", () => {
-  assert.equal(Object.keys(buildEntries).length, 46);
+  assert.equal(Object.keys(buildEntries).length, 48);
   assert.equal(buildEntries.pads_id, "pad-station/index.html");
   assert.equal(buildEntries.pads_en, "en/pad-station/index.html");
   assert.equal(buildEntries.home_id, "index.html");
   assert.equal(buildEntries.beatbox_en, "en/beatbox/index.html");
+  assert.equal(buildEntries.tutorials_id, "tutorial/index.html");
+  assert.equal(buildEntries.tutorials_en, "en/tutorial/index.html");
   for (const locale of ["id", "en"])
     for (const page of pages) {
       assert.equal(pageFromPath(pagePath(page, locale)), page);
     }
   assert.equal(pageFromPath("/privacy"), "privacy");
   assert.equal(pageFromPath("/en/privacy"), "privacy");
+  assert.equal(pageFromPath("/tutorial"), "tutorials");
+  assert.equal(pageFromPath("/en/tutorial"), "tutorials");
   assert.equal(pageFromPath("/not-a-route"), "notFound");
   assert.equal(pageFromPath("/en/missing"), "notFound");
 });
