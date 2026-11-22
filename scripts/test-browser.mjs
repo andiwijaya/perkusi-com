@@ -356,7 +356,13 @@ try {
     async () => {
       for (const width of [320, 360, 390, 430, 768, 1280, 1440, 1920])
         for (const locale of ["id", "en"])
-          for (const screen of ["home", "privacy", "beatbox", "studio"]) {
+          for (const screen of [
+            "home",
+            "privacy",
+            "beatbox",
+            "studio",
+            "tutorials",
+          ]) {
             await page.setViewportSize({ width, height: 900 });
             await page.goto(
               base +
@@ -399,6 +405,89 @@ try {
                 fullPage: true,
               });
           }
+    },
+  );
+  await check(
+    "bilingual Tutorial menu, guide links and preserved language",
+    async () => {
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const locale of ["id", "en"]) {
+          await page.goto(base + navigationHref("home", locale));
+          await settle();
+          if (width === 390) await page.locator(".menu-toggle").click();
+          const menuLink = page.locator(
+            '#navigation a[data-route="tutorials"]',
+          );
+          assert.equal(
+            await menuLink.innerText(),
+            messages[locale]["common.tutorials"],
+          );
+          await menuLink.click();
+          await page.waitForURL(base + navigationHref("tutorials", locale));
+          await settle();
+          const hub = page.locator(".tutorial-hub");
+          assert.equal(
+            await hub.locator("h1").innerText(),
+            messages[locale]["tutorialHub.title"],
+          );
+          assert.equal(await menuLink.getAttribute("aria-current"), "page");
+          assert.equal(await hub.locator(".tutorial-hub-link").count(), 3);
+
+          const other = locale === "id" ? "en" : "id";
+          await page.locator(`[data-locale="${other}"]`).click();
+          assert.equal(
+            new URL(page.url()).pathname,
+            pagePath("tutorials", other),
+          );
+          assert.equal(
+            await hub.locator("h1").innerText(),
+            messages[other]["tutorialHub.title"],
+          );
+          for (const link of await hub.locator(".tutorial-hub-link").all()) {
+            assert.equal(
+              await link.getAttribute("href"),
+              navigationHref(
+                await link.getAttribute("data-route"),
+                other,
+                "tutorial",
+              ),
+            );
+            assert.match(
+              await link
+                .locator(".tutorial-hub-preview")
+                .evaluate((image) => getComputedStyle(image).backgroundImage),
+              new RegExp(`-${other}\\.webp`),
+            );
+          }
+          await page.locator(`[data-locale="${locale}"]`).click();
+          await page.screenshot({
+            path: join(output, `tutorials-${locale}-${width}.png`),
+            fullPage: true,
+          });
+          for (const guide of ["pads", "studio", "beatbox"]) {
+            await hub.locator(`[data-route="${guide}"]`).press("Enter");
+            await page.waitForURL(
+              base + navigationHref(guide, locale, "tutorial"),
+            );
+            await page.waitForFunction(
+              () =>
+                document.querySelector("#tutorial")?.open &&
+                document.activeElement.id === "tutorial",
+            );
+            assert.equal(
+              await page.locator("html").getAttribute("lang"),
+              locale,
+            );
+            assert.equal(
+              await page.locator("#tutorial .tutorial-search").isVisible(),
+              true,
+            );
+            await page.goBack();
+            await page.waitForURL(base + navigationHref("tutorials", locale));
+          }
+        }
+      }
     },
   );
   await check(
@@ -526,10 +615,17 @@ try {
     async () => {
       const staticContext = await browser.newContext({
         javaScriptEnabled: false,
+        reducedMotion: "reduce",
       });
       const staticPage = await staticContext.newPage();
       for (const locale of ["id", "en"])
-        for (const screen of ["home", "privacy", "beatbox", "studio"]) {
+        for (const screen of [
+          "home",
+          "privacy",
+          "beatbox",
+          "studio",
+          "tutorials",
+        ]) {
           const response = await staticPage.goto(
             base + pagePath(screen, locale),
           );
@@ -542,6 +638,23 @@ try {
             await staticPage.title(),
             messages[locale]["meta." + screen + ".title"],
           );
+          if (screen === "tutorials") {
+            const link = staticPage.locator(
+              '.tutorial-hub [data-route="pads"]',
+            );
+            assert.equal(
+              await link.getAttribute("href"),
+              navigationHref("pads", locale, "tutorial"),
+            );
+            await link.click();
+            await staticPage.waitForURL(
+              base + navigationHref("pads", locale, "tutorial"),
+            );
+            const steps = staticPage.locator(".tutorial-steps");
+            if (!(await steps.isVisible()))
+              await staticPage.locator("#tutorial > summary").press("Enter");
+            assert.equal(await steps.isVisible(), true);
+          }
           const href = await staticPage
             .locator('.site-footer [data-route="privacy"]')
             .getAttribute("href");

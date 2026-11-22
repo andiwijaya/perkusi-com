@@ -4,6 +4,33 @@ import { tutorialPairs } from "../tutorials/messages.js";
 const pairs = {
   ...tutorialPairs,
   "common.articles": ["Artikel Instrumen", "Instrument Articles"],
+  "common.tutorials": ["Tutorial", "Tutorials"],
+  "meta.tutorials.title": [
+    "Tutorial untuk Pemula | Perkusi.com",
+    "Beginner Tutorials | Perkusi.com",
+  ],
+  "meta.tutorials.description": [
+    "Panduan langkah demi langkah untuk belajar Pad Station, Rhythm Studio, dan Beatbox Playground, dengan tangkapan layar dan pencarian di tiap tutorial.",
+    "Learn Pad Station, Rhythm Studio, and Beatbox Playground with step-by-step guides, screenshots, and search in each tutorial.",
+  ],
+  "tutorialHub.title": ["Tutorial untuk pemula", "Beginner tutorials"],
+  "tutorialHub.intro": [
+    "Pilih alat yang ingin kamu pelajari. Tiap panduan punya tangkapan layar, kolom pencarian, dan tautan untuk langsung praktik.",
+    "Pick a tool to learn. Each guide includes screenshots, search, and links to try the steps in the tool.",
+  ],
+  "tutorialHub.open": ["Buka panduan", "Open guide"],
+  "tutorialHub.pads": [
+    "Mainkan Kick dan Snare, coba irama empat hitungan, lalu jelajahi instrumen tambahan.",
+    "Play Kick and Snare, try a four-count rhythm, then explore additional instruments.",
+  ],
+  "tutorialHub.studio": [
+    "Buat pola drum pertama, susun empat bar, lalu unduh hasilnya sebagai WAV.",
+    "Make your first drum pattern, build a four-bar chain, then download it as a WAV file.",
+  ],
+  "tutorialHub.beatbox": [
+    "Campur suara Bumi, Cicik, dan Dum, coba variasi A/B, lalu unduh groove-mu.",
+    "Mix Bumi, Cicik, and Dum, try A/B variations, then download your groove.",
+  ],
   "home.articles.meta": ["04 / JELAJAHI BUNYI", "04 / EXPLORE SOUND"],
   "home.articles.title": ["Artikel Instrumen", "Instrument Articles"],
   "home.articles.copy": [
