@@ -491,6 +491,119 @@ try {
     },
   );
   await check(
+    "Tutorial hub searches all three guides and opens exact localized steps",
+    async () => {
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const locale of ["id", "en"]) {
+          await page.goto(base + navigationHref("tutorials", locale));
+          await settle();
+          const search = page.getByRole("searchbox", {
+            name: messages[locale]["tutorial.search.all"],
+          });
+          const results = page.locator("#tutorial-search-results");
+          const status = page.locator(".tutorial-search-status");
+          assert.equal(await results.isVisible(), false);
+          await search.fill("WÁV");
+          const paths = await results
+            .getByRole("link")
+            .evaluateAll((links) =>
+              links.map((link) => new URL(link.href).pathname),
+            );
+          assert.deepEqual(
+            [...new Set(paths)].sort(),
+            ["pads", "studio", "beatbox"]
+              .map((tool) => pagePath(tool, locale))
+              .sort(),
+          );
+          assert.match(
+            await status.innerText(),
+            locale === "id" ? /hasil/ : /results/,
+          );
+          assert(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth,
+            ),
+          );
+          await page.screenshot({
+            path: join(output, `tutorial-search-${locale}-${width}.png`),
+          });
+
+          const targets = [
+            ["Kenong", "pads", "tutorial-step-3", "home.pads.title"],
+            ["tÉmp", "studio", "tutorial-step-2", "home.card1.title"],
+            [
+              locale === "id" ? "variasi dan isi" : "variations and voices",
+              "beatbox",
+              "tutorial-step-3",
+              "home.card3.title",
+            ],
+          ];
+          for (const [query, tool, target, nameKey] of targets) {
+            await search.fill(query);
+            const link = results.getByRole("link").first();
+            assert.equal(
+              await link.locator(".tutorial-result-guide").innerText(),
+              messages[locale][nameKey] +
+                " · " +
+                messages[locale]["tutorial.search.step"].replace(
+                  "{step}",
+                  target.at(-1),
+                ),
+            );
+            const href = navigationHref(tool, locale, target);
+            assert.equal(await link.getAttribute("href"), href);
+            await search.press("Enter");
+            await page.waitForURL(base + href);
+            await page.waitForFunction(
+              (id) =>
+                document.querySelector("#tutorial")?.open &&
+                document.activeElement.id === id,
+              target,
+            );
+            assert.equal(
+              await page.locator("html").getAttribute("lang"),
+              locale,
+            );
+            await page.goBack();
+            await page.waitForURL(base + navigationHref("tutorials", locale));
+            await search.waitFor({ state: "visible" });
+            assert.equal(await search.inputValue(), query);
+          }
+
+          await search.fill("WAV");
+          const other = locale === "id" ? "en" : "id";
+          await page.locator(`[data-locale="${other}"]`).click();
+          const otherSearch = page.getByRole("searchbox", {
+            name: messages[other]["tutorial.search.all"],
+          });
+          assert.equal(await otherSearch.inputValue(), "WAV");
+          assert.equal(
+            await results.getByRole("link").first().getAttribute("href"),
+            navigationHref("studio", other, "tutorial-step-6"),
+          );
+          await otherSearch.fill("zz-unmatched-9087");
+          assert.equal(
+            await status.innerText(),
+            messages[other]["tutorial.search.empty"],
+          );
+          assert.equal(await results.isVisible(), false);
+          await page
+            .getByRole("button", {
+              name: messages[other]["tutorial.search.clear"],
+            })
+            .click();
+          assert.equal(await otherSearch.inputValue(), "");
+          assert.equal(await status.innerText(), "");
+          assert.equal(
+            await page.locator(".tutorial-hub-link:visible").count(),
+            3,
+          );
+        }
+      }
+    },
+  );
+  await check(
     "mobile keyboard/menu/Escape, skip link, language control retains focus",
     async () => {
       await page.setViewportSize({ width: 390, height: 900 });
@@ -639,6 +752,10 @@ try {
             messages[locale]["meta." + screen + ".title"],
           );
           if (screen === "tutorials") {
+            assert.equal(
+              await staticPage.locator(".tutorial-search").isVisible(),
+              false,
+            );
             const link = staticPage.locator(
               '.tutorial-hub [data-route="pads"]',
             );

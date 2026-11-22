@@ -1,5 +1,11 @@
 export const tutorialPairs = {
   "tutorial.search.label": ["Cari dalam tutorial", "Search this tutorial"],
+  "tutorial.search.all": ["Cari di semua tutorial", "Search all tutorials"],
+  "tutorial.search.allHint": [
+    "Misalnya tempo, Kenong, atau WAV",
+    "e.g. tempo, Kenong, or WAV",
+  ],
+  "tutorial.search.step": ["Langkah {step}", "Step {step}"],
   "tutorial.search.clear": ["Hapus", "Clear"],
   "tutorial.search.empty": [
     "Tidak ada hasil. Coba kata kunci lain.",

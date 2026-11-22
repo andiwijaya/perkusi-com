@@ -17,6 +17,35 @@
   color: var(--muted);
   line-height: 1.6;
 }
+.tutorial-hub .tutorial-search {
+  max-width: 760px;
+  margin-block: 0 24px;
+  color: #f1f3e9;
+}
+.tutorial-hub .tutorial-search-results {
+  margin-top: 8px;
+  padding: 0;
+  list-style: none;
+}
+.tutorial-hub .tutorial-search-results li {
+  border-top: 1px solid #3d503a;
+}
+.tutorial-hub .tutorial-search-results a {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 6px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.tutorial-hub .tutorial-search-results a:hover span:last-child {
+  text-decoration: underline;
+}
+.tutorial-result-guide {
+  margin-bottom: 2px;
+  color: #c9d3c5;
+  font-size: 0.875rem;
+}
 .tutorial-hub-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
