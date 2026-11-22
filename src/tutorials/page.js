@@ -1,5 +1,6 @@
 import { tutorialPairs } from "./messages.js";
-import { screenshotFor, screenshotDetails } from "./screenshots.js";
+import { screenshotDetails } from "./screenshots.js";
+import { tutorialTopics } from "./topics.js";
 import { navigationHref } from "../app/routes.js";
 
 const escape = (value) =>
@@ -93,54 +94,39 @@ const stepTargets = {
   },
 };
 
-function renderScreenshot(screenshot, step, locale) {
-  const { name, src, width, height, alt } = screenshotDetails(
-    screenshot,
-    locale,
-  );
-  const caption = copy(locale, `tutorial.screenshot.${name}.caption`, "span");
+function renderScreenshot({ screenshot, step, captionKey }, locale) {
+  const { src, width, height, alt } = screenshotDetails(screenshot, locale);
+  const caption = copy(locale, captionKey, "span");
   return `<figure class="tutorial-screenshot" data-tutorial-screenshot="${step}"><img src="${src}" width="${width}" height="${height}" alt="${escape(alt)}" loading="lazy" decoding="async"><figcaption>${caption}<a href="${src}" target="_blank" rel="noopener">${copy(locale, "tutorial.screenshot.enlarge", "span")}</a></figcaption></figure>`;
 }
 
+export function renderTutorialSearch(locale, all = false) {
+  const label = all ? "tutorial.search.all" : "tutorial.search.label";
+  return `<form class="tutorial-search" role="search" aria-labelledby="tutorial-search-label" hidden>${copy(locale, label, "label", 'id="tutorial-search-label" for="tutorial-query"')}<div class="tutorial-search-controls"><input id="tutorial-query" type="search" autocomplete="off" maxlength="100" aria-controls="tutorial-search-results"><button type="button" data-tutorial-clear hidden>${copy(locale, "tutorial.search.clear", "span")}</button></div><p class="tutorial-search-status" role="status"></p><ul class="tutorial-search-results" id="tutorial-search-results" hidden></ul></form>`;
+}
+
 export function renderTutorial(tool, locale) {
-  const text = (key, tag = "p", attrs = "") =>
-    copy(
-      locale,
-      key.startsWith("tutorial.") ? key : `tutorial.${tool}.${key}`,
-      tag,
-      attrs,
-    );
-  const section = (
-    id,
-    title,
-    body,
-    extra = "",
-    className = "tutorial-reference",
-  ) =>
-    `<section id="tutorial-topic-${id}" class="${className} tutorial-destination" tabindex="-1" data-tutorial-topic>${text(title, "h3")}${text(body)}${extra}</section>`;
-  const steps = Array.from({ length: tool === "studio" ? 6 : 5 }, (_, i) => {
-    const n = i + 1;
-    const destination = stepTargets[tool][n];
-    const screenshot = screenshotFor(tool, n);
-    return `<li id="tutorial-step-${n}" tabindex="-1" data-tutorial-topic>${text(`step${n}Title`, "h3")}${text(`step${n}`)}${tool === "studio" && n === 3 ? renderStudioRecipe(locale) : ""}${destination ? tutorialLink(locale, ...destination) : ""}${screenshot ? renderScreenshot(screenshot, n, locale) : ""}</li>`;
-  }).join("");
-  const references =
-    tool === "studio"
-      ? section("save", "saveTitle", "save") +
-        section("demo", "demoTitle", "demo")
-      : section("keyboard", "tutorial.keyboard", "keys");
-  const next =
-    tool === "pads"
-      ? section(
-          "next",
-          "nextTitle",
-          "next",
-          `<a data-route="studio" href="${navigationHref("studio", locale)}">${text("studioLink", "span")}</a>`,
-          "tutorial-next",
-        )
-      : "";
-  const search = `<form class="tutorial-search" role="search" aria-labelledby="tutorial-search-label" hidden>${text("tutorial.search.label", "label", 'id="tutorial-search-label" for="tutorial-query"')}<div class="tutorial-search-controls"><input id="tutorial-query" type="search" autocomplete="off" maxlength="100" aria-controls="tutorial-search-results"><button type="button" data-tutorial-clear hidden>${text("tutorial.search.clear", "span")}</button></div><p class="tutorial-search-status" role="status"></p><ul class="tutorial-search-results" id="tutorial-search-results" hidden></ul></form>`;
-  return `<details class="tool-tutorial" id="tutorial" data-tutorial-tool="${tool}"><summary>${text("title", "span", 'class="tutorial-title"')}${text("summary", "span", 'class="tutorial-summary"')}</summary><div class="tutorial-body">${text("intro", "p", 'class="tutorial-intro"')}${text("tutorial.useLinks", "p")}${search}<ol class="tutorial-steps">${steps}</ol>${references}${section("sound", "tutorial.soundHelp", "trouble")}${next}</div></details>`;
+  const steps = [];
+  const sections = [];
+  for (const topic of tutorialTopics(tool)) {
+    const { id, titleKey, bodyKey, step, recipe, screenshot } = topic;
+    const content = copy(locale, titleKey, "h3") + copy(locale, bodyKey);
+    if (step) {
+      const destination = stepTargets[tool][step];
+      steps.push(
+        `<li id="${id}" tabindex="-1" data-tutorial-topic>${content}${recipe ? renderStudioRecipe(locale) : ""}${destination ? tutorialLink(locale, ...destination) : ""}${screenshot ? renderScreenshot(topic, locale) : ""}</li>`,
+      );
+    } else {
+      const next = id === "tutorial-topic-next";
+      const link = next
+        ? `<a data-route="studio" href="${navigationHref("studio", locale)}">${copy(locale, "tutorial.pads.studioLink", "span")}</a>`
+        : "";
+      sections.push(
+        `<section id="${id}" class="${next ? "tutorial-next" : "tutorial-reference"} tutorial-destination" tabindex="-1" data-tutorial-topic>${content}${link}</section>`,
+      );
+    }
+  }
+  return `<details class="tool-tutorial" id="tutorial" data-tutorial-tool="${tool}"><summary>${copy(locale, `tutorial.${tool}.title`, "span", 'class="tutorial-title"')}${copy(locale, `tutorial.${tool}.summary`, "span", 'class="tutorial-summary"')}</summary><div class="tutorial-body">${copy(locale, `tutorial.${tool}.intro`, "p", 'class="tutorial-intro"')}${copy(locale, "tutorial.useLinks")}${renderTutorialSearch(locale)}<ol class="tutorial-steps">${steps.join("")}</ol>${sections.join("")}</div></details>`;
 }
 
 export function renderPadQuickStart(locale) {

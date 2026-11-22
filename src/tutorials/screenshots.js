@@ -26,7 +26,6 @@ export function screenshotFor(tool, step) {
 
 export function screenshotDetails([name, width, idHeight, enHeight], locale) {
   return {
-    name,
     src: `/images/tutorials/${name}-${locale}.webp`,
     width,
     height: locale === "en" ? (enHeight ?? idHeight) : idHeight,

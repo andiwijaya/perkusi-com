@@ -1,4 +1,3 @@
-import { initTutorialSearch } from "./search.js";
 import { initTutorialScreenshots } from "./screenshots.js";
 
 // Tutorial navigation moves focus and reveals instructions without starting audio.
@@ -7,7 +6,6 @@ export function initTutorialNavigation() {
   if (!guide) return;
   const root = guide.closest("main"),
     life = new AbortController();
-  initTutorialSearch(guide, life.signal);
   initTutorialScreenshots(guide, life.signal);
   root.classList.add("tutorial-enhanced");
   guide.addEventListener(

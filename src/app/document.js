@@ -5,6 +5,8 @@ import { navigationHref, pagePath } from "./routes.js";
 import { renderBeatbox } from "../beatbox/page.js";
 import { renderStudio } from "../studio/page.js";
 import { renderPadStation } from "../pads/page.js";
+import { renderTutorialSearch } from "../tutorials/page.js";
+import { tutorialGuides } from "../tutorials/topics.js";
 import { instrumentByPage, isInstrumentPage } from "../instruments/catalog.js";
 import { articleContent } from "../instruments/content.js";
 import {
@@ -79,18 +81,13 @@ export function renderDocument(page, locale) {
       .join("");
     content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span> <span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${toolCards}</div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}</div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
   } else if (page === "tutorials") {
-    const guides = [
-      ["pads", "home.pads.title"],
-      ["studio", "home.card1.title"],
-      ["beatbox", "home.card3.title"],
-    ];
-    const cards = guides
+    const cards = Object.entries(tutorialGuides)
       .map(
-        ([tool, title]) =>
-          `<article class="tool-card tutorial-hub-card"><a ${routeAttrs(tool, "tutorial")} aria-labelledby="guide-${tool}" class="tutorial-hub-link"><div class="tutorial-hub-preview tutorial-hub-preview--${tool}" aria-hidden="true"></div><div class="tutorial-hub-card-body">${tag("h2", title, `id="guide-${tool}"`)}${tag("p", `tutorialHub.${tool}`)}${tag("span", "tutorialHub.open", 'class="tutorial-hub-action"')}</div></a></article>`,
+        ([tool, { nameKey }]) =>
+          `<article class="tool-card tutorial-hub-card"><a ${routeAttrs(tool, "tutorial")} aria-labelledby="guide-${tool}" class="tutorial-hub-link"><div class="tutorial-hub-preview tutorial-hub-preview--${tool}" aria-hidden="true"></div><div class="tutorial-hub-card-body">${tag("h2", nameKey, `id="guide-${tool}"`)}${tag("p", `tutorialHub.${tool}`)}${tag("span", "tutorialHub.open", 'class="tutorial-hub-action"')}</div></a></article>`,
       )
       .join("");
-    content = `<main id="main" class="tutorial-hub wrap" tabindex="-1"><header class="tutorial-hub-intro">${tag("h1", "tutorialHub.title")}${tag("p", "tutorialHub.intro")}</header><div class="tutorial-hub-grid">${cards}</div></main>`;
+    content = `<main id="main" class="tutorial-hub wrap" tabindex="-1"><header class="tutorial-hub-intro">${tag("h1", "tutorialHub.title")}${tag("p", "tutorialHub.intro")}</header>${renderTutorialSearch(locale, true)}<div class="tutorial-hub-grid">${cards}</div></main>`;
   } else if (page === "beatbox") {
     content = renderBeatbox(locale);
   } else if (page === "studio") {
