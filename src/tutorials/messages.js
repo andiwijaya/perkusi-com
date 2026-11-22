@@ -1,4 +1,116 @@
 export const tutorialPairs = {
+  "tutorial.search.label": ["Cari dalam tutorial", "Search this tutorial"],
+  "tutorial.search.clear": ["Hapus", "Clear"],
+  "tutorial.search.empty": [
+    "Tidak ada hasil. Coba kata kunci lain.",
+    "No results. Try a different keyword.",
+  ],
+  "tutorial.search.count": ["{count} hasil", "{count} results"],
+  "tutorial.search.one": ["1 hasil", "1 result"],
+  "tutorial.pads.searchHint": [
+    "Misalnya Kick atau volume",
+    "e.g. Kick or volume",
+  ],
+  "tutorial.studio.searchHint": [
+    "Misalnya tempo atau WAV",
+    "e.g. tempo or WAV",
+  ],
+  "tutorial.beatbox.searchHint": [
+    "Misalnya Bumi atau variasi",
+    "e.g. Bumi or variation",
+  ],
+  "tutorial.screenshot.enlarge": [
+    "Buka gambar ukuran penuh (tab baru)",
+    "Open full-size image (new tab)",
+  ],
+  "tutorial.screenshot.pads-drums.alt": [
+    "Grup Drum siap dimainkan, dengan Kick dan Snare di dua pad pertama.",
+    "The Drum group is ready, with Kick and Snare on the first two pads.",
+  ],
+  "tutorial.screenshot.pads-drums.caption": [
+    "Ketuk Kick pada hitungan 1 dan 3, lalu Snare pada 2 dan 4.",
+    "Tap Kick on counts 1 and 3, then Snare on 2 and 4.",
+  ],
+  "tutorial.screenshot.pads-instruments.alt": [
+    "Menu Pilih instrumen menampilkan Kenong – Pelog, dengan pad nada di bawahnya.",
+    "The Choose instrument menu shows Kenong – Pelog, with its note pads below.",
+  ],
+  "tutorial.screenshot.pads-instruments.caption": [
+    "Di Instrumen tambahan, pilih Kenong – Pelog untuk mencoba bunyi gamelan.",
+    "Under Additional instruments, choose Kenong – Pelog to try a gamelan sound.",
+  ],
+  "tutorial.screenshot.pads-volume.alt": [
+    "Kontrol Hentikan suara, Bisukan semua, dan penggeser Volume utama.",
+    "Stop sounds, Mute all, and the Master volume slider.",
+  ],
+  "tutorial.screenshot.pads-volume.caption": [
+    "Geser Volume utama. Gunakan Bisukan semua untuk menjeda keluaran suara.",
+    "Move the Master volume slider. Use Mute all to silence the output.",
+  ],
+  "tutorial.screenshot.studio-tempo.alt": [
+    "Panel pemutaran Studio dengan Tempo 100 BPM dan Swing 0%.",
+    "Studio playback controls with Tempo at 100 BPM and Swing at 0%.",
+  ],
+  "tutorial.screenshot.studio-tempo.caption": [
+    "Mulai dengan 100 BPM dan Swing 0%.",
+    "Start at 100 BPM with Swing at 0%.",
+  ],
+  "tutorial.screenshot.studio-grid.alt": [
+    "Grid dengan kolom 1–16 dan kotak aktif pada tiga baris Kick, Snare, dan Hi-hat rapat.",
+    "The 16-column grid with active cells in the Kick, Snare, and Closed hat rows.",
+  ],
+  "tutorial.screenshot.studio-grid.caption": [
+    "Cocokkan kotak yang menyala di tiga baris pertama dengan tabel latihan.",
+    "Match the lit cells in the first three rows to the practice table.",
+  ],
+  "tutorial.screenshot.studio-chain.alt": [
+    "Rantai pola berisi empat bar A, dengan Putar rantai dicentang dan durasi 9,60 detik.",
+    "The pattern chain shows four A bars, with Play chain checked and a duration of 9.60 seconds.",
+  ],
+  "tutorial.screenshot.studio-chain.caption": [
+    "Tambahkan tiga bar A hingga durasi total sekitar 9,6 detik.",
+    "Add three A bars for a total duration of about 9.6 seconds.",
+  ],
+  "tutorial.screenshot.studio-wav.alt": [
+    "Panel proyek berisi nama Beat pertamaku serta tombol Buat WAV rantai dan Unduh WAV.",
+    "The project panel shows My first beat and the Make chain WAV and Download WAV buttons.",
+  ],
+  "tutorial.screenshot.studio-wav.caption": [
+    "Beri nama proyek. Setelah ekspor selesai, pilih Unduh WAV.",
+    "Name your project. When the export finishes, choose Download WAV.",
+  ],
+  "tutorial.screenshot.beatbox-play.alt": [
+    "Panel Beatbox dengan tombol Mulai main, Jeda, Mulai ulang, dan kontrol Volume.",
+    "Beatbox controls with Start playing, Pause, Reset, and a Volume slider.",
+  ],
+  "tutorial.screenshot.beatbox-play.caption": [
+    "Setelah audio siap, tekan Mulai main untuk memutar groove.",
+    "Press Start playing when the audio is ready.",
+  ],
+  "tutorial.screenshot.beatbox-mix.alt": [
+    "Panggung enam karakter dengan Bumi, Cicik, dan Dum aktif.",
+    "The six-character stage with Bumi, Cicik, and Dum active.",
+  ],
+  "tutorial.screenshot.beatbox-mix.caption": [
+    "Aktifkan Bumi, Cicik, dan Dum untuk campuran pertama.",
+    "Turn on Bumi, Cicik, and Dum for your first mix.",
+  ],
+  "tutorial.screenshot.beatbox-variation.alt": [
+    "Kartu Bumi dengan tombol variasi B dipilih.",
+    "Bumi’s character card with variation B selected.",
+  ],
+  "tutorial.screenshot.beatbox-variation.caption": [
+    "Tekan B di kartu Bumi untuk mencoba variasi suaranya.",
+    "Press B on Bumi’s card to try its other variation.",
+  ],
+  "tutorial.screenshot.beatbox-wav.alt": [
+    "Panel Unduh audio menampilkan Panjang WAV 4 bar serta tombol Buat WAV dan Unduh WAV.",
+    "The Download audio panel shows a WAV length of 4 bars and the Make WAV and Download WAV buttons.",
+  ],
+  "tutorial.screenshot.beatbox-wav.caption": [
+    "Pilih 4 bar, buat WAV, lalu unduh hasilnya saat siap.",
+    "Choose 4 bars, make the WAV, then download it when ready.",
+  ],
   "tutorial.useLinks": [
     "Ikuti satu langkah, lalu gunakan tautan di bawahnya untuk langsung mencoba. Pilih “Kembali ke tutorial” saat ingin membaca langkah selanjutnya.",
     "Follow one step, then use its link to try it in the tool. Choose “Back to tutorial” when you want to read the next step.",

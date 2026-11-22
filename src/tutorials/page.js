@@ -1,4 +1,5 @@
 import { tutorialPairs } from "./messages.js";
+import { screenshotFor, screenshotDetails } from "./screenshots.js";
 import { navigationHref } from "../app/routes.js";
 
 const escape = (value) =>
@@ -92,6 +93,15 @@ const stepTargets = {
   },
 };
 
+function renderScreenshot(screenshot, step, locale) {
+  const { name, src, width, height, alt } = screenshotDetails(
+    screenshot,
+    locale,
+  );
+  const caption = copy(locale, `tutorial.screenshot.${name}.caption`, "span");
+  return `<figure class="tutorial-screenshot" data-tutorial-screenshot="${step}"><img src="${src}" width="${width}" height="${height}" alt="${escape(alt)}" loading="lazy" decoding="async"><figcaption>${caption}<a href="${src}" target="_blank" rel="noopener">${copy(locale, "tutorial.screenshot.enlarge", "span")}</a></figcaption></figure>`;
+}
+
 export function renderTutorial(tool, locale) {
   const text = (key, tag = "p", attrs = "") =>
     copy(
@@ -100,22 +110,37 @@ export function renderTutorial(tool, locale) {
       tag,
       attrs,
     );
-  const section = (title, body) =>
-    `<section class="tutorial-reference">${text(title, "h3")}${text(body)}</section>`;
+  const section = (
+    id,
+    title,
+    body,
+    extra = "",
+    className = "tutorial-reference",
+  ) =>
+    `<section id="tutorial-topic-${id}" class="${className} tutorial-destination" tabindex="-1" data-tutorial-topic>${text(title, "h3")}${text(body)}${extra}</section>`;
   const steps = Array.from({ length: tool === "studio" ? 6 : 5 }, (_, i) => {
     const n = i + 1;
     const destination = stepTargets[tool][n];
-    return `<li id="tutorial-step-${n}" tabindex="-1">${text(`step${n}Title`, "h3")}${text(`step${n}`)}${tool === "studio" && n === 3 ? renderStudioRecipe(locale) : ""}${destination ? tutorialLink(locale, ...destination) : ""}</li>`;
+    const screenshot = screenshotFor(tool, n);
+    return `<li id="tutorial-step-${n}" tabindex="-1" data-tutorial-topic>${text(`step${n}Title`, "h3")}${text(`step${n}`)}${tool === "studio" && n === 3 ? renderStudioRecipe(locale) : ""}${destination ? tutorialLink(locale, ...destination) : ""}${screenshot ? renderScreenshot(screenshot, n, locale) : ""}</li>`;
   }).join("");
   const references =
     tool === "studio"
-      ? section("saveTitle", "save") + section("demoTitle", "demo")
-      : section("tutorial.keyboard", "keys");
+      ? section("save", "saveTitle", "save") +
+        section("demo", "demoTitle", "demo")
+      : section("keyboard", "tutorial.keyboard", "keys");
   const next =
     tool === "pads"
-      ? `<section class="tutorial-next">${text("nextTitle", "h3")}${text("next")}<a data-route="studio" href="${navigationHref("studio", locale)}">${text("studioLink", "span")}</a></section>`
+      ? section(
+          "next",
+          "nextTitle",
+          "next",
+          `<a data-route="studio" href="${navigationHref("studio", locale)}">${text("studioLink", "span")}</a>`,
+          "tutorial-next",
+        )
       : "";
-  return `<details class="tool-tutorial" id="tutorial"><summary>${text("title", "span", 'class="tutorial-title"')}${text("summary", "span", 'class="tutorial-summary"')}</summary><div class="tutorial-body">${text("intro", "p", 'class="tutorial-intro"')}${text("tutorial.useLinks", "p")}<ol class="tutorial-steps">${steps}</ol>${references}${section("tutorial.soundHelp", "trouble")}${next}</div></details>`;
+  const search = `<form class="tutorial-search" role="search" aria-labelledby="tutorial-search-label" hidden>${text("tutorial.search.label", "label", 'id="tutorial-search-label" for="tutorial-query"')}<div class="tutorial-search-controls"><input id="tutorial-query" type="search" autocomplete="off" maxlength="100" aria-controls="tutorial-search-results"><button type="button" data-tutorial-clear hidden>${text("tutorial.search.clear", "span")}</button></div><p class="tutorial-search-status" role="status"></p><ul class="tutorial-search-results" id="tutorial-search-results" hidden></ul></form>`;
+  return `<details class="tool-tutorial" id="tutorial" data-tutorial-tool="${tool}"><summary>${text("title", "span", 'class="tutorial-title"')}${text("summary", "span", 'class="tutorial-summary"')}</summary><div class="tutorial-body">${text("intro", "p", 'class="tutorial-intro"')}${text("tutorial.useLinks", "p")}${search}<ol class="tutorial-steps">${steps}</ol>${references}${section("sound", "tutorial.soundHelp", "trouble")}${next}</div></details>`;
 }
 
 export function renderPadQuickStart(locale) {

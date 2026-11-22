@@ -157,6 +157,26 @@ async function backToStep(page, step) {
     `tutorial-step-${step}`,
   );
 }
+const searchExamples = {
+  pads: {
+    id: ["ÉMPAT hitu", "abu-abu"],
+    en: ["four-count rhy", "still grey"],
+    step: 2,
+    images: 3,
+  },
+  studio: {
+    id: ["ATUR témp", "memori"],
+    en: ["starting témp", "runs out of memory"],
+    step: 2,
+    images: 4,
+  },
+  beatbox: {
+    id: ["variasi dan isi", "terkunci"],
+    en: ["variations and voices", "still locked"],
+    step: 3,
+    images: 4,
+  },
+};
 try {
   browser = await playwright.chromium.launch({
     channel: process.env.PERKUSI_BROWSER_CHANNEL || "chrome",
@@ -243,6 +263,108 @@ try {
           },
         );
       }
+      await check(
+        `${tool} ${locale}: search results and localized screenshots`,
+        async () => {
+          await page.setViewportSize({
+            width: locale === "id" ? 320 : 1440,
+            height: 900,
+          });
+          const guide = page.locator("#tutorial");
+          const query = guide.getByRole("searchbox");
+          const label = (lang) =>
+            lang === "id" ? "Cari dalam tutorial" : "Search this tutorial";
+          assert.equal(
+            await guide.getByRole("searchbox", { name: label(locale) }).count(),
+            1,
+          );
+          const results = guide.locator("#tutorial-search-results");
+          const clear = guide.getByRole("button", {
+            name: locale === "id" ? "Hapus" : "Clear",
+          });
+          const examples = searchExamples[tool];
+          const [example, help] = examples[locale];
+          await query.fill(example);
+          const stepId = `tutorial-step-${examples.step}`;
+          assert.equal(
+            await results.getByRole("link").first().getAttribute("href"),
+            "#" + stepId,
+          );
+          assert(
+            await guide.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+            "Search results must fit without horizontal overflow",
+          );
+          await query.press("Enter");
+          await page.waitForFunction(
+            (id) => document.activeElement.id === id,
+            stepId,
+          );
+          await query.fill(help);
+          await results.locator('a[href="#tutorial-topic-sound"]').click();
+          await page.waitForFunction(
+            () => document.activeElement.id === "tutorial-topic-sound",
+          );
+          await query.fill("no-such-tutorial-term-657");
+          assert.match(
+            await guide.getByRole("status").innerText(),
+            /Tidak ada hasil|No results/,
+          );
+          assert.equal(await results.isVisible(), false);
+          await clear.click();
+          assert.equal(await query.inputValue(), "");
+          assert.equal(await clear.isVisible(), false);
+          assert.equal(
+            await guide.locator(".tutorial-steps").isVisible(),
+            true,
+          );
+
+          const figures = guide.locator(".tutorial-screenshot");
+          assert.equal(await figures.count(), examples.images);
+          for (const figure of await figures.all()) {
+            const image = figure.locator("img");
+            await image.scrollIntoViewIfNeeded();
+            const size = await image.evaluate(async (el) => {
+              await el.decode();
+              return [el.naturalWidth, el.naturalHeight];
+            });
+            assert.deepEqual(size, [
+              Number(await image.getAttribute("width")),
+              Number(await image.getAttribute("height")),
+            ]);
+            assert.match(
+              await image.getAttribute("src"),
+              new RegExp(`-${locale}\\.webp$`),
+            );
+            assert.equal(
+              await figure.getByRole("link").getAttribute("href"),
+              await image.getAttribute("src"),
+            );
+          }
+          await query.fill(example);
+          const firstImage = figures.first().locator("img");
+          const alt = await firstImage.getAttribute("alt");
+          const other = locale === "id" ? "en" : "id";
+          await page.locator(`[data-locale="${other}"]`).click();
+          assert.equal(
+            await guide.getByRole("searchbox", { name: label(other) }).count(),
+            1,
+          );
+          assert.equal(await query.inputValue(), example);
+          assert.notEqual(await firstImage.getAttribute("alt"), alt);
+          assert.match(
+            await firstImage.getAttribute("src"),
+            new RegExp(`-${other}\\.webp$`),
+          );
+          await query.fill(examples[other][0]);
+          assert.equal(
+            await results.getByRole("link").first().getAttribute("href"),
+            "#" + stepId,
+          );
+          await query.press("Escape");
+          assert.equal(await query.inputValue(), "");
+          assert.equal(await page.evaluate(() => window.__tutorialStarts), 0);
+        },
+      );
     }
   }
   await context.close();
@@ -256,6 +378,16 @@ try {
           await staticPage.goto(base + pagePath(tool, locale));
           await staticPage.locator("#tutorial summary").click();
           assert(await staticPage.locator(".tutorial-steps").isVisible());
+          assert.equal(
+            await staticPage.locator(".tutorial-search").isVisible(),
+            false,
+          );
+          const image = staticPage.locator(".tutorial-screenshot img").first();
+          assert(await image.isVisible());
+          assert.match(
+            await image.getAttribute("src"),
+            new RegExp(`-${locale}\\.webp$`),
+          );
           await staticPage.close();
         },
       );
