@@ -52,6 +52,78 @@
 .tutorial-body .tutorial-intro {
   margin-top: 20px;
 }
+.tutorial-search {
+  max-width: 650px;
+  margin-block: 20px;
+  padding: 14px;
+  border: 1px solid #4c6049;
+  border-radius: 10px;
+  background: #172019;
+}
+.tutorial-search[hidden],
+.tutorial-search [hidden] {
+  display: none;
+}
+.tutorial-search label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 650;
+}
+.tutorial-search-controls {
+  display: flex;
+  gap: 8px;
+}
+.tutorial-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #647a59;
+  border-radius: 8px;
+  background: #10160f;
+  color: inherit;
+  font: inherit;
+}
+.tutorial-search input::placeholder {
+  color: #aebcab;
+}
+.tutorial-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.tutorial-search :focus-visible,
+.tutorial-screenshot a:focus-visible {
+  outline: 2px solid #c3f36b;
+  outline-offset: 3px;
+}
+.tutorial-search-controls button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #647a59;
+  border-radius: 8px;
+  background: #243025;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tutorial-search .tutorial-search-status {
+  margin: 8px 0 0;
+}
+.tutorial-search .tutorial-search-status:empty {
+  margin: 0;
+}
+.tutorial-search-results {
+  margin: 4px 0 0;
+  padding-left: 22px;
+}
+.tutorial-search-results a,
+.tutorial-screenshot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #c3f36b;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .tutorial-steps {
   margin-block: 22px;
   padding-left: 26px;
@@ -70,6 +142,27 @@
   margin-block: 0 8px;
   font-size: 1rem;
   line-height: 1.5;
+}
+.tutorial-screenshot {
+  max-width: 760px;
+  margin: 12px 0 0;
+}
+.tutorial-screenshot img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #4c6049;
+  border-radius: 8px;
+}
+.tutorial-screenshot figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 12px;
+  margin-top: 6px;
+  color: #c9d3c5;
+  font-size: 0.875rem;
+  line-height: 1.6;
 }
 .tutorial-reference,
 .tutorial-next {
