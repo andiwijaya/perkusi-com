@@ -615,6 +615,7 @@ try {
     async () => {
       const staticContext = await browser.newContext({
         javaScriptEnabled: false,
+        reducedMotion: "reduce",
       });
       const staticPage = await staticContext.newPage();
       for (const locale of ["id", "en"])
@@ -646,11 +647,13 @@ try {
               navigationHref("pads", locale, "tutorial"),
             );
             await link.click();
-            await staticPage.locator("#tutorial > summary").click();
-            assert.equal(
-              await staticPage.locator(".tutorial-steps").isVisible(),
-              true,
+            await staticPage.waitForURL(
+              base + navigationHref("pads", locale, "tutorial"),
             );
+            const steps = staticPage.locator(".tutorial-steps");
+            if (!(await steps.isVisible()))
+              await staticPage.locator("#tutorial > summary").press("Enter");
+            assert.equal(await steps.isVisible(), true);
           }
           const href = await staticPage
             .locator('.site-footer [data-route="privacy"]')
