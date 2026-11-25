@@ -6,8 +6,8 @@ const pairs = {
   "common.articles": ["Artikel Instrumen", "Instrument Articles"],
   "common.tutorials": ["Tutorial", "Tutorials"],
   "meta.tutorials.title": [
-    "Tutorial untuk Pemula | Perkusi.com",
-    "Beginner Tutorials | Perkusi.com",
+    "Tutorial Beat, Drum Pad, dan Beatbox untuk Pemula | Perkusi.com",
+    "Beginner Beat Making, Drum Pad & Beatbox Guides | Perkusi.com",
   ],
   "meta.tutorials.description": [
     "Panduan langkah demi langkah untuk belajar Pad Station, Rhythm Studio, dan Beatbox Playground, dengan tangkapan layar dan pencarian di tiap tutorial.",
@@ -15,8 +15,8 @@ const pairs = {
   ],
   "tutorialHub.title": ["Tutorial untuk pemula", "Beginner tutorials"],
   "tutorialHub.intro": [
-    "Pilih alat yang ingin kamu pelajari. Tiap panduan punya tangkapan layar, kolom pencarian, dan tautan untuk langsung praktik.",
-    "Pick a tool to learn. Each guide includes screenshots, search, and links to try the steps in the tool.",
+    "Pilih panduan untuk membaca langkahnya, atau cari topik untuk langsung membuka langkah praktik di alat musiknya.",
+    "Pick a guide to read the steps, or search for a topic to jump straight to that step in the tool.",
   ],
   "tutorialHub.open": ["Buka panduan", "Open guide"],
   "tutorialHub.pads": [
@@ -31,6 +31,30 @@ const pairs = {
     "Campur suara Bumi, Cicik, dan Dum, coba variasi A/B, lalu unduh groove-mu.",
     "Mix Bumi, Cicik, and Dum, try A/B variations, then download your groove.",
   ],
+  "meta.tutorial-pads.title": [
+    "Tutorial Pad Station: Cara Main Drum Pad | Perkusi.com",
+    "Pad Station Tutorial: How to Play Drum Pads | Perkusi.com",
+  ],
+  "meta.tutorial-studio.title": [
+    "Tutorial Rhythm Studio: Bikin Beat dan Ekspor WAV | Perkusi.com",
+    "Rhythm Studio Tutorial: Make a Beat and Export WAV | Perkusi.com",
+  ],
+  "meta.tutorial-beatbox.title": [
+    "Tutorial Beatbox Playground: Susun Groove Pertama | Perkusi.com",
+    "Beatbox Playground Tutorial: Build Your First Groove | Perkusi.com",
+  ],
+  "meta.tutorial-pads.description": [
+    "Belajar cara memainkan Pad Station. Mulai dari Kick dan Snare, latih irama empat hitungan, lalu coba kendhang dan instrumen tambahan.",
+    "Learn to play Pad Station. Start with Kick and Snare, practise a four-count rhythm, then try kendhang and other instrument pads.",
+  ],
+  "meta.tutorial-studio.description": [
+    "Ikuti tutorial Rhythm Studio untuk membuat pola drum 16 langkah, mengatur tempo, merangkai empat bar, dan mengekspor beat ke WAV.",
+    "Follow the Rhythm Studio tutorial to program a 16-step drum pattern, set the tempo, arrange four bars, and export your beat as WAV.",
+  ],
+  "meta.tutorial-beatbox.description": [
+    "Buat groove pertamamu di Beatbox Playground. Campur suara Bumi, Cicik, dan Dum, ganti variasi A/B, lalu simpan proyek atau unduh WAV.",
+    "Make your first groove in Beatbox Playground. Mix Bumi, Cicik, and Dum, switch A/B variations, then save the project or download a WAV.",
+  ],
   "home.articles.meta": ["04 / JELAJAHI BUNYI", "04 / EXPLORE SOUND"],
   "home.articles.title": ["Artikel Instrumen", "Instrument Articles"],
   "home.articles.copy": [
@@ -40,8 +64,8 @@ const pairs = {
   "home.articles.action": ["Jelajahi Artikel", "Explore Articles"],
   "home.articles.badge": ["Baca & mainkan", "Read & play"],
   "meta.instruments.title": [
-    "Artikel Instrumen: Cerita, Asal-usul & Pad Interaktif | Perkusi.com",
-    "Instrument Articles: Stories, Origins & Interactive Pads | Perkusi.com",
+    "Artikel Instrumen Gamelan, Drum, Gitar & Bass | Perkusi.com",
+    "Gamelan, Drums, Guitar & Bass Instrument Guides | Perkusi.com",
   ],
   "meta.instruments.description": [
     "Jelajahi 16 instrumen melalui cerita, ilustrasi dan pad interaktif. Kenali gamelan, drum, gitar, bass, dan suara Bilah Perkusi.com.",
@@ -74,8 +98,8 @@ const pairs = {
     "Drum and instrument pads with additional sound banks. Play directly on your phone or keyboard without pattern editing.",
   ],
   "meta.pads.title": [
-    "Pad Station - Mainkan Instrumen Langsung | Perkusi.com",
-    "Pad Station - Live Instrument Pads | Perkusi.com",
+    "Pad Station: Drum Pad dan Instrumen Online | Perkusi.com",
+    "Pad Station: Online Drum and Instrument Pads | Perkusi.com",
   ],
   "meta.pads.description": [
     "Mainkan drum, Bilah, kendhang, bass, gitar dan pilihan instrumen tambahan. Tanpa pola, rekaman atau akun.",
@@ -95,12 +119,12 @@ const pairs = {
   "home.loopPreviewAction": ["Buka Loop Station", "Open Loop Station"],
 
   "meta.home.title": [
-    "Perkusi.com - Alat Musik di Browser",
-    "Perkusi.com - Music Tools in Your Browser",
+    "Perkusi.com | Drum Pad, Beat Maker, dan Instrumen Online",
+    "Perkusi.com | Online Drum Pads, Beat Maker & Instruments",
   ],
   "meta.home.description": [
-    "Mainkan Pad Station, Beatbox dan Rhythm Studio. Jelajahi artikel instrumen, kenali ceritanya dan coba suaranya langsung di browser.",
-    "Play Pad Station, Beatbox and Rhythm Studio. Explore instrument articles, discover their stories and try their sounds in your browser.",
+    "Mainkan drum pad, susun beat, dan campur suara beatbox langsung di browser. Pelajari ritme dari tutorial pemula dan dengarkan bunyi instrumen gamelan.",
+    "Play drum pads, make beats, and mix beatbox voices in your browser. Learn rhythm with beginner tutorials and explore the sounds of gamelan instruments.",
   ],
   "meta.home.social": [
     "Tiga alat musik di browser: Rhythm Studio, Beatbox Playground dan Pad Station. Mulai bermain tanpa instalasi.",
@@ -112,12 +136,12 @@ const pairs = {
     "How Perkusi.com uses analytics and stores language preferences and projects locally.",
   ],
   "meta.beatbox.title": [
-    "Beatbox Playground | Perkusi.com",
-    "Beatbox Playground | Perkusi.com",
+    "Beatbox Playground: Mixer Beatbox Online | Perkusi.com",
+    "Beatbox Playground: Online Beatbox Loop Mixer | Perkusi.com",
   ],
   "meta.beatbox.description": [
-    "Pratinjau Beatbox: enam karakter asli, dua variasi suara, dan irama pada satu jam audio.",
-    "Beatbox preview: six original characters, two sound variations, and one shared audio clock.",
+    "Campur enam karakter beatbox, pilih variasi suara A/B, dan unduh groove sebagai WAV langsung dari browser.",
+    "Mix six original beatbox voices, switch between A/B variations, and download your groove as a WAV file in your browser.",
   ],
   "meta.studio.title": [
     "Rhythm Studio - Bikin Beat dan Ekspor WAV | Perkusi.com",
@@ -160,8 +184,8 @@ const pairs = {
   "home.hero1": ["Mainkan irama.", "Make rhythm."],
   "home.hero2": ["Di browser.", "In your browser."],
   "home.description": [
-    "Susun beat di Rhythm Studio, gabungkan suara di Beatbox Playground, atau mainkan instrumen langsung di Pad Station.",
-    "Build beats in Rhythm Studio, combine voices in Beatbox Playground, or play instruments live in Pad Station.",
+    "Mainkan drum pad di Pad Station, susun beat di Rhythm Studio, atau campur suara di Beatbox Playground.",
+    "Play drum pads in Pad Station, build beats in Rhythm Studio, or mix voices in Beatbox Playground.",
   ],
   "home.explore": ["Buka Beatbox", "Open Beatbox"],
   "home.note": ["Tanpa akun atau instalasi.", "No account or installation."],
@@ -176,6 +200,10 @@ const pairs = {
     "Rhythm illustration - not an audio control",
   ],
   "home.toolsTitle": ["Pilih alat musikmu.", "Choose your music tool."],
+  "home.learn": [
+    "Mulai dari tutorial pemula",
+    "Start with a beginner tutorial",
+  ],
   "home.card1.meta": ["01 / PERKUSI", "01 / PERCUSSION"],
   "home.card1.title": ["Rhythm Studio", "Rhythm Studio"],
   "home.card1.copy": [
@@ -265,22 +293,79 @@ const pairs = {
   "notFound.heading": ["Ketukan yang tersesat.", "A beat out of place."],
   "notFound.copy": ["Halaman ini tidak ditemukan.", "This page doesn't exist."],
 };
+const articleTitles = {
+  drum: [
+    "Drum: Bagian Kit dan Perannya dalam Irama",
+    "Drum Kit: The Sounds That Shape a Groove",
+  ],
+  bilah: [
+    "Bilah: Lima Nada Sintetis Perkusi.com",
+    "Bilah: Perkusi.com’s Five-Note Synth Voice",
+  ],
+  "kendhang-ciblon": [
+    "Kendhang Ciblon: Bunyi dan Peran dalam Gamelan",
+    "Kendhang Ciblon: Sound and Role in Gamelan",
+  ],
+  "bass-elektrik": [
+    "Bass Elektrik: Bunyi dan Perannya dalam Musik",
+    "Electric Bass: Listen to the Low Notes of a Groove",
+  ],
+  "gitar-nylon": [
+    "Gitar Nylon: Bentuk dan Bunyi Senar Nilon",
+    "Nylon-String Guitar: Construction and Sound",
+  ],
+  kethuk: [
+    "Kethuk: Penanda Ketukan dalam Gamelan",
+    "Kethuk: A Small Time Marker in Gamelan",
+  ],
+  kempyang: [
+    "Kempyang: Bunyi dan Fungsi dalam Gamelan",
+    "Kempyang: A Bright Sound in Gamelan",
+  ],
+  kenong: [
+    "Kenong: Bunyi dan Fungsinya dalam Gamelan",
+    "Kenong: Pitch and Punctuation in Gamelan",
+  ],
+  "bonang-panerus": [
+    "Bonang Panerus: Bunyi dan Gerak Melodi",
+    "Bonang Panerus: Sound and Melodic Movement",
+  ],
+  peking: [
+    "Peking: Instrumen Bersuara Tinggi Keluarga Saron",
+    "Peking: The High Voice of the Saron Family",
+  ],
+  "saron-barung": [
+    "Saron Barung: Melodi Gamelan dari Bilah Logam",
+    "Saron Barung: Gamelan Melody on Metal Keys",
+  ],
+  "bonang-barung": [
+    "Bonang Barung: Bunyi dan Arah Melodi Gamelan",
+    "Bonang Barung: How It Shapes Gamelan Melodies",
+  ],
+  demung: [
+    "Demung: Suara Rendah dalam Keluarga Saron",
+    "Demung: The Low Voice of the Saron Family",
+  ],
+  kempul: [
+    "Kempul: Gong Gantung Penanda Frasa Gamelan",
+    "Kempul: Hanging Gongs and Musical Phrases",
+  ],
+  "gong-ageng": [
+    "Gong Ageng: Bunyi dan Peran Gong Besar",
+    "Gong Ageng: Sound and Role of the Great Gong",
+  ],
+  slenthem: [
+    "Slenthem: Bilah Gantung dan Dengung Lembut",
+    "Slenthem: Suspended Keys and Soft Resonance",
+  ],
+};
 for (const instrument of instruments) {
-  pairs["meta." + instrument.page + ".title"] = [
-    instrument.id + ": Cerita, Asal-usul & Pad Interaktif | Perkusi.com",
-    instrument.en + ": Story, Origins & Interactive Pads | Perkusi.com",
-  ];
+  pairs["meta." + instrument.page + ".title"] = articleTitles[
+    instrument.slug
+  ].map((title) => `${title} | Perkusi.com`);
   pairs["meta." + instrument.page + ".description"] = [
-    "Kenali " +
-      instrument.id +
-      ": cerita, tradisi, bentuk dan cara memainkan. Coba " +
-      instrument.count +
-      " pad suara langsung di Perkusi.com.",
-    "Discover " +
-      instrument.en +
-      ": its story, traditions, construction and playing techniques. Try " +
-      instrument.count +
-      " sound pads on Perkusi.com.",
+    `${instrument.id}. ${instrument.summary.id} Dengarkan lewat pad interaktif.`,
+    `${instrument.en}. ${instrument.summary.en} Listen with interactive pads.`,
   ];
 }
 export const messages = Object.freeze({

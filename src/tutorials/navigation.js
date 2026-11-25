@@ -2,8 +2,12 @@ import { initTutorialScreenshots } from "./screenshots.js";
 
 // Tutorial navigation moves focus and reveals instructions without starting audio.
 export function initTutorialNavigation() {
-  const guide = document.querySelector("#tutorial");
+  const guide = document.querySelector("[data-tutorial-tool]");
   if (!guide) return;
+  if (guide.tagName !== "DETAILS") {
+    initTutorialScreenshots(guide);
+    return;
+  }
   const root = guide.closest("main"),
     life = new AbortController();
   initTutorialScreenshots(guide, life.signal);

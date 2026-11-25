@@ -21,7 +21,7 @@ npm run format
 
 `npm test` runs the Node unit suite. After `npm run build`, `npm run test:e2e` starts and closes a local Vite preview on port 4174 and checks routes, language precedence, session/DOM continuity, metadata, genuine 404s, keyboard navigation, and eight viewport widths in both languages. Browser QA requires Playwright and installed Chrome. On this Windows Codex host the runner uses the bundled package from `NODE_REPL_NODE_MODULE_DIRS`; elsewhere install Playwright locally. Set `PERKUSI_BROWSER_CHANNEL=msedge` to use installed Edge and `PERKUSI_QA_DIR` to choose a separate evidence directory. These tests do not use GitHub Actions or deploy.
 
-Static entry shells are transformed at build/dev time by `src/app/document.js` and the Vite plugin. Copy, metadata, and ARIA labels share `src/i18n/messages.js`. Locale selection is explicit URL (`/en/` or `?lang=id|en`), then a saved preference, then `id`. Same-page language links use History API and update text/metadata without rebuilding the DOM or in-memory workspace session. Back/forward restores that page's selected locale. Storage failure does not block switching. `appType: mpa` and local 404 middleware prevent unknown paths from becoming homepage responses. Cloudflare uses the built static entries and existing `404.html`; live verification remains a later release gate.
+Static entry shells are transformed at build/dev time by `src/app/document.js` and the Vite plugin. Copy, metadata, and ARIA labels share `src/i18n/messages.js`. Public URLs define the locale (`/en/` for English and the unprefixed path for Indonesian). The legacy `?lang=id|en` override still works and normalizes to the localized path. Same-page language links use History API and update text/metadata without rebuilding the DOM or in-memory workspace session. Back/forward restores the page's locale. Storage failure does not block switching. `appType: mpa` and local 404 middleware prevent unknown paths from becoming homepage responses. Cloudflare uses the built static entries and existing `404.html`.
 
 ## Instrument articles
 
@@ -93,7 +93,7 @@ The public GA4 Measurement ID is `G-G9ETDLX4XP` and lives in `src/analytics.js` 
 - `src/style.css`: responsive styles; breakpoints at 1100px and 700px.
 - `src/main.js`, `src/app/`: accessible navigation, locale updates, workspace session ownership, and footer year.
 - `src/i18n/`, `src/styles/tokens.css`: complete ID/EN foundation copy and shared design tokens.
-- `public/`: preserved favicon/social image, sitemap, robots, legacy privacy CSS, and unchanged Cloudflare security headers.
+- `public/`: favicon, social image, robots, legacy privacy CSS, and Cloudflare security headers. Vite generates `sitemap.xml` from the public routes and uses the same language alternates as the HTML. The policy pages use Cloudflare's extensionless `/privacy` and `/en/privacy` URLs.
 - `404.html`: genuine missing-page response on Cloudflare Pages.
 - `scripts/social-card.py`: optional Pillow script to regenerate the social image; not required by the build.
 

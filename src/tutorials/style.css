@@ -17,6 +17,19 @@
   color: var(--muted);
   line-height: 1.6;
 }
+.tutorial-guide .tutorial-hub-intro,
+.tutorial-guide .tutorial-body {
+  max-width: 760px;
+}
+.tutorial-guide .tutorial-hub-intro .tutorial-jump {
+  margin-block: 0 12px;
+}
+.tutorial-guide .tutorial-hub-intro p + .tutorial-jump {
+  margin-block: 12px 0;
+}
+.tutorial-guide .tutorial-body {
+  padding: 0;
+}
 .tutorial-hub .tutorial-search {
   max-width: 760px;
   margin-block: 0 24px;
@@ -261,6 +274,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.tutorial-body h2,
 .tutorial-body h3 {
   margin-block: 0 8px;
   font-size: 1rem;

@@ -1,7 +1,7 @@
 import { tutorialPairs } from "./messages.js";
 import { screenshotDetails } from "./screenshots.js";
 import { tutorialTopics } from "./topics.js";
-import { navigationHref } from "../app/routes.js";
+import { navigationHref, tutorialGuidePage } from "../app/routes.js";
 
 const escape = (value) =>
   String(value).replace(
@@ -105,16 +105,26 @@ export function renderTutorialSearch(locale, all = false) {
   return `<form class="tutorial-search" role="search" aria-labelledby="tutorial-search-label" hidden>${copy(locale, label, "label", 'id="tutorial-search-label" for="tutorial-query"')}<div class="tutorial-search-controls"><input id="tutorial-query" type="search" autocomplete="off" maxlength="100" aria-controls="tutorial-search-results"><button type="button" data-tutorial-clear hidden>${copy(locale, "tutorial.search.clear", "span")}</button></div><p class="tutorial-search-status" role="status"></p><ul class="tutorial-search-results" id="tutorial-search-results" hidden></ul></form>`;
 }
 
-export function renderTutorial(tool, locale) {
+function guideLink(locale, page, key, anchor = "") {
+  return `<a class="tutorial-jump" data-route="${page}"${anchor ? ` data-route-anchor="${anchor}"` : ""} href="${navigationHref(page, locale, anchor)}">${copy(locale, key, "span")}</a>`;
+}
+
+function renderTutorialBody(tool, locale, standalone = false) {
   const steps = [];
   const sections = [];
   for (const topic of tutorialTopics(tool)) {
     const { id, titleKey, bodyKey, step, recipe, screenshot } = topic;
-    const content = copy(locale, titleKey, "h3") + copy(locale, bodyKey);
+    const content =
+      copy(locale, titleKey, standalone ? "h2" : "h3") + copy(locale, bodyKey);
     if (step) {
       const destination = stepTargets[tool][step];
+      const link = destination
+        ? standalone
+          ? guideLink(locale, tool, destination[1], destination[0])
+          : tutorialLink(locale, ...destination)
+        : "";
       steps.push(
-        `<li id="${id}" tabindex="-1" data-tutorial-topic>${content}${recipe ? renderStudioRecipe(locale) : ""}${destination ? tutorialLink(locale, ...destination) : ""}${screenshot ? renderScreenshot(topic, locale) : ""}</li>`,
+        `<li id="${id}" tabindex="-1" data-tutorial-topic>${content}${recipe ? renderStudioRecipe(locale) : ""}${link}${screenshot ? renderScreenshot(topic, locale) : ""}</li>`,
       );
     } else {
       const next = id === "tutorial-topic-next";
@@ -126,7 +136,18 @@ export function renderTutorial(tool, locale) {
       );
     }
   }
-  return `<details class="tool-tutorial" id="tutorial" data-tutorial-tool="${tool}"><summary>${copy(locale, `tutorial.${tool}.title`, "span", 'class="tutorial-title"')}${copy(locale, `tutorial.${tool}.summary`, "span", 'class="tutorial-summary"')}</summary><div class="tutorial-body">${copy(locale, `tutorial.${tool}.intro`, "p", 'class="tutorial-intro"')}${copy(locale, "tutorial.useLinks")}${renderTutorialSearch(locale)}<ol class="tutorial-steps">${steps.join("")}</ol>${sections.join("")}</div></details>`;
+  const guide = standalone
+    ? ""
+    : guideLink(locale, tutorialGuidePage(tool), "tutorial.guide.read");
+  return `<div class="tutorial-body">${copy(locale, `tutorial.${tool}.intro`, "p", 'class="tutorial-intro"')}${standalone ? "" : copy(locale, "tutorial.useLinks")}${guide}${renderTutorialSearch(locale)}<ol class="tutorial-steps">${steps.join("")}</ol>${sections.join("")}</div>`;
+}
+
+export function renderTutorial(tool, locale) {
+  return `<details class="tool-tutorial" id="tutorial" data-tutorial-tool="${tool}"><summary>${copy(locale, `tutorial.${tool}.title`, "span", 'class="tutorial-title"')}${copy(locale, `tutorial.${tool}.summary`, "span", 'class="tutorial-summary"')}</summary>${renderTutorialBody(tool, locale)}</details>`;
+}
+
+export function renderTutorialGuide(tool, locale) {
+  return `<main id="main" class="tutorial-hub tutorial-guide wrap" tabindex="-1" data-tutorial-tool="${tool}"><header class="tutorial-hub-intro">${guideLink(locale, "tutorials", "tutorial.guide.all")}${copy(locale, `tutorial.${tool}.guideHeading`, "h1")}${copy(locale, `tutorial.${tool}.summary`)}${guideLink(locale, tool, "tutorial.guide.try", "tutorial")}</header>${renderTutorialBody(tool, locale, true)}</main>`;
 }
 
 export function renderPadQuickStart(locale) {

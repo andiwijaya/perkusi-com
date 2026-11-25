@@ -1,6 +1,7 @@
 import { instrumentCopy } from "./copy.js";
 import { instruments, instrumentBySlug } from "./catalog.js";
 import {
+  articleBreadcrumb,
   renderArticleFacts,
   renderArticleReading,
   renderArticlePractice,
@@ -65,6 +66,11 @@ export async function initInstrumentPages() {
         'link[rel="canonical"]',
       ).href;
       schema.textContent = JSON.stringify(data);
+      document.querySelector("[data-breadcrumb-schema]").textContent =
+        JSON.stringify({
+          "@context": "https://schema.org",
+          ...articleBreadcrumb(instrumentBySlug(slug), locale),
+        });
       const words = content.sections
         .flatMap((s) => s.paragraphs)
         .join(" ")

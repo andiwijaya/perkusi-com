@@ -1,6 +1,6 @@
 import { instruments, instrumentBySlug } from "./catalog.js";
 import { instrumentCopy } from "./copy.js";
-import { navigationHref } from "../app/routes.js";
+import { navigationHref, pagePath, siteOrigin } from "../app/routes.js";
 
 export const html = (value) =>
   String(value).replace(
@@ -12,6 +12,22 @@ export const html = (value) =>
   );
 const copy = (locale, key, tag = "span", attrs = "") =>
   `<${tag} data-instrument-copy="${key}" ${attrs}>${html(instrumentCopy[locale][key])}</${tag}>`;
+export function articleBreadcrumb(instrument, locale) {
+  const labels = instrumentCopy[locale];
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      ["home", labels.home],
+      ["instruments", labels.index],
+      [instrument.page, instrument[locale]],
+    ].map(([page, name], index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name,
+      item: siteOrigin + pagePath(page, locale),
+    })),
+  };
+}
 export function renderInstrumentCard(instrument, locale) {
   const t = instrumentCopy[locale];
   return `<article class="instrument-card" data-category="${instrument.category}" data-search="${html(instrument.id + " " + instrument.en)}"><a data-route="${instrument.page}" href="${navigationHref(instrument.page, locale)}"><img src="${instrument.image}" alt="${html(instrument[locale])}" width="1536" height="1024" loading="lazy"><div class="instrument-card-copy"><span class="eyebrow" data-instrument-copy="${instrument.category}">${html(t[instrument.category])}</span><h2 data-instrument-name="${instrument.slug}">${html(instrument[locale])}</h2><p class="instrument-card-summary" data-instrument-summary="${instrument.slug}">${html(instrument.summary[locale])}</p><p><strong>${instrument.count}</strong> ${copy(locale, "sounds")}</p><span class="instrument-card-cta">${copy(locale, "read")} <span aria-hidden="true">↗</span></span></div></a></article>`;
