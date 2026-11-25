@@ -1,4 +1,19 @@
 export const tutorialPairs = {
+  "tutorial.guide.all": ["Semua tutorial", "All tutorials"],
+  "tutorial.guide.read": ["Baca panduan lengkap", "Read the full guide"],
+  "tutorial.guide.try": ["Praktik di alat musik", "Practise in the tool"],
+  "tutorial.pads.guideHeading": [
+    "Cara main drum pad di Pad Station",
+    "How to play drum pads in Pad Station",
+  ],
+  "tutorial.studio.guideHeading": [
+    "Bikin beat pertama dan ekspor WAV di Rhythm Studio",
+    "Make your first beat and export WAV in Rhythm Studio",
+  ],
+  "tutorial.beatbox.guideHeading": [
+    "Susun groove pertama di Beatbox Playground",
+    "Build your first groove in Beatbox Playground",
+  ],
   "tutorial.search.label": ["Cari dalam tutorial", "Search this tutorial"],
   "tutorial.search.all": ["Cari di semua tutorial", "Search all tutorials"],
   "tutorial.search.allHint": [

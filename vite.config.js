@@ -6,6 +6,7 @@ import { renderDocument } from "./src/app/document.js";
 import { buildEntries, pageFromPath } from "./src/app/routes.js";
 
 import { retirementProvenance } from "./scripts/retirement-provenance.mjs";
+import { renderSitemap } from "./scripts/seo-sitemap.mjs";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const recoveryEntries = {
@@ -113,6 +114,15 @@ export default defineConfig(({ mode }) => {
           },
         },
         configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (
+              !["GET", "HEAD"].includes(req.method) ||
+              new URL(req.url, "http://localhost").pathname !== "/sitemap.xml"
+            )
+              return next();
+            res.setHeader("Content-Type", "application/xml; charset=utf-8");
+            res.end(req.method === "HEAD" ? "" : renderSitemap());
+          });
           server.middlewares.use(missingPageMiddleware(server));
         },
         configurePreviewServer(server) {
@@ -120,8 +130,13 @@ export default defineConfig(({ mode }) => {
         },
       },
       {
-        name: "deployment-revision",
+        name: "deployment-metadata",
         generateBundle() {
+          this.emitFile({
+            type: "asset",
+            fileName: "sitemap.xml",
+            source: renderSitemap(),
+          });
           this.emitFile({
             type: "asset",
             fileName: "version.json",

@@ -1,20 +1,30 @@
 import { renderSiteShell } from "./site-shell.js";
 import { messages } from "../i18n/messages.js";
 import { createTranslator } from "../i18n/locale.js";
-import { navigationHref, pagePath } from "./routes.js";
+import {
+  navigationHref,
+  pageAlternates,
+  pagePath,
+  siteOrigin,
+  tutorialGuidePage,
+  tutorialToolByPage,
+} from "./routes.js";
 import { renderBeatbox } from "../beatbox/page.js";
 import { renderStudio } from "../studio/page.js";
 import { renderPadStation } from "../pads/page.js";
-import { renderTutorialSearch } from "../tutorials/page.js";
+import {
+  renderTutorialGuide,
+  renderTutorialSearch,
+} from "../tutorials/page.js";
 import { tutorialGuides } from "../tutorials/topics.js";
 import { instrumentByPage, isInstrumentPage } from "../instruments/catalog.js";
 import { articleContent } from "../instruments/content.js";
 import {
+  articleBreadcrumb,
   renderInstrumentIndex,
   renderInstrumentArticle,
 } from "../instruments/render.js";
 
-export const origin = "https://perkusi.com";
 export function escapeHtml(value) {
   return String(value).replace(
     /[&<>"']/g,
@@ -23,6 +33,9 @@ export function escapeHtml(value) {
         char
       ],
   );
+}
+function jsonLd(data, marker = "") {
+  return `<script type="application/ld+json"${marker ? ` ${marker}` : ""}>${JSON.stringify({ "@context": "https://schema.org", ...data }).replace(/</g, "\\u003c")}</script>`;
 }
 export function renderDocument(page, locale) {
   const t = createTranslator(messages, locale);
@@ -33,6 +46,7 @@ export function renderDocument(page, locale) {
   const routeAttrs = (target, anchor) =>
     `data-route="${target}"${anchor ? ` data-route-anchor="${anchor}"` : ""} href="${navigationHref(target, locale, anchor)}"`;
   const { brand, header } = renderSiteShell(page, locale);
+  const tutorialTool = tutorialToolByPage[page];
   const footer = `<footer class="site-footer wrap">${brand}<p>© <span id="year">2026</span> <span data-i18n="common.footer">${text("common.footer")}</span></p><nav data-i18n-aria-label="common.footerLabel" aria-label="${text("common.footerLabel")}"><a data-home-anchor="tools" href="${path("home")}#tools" data-i18n="common.tools">${text("common.tools")}</a><a data-home-anchor="approach" href="${path("home")}#approach" data-i18n="common.approach">${text("common.approach")}</a><a ${routeAttrs("tutorials")} data-i18n="common.tutorials">${text("common.tutorials")}</a><a ${routeAttrs("privacy")} data-i18n="common.privacy">${text("common.privacy")}</a></nav></footer>`;
   let content;
   if (page === "home") {
@@ -79,15 +93,17 @@ export function renderDocument(page, locale) {
           `<article class="tool-card"${card.route === "pads" ? " data-pad-station-card" : ""}${card.route === "instruments" ? " data-instrument-articles-card" : ""}><a class="tool-card-link" ${routeAttrs(card.route)} aria-labelledby="tool-${card.route}-action"><div class="card-meta">${tag("span", card.meta)}${tag("span", card.route === "instruments" ? "home.articles.badge" : "common.playable", 'class="badge"')}</div>${card.image ? `<img class="home-article-cover" src="${card.image}" alt="" width="1536" height="1024" loading="lazy">` : `<div class="tool-symbol ${card.symbol}-symbol" aria-hidden="true">${"<i></i>".repeat(card.marks)}</div>`}${tag("h3", card.title)}${tag("p", card.copy)}<div class="card-bottom"><span class="tool-card-cta" id="tool-${card.route}-action">${tag("span", card.action)}<span class="tool-card-arrow" aria-hidden="true">→</span></span></div></a></article>`,
       )
       .join("");
-    content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span> <span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${toolCards}</div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}</div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
+    content = `<main id="main" tabindex="-1"><section class="hero wrap" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span><span data-i18n="home.eyebrow">${text("home.eyebrow")}</span></p><h1 id="hero-title"><span data-i18n="home.hero1">${text("home.hero1")}</span> <span data-i18n="home.hero2">${text("home.hero2")}</span></h1><p class="hero-description"><span data-i18n="home.description">${text("home.description")}</span></p><p class="hero-note"><span aria-hidden="true">◌</span><span data-i18n="home.note">${text("home.note")}</span></p></div></section><section id="tools" class="tools-section wrap" aria-labelledby="tools-title"><div class="section-heading"><div>${tag("h2", "home.toolsTitle", 'id="tools-title"')}</div></div><div class="tool-grid">${toolCards}</div></section><section id="approach" class="approach-section wrap" aria-labelledby="approach-title"><div class="approach-intro">${tag("h2", "home.guideTitle", 'id="approach-title"')}<p><a ${routeAttrs("tutorials")} data-i18n="home.learn">${text("home.learn")}</a></p></div><div class="principles">${["audio", "live"].map((key, index) => `<article><span>0${index + 1}</span><div>${tag("h3", `home.guide.${key}.title`)}${tag("p", `home.guide.${key}.copy`)}</div></article>`).join("")}</div></section></main>`;
   } else if (page === "tutorials") {
     const cards = Object.entries(tutorialGuides)
       .map(
         ([tool, { nameKey }]) =>
-          `<article class="tool-card tutorial-hub-card"><a ${routeAttrs(tool, "tutorial")} aria-labelledby="guide-${tool}" class="tutorial-hub-link"><div class="tutorial-hub-preview tutorial-hub-preview--${tool}" aria-hidden="true"></div><div class="tutorial-hub-card-body">${tag("h2", nameKey, `id="guide-${tool}"`)}${tag("p", `tutorialHub.${tool}`)}${tag("span", "tutorialHub.open", 'class="tutorial-hub-action"')}</div></a></article>`,
+          `<article class="tool-card tutorial-hub-card"><a ${routeAttrs(tutorialGuidePage(tool))} aria-labelledby="guide-${tool}" class="tutorial-hub-link"><div class="tutorial-hub-preview tutorial-hub-preview--${tool}" aria-hidden="true"></div><div class="tutorial-hub-card-body">${tag("h2", nameKey, `id="guide-${tool}"`)}${tag("p", `tutorialHub.${tool}`)}${tag("span", "tutorialHub.open", 'class="tutorial-hub-action"')}</div></a></article>`,
       )
       .join("");
     content = `<main id="main" class="tutorial-hub wrap" tabindex="-1"><header class="tutorial-hub-intro">${tag("h1", "tutorialHub.title")}${tag("p", "tutorialHub.intro")}</header>${renderTutorialSearch(locale, true)}<div class="tutorial-hub-grid">${cards}</div></main>`;
+  } else if (tutorialTool) {
+    content = renderTutorialGuide(tutorialTool, locale);
   } else if (page === "beatbox") {
     content = renderBeatbox(locale);
   } else if (page === "studio") {
@@ -112,30 +128,56 @@ export function renderDocument(page, locale) {
   }
   const descriptionKey = "meta." + page + ".description";
   const socialKey = page === "home" ? "meta.home.social" : descriptionKey;
-  const canonical = origin + pagePath(page, locale);
+  const canonical = siteOrigin + pagePath(page, locale);
   const instrument = instrumentByPage(page);
   const article = instrument && articleContent[instrument.slug][locale];
-  const socialImage = instrument
-    ? origin + instrument.image
-    : origin + "/social-card.png";
-  const schema = article
-    ? `<script type="application/ld+json" data-article-schema>${JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Article",
-        headline: article.title,
-        description: article.dek,
-        image: [socialImage],
-        inLanguage: locale,
-        datePublished: "2026-11-15T00:00:00+07:00",
-        dateModified: "2026-11-15T00:00:00+07:00",
-        author: { "@type": "Organization", name: "Perkusi.com", url: origin },
-        publisher: {
-          "@type": "Organization",
-          name: "Perkusi.com",
-          url: origin,
+  const socialImage = siteOrigin + (instrument?.image ?? "/social-card.png");
+  let schema = "";
+  if (page === "home") {
+    schema = jsonLd({
+      "@type": "WebSite",
+      name: "Perkusi.com",
+      url: siteOrigin + "/",
+    });
+  } else if (article) {
+    schema =
+      jsonLd(
+        {
+          "@type": "Article",
+          headline: article.title,
+          description: article.dek,
+          image: [socialImage],
+          inLanguage: locale,
+          datePublished: "2026-11-15T00:00:00+07:00",
+          dateModified: "2026-11-15T00:00:00+07:00",
+          author: {
+            "@type": "Organization",
+            name: "Perkusi.com",
+            url: siteOrigin,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Perkusi.com",
+            url: siteOrigin,
+          },
+          mainEntityOfPage: canonical,
         },
-        mainEntityOfPage: canonical,
-      }).replace(/</g, "\\u003c")}</script>`
-    : "";
-  return `<!doctype html><html lang="${locale}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#121513"><title>${text("meta." + page + ".title")}</title><meta name="description" content="${text(descriptionKey)}"><link rel="canonical" href="${canonical}">${["id", "en"].map((lang) => `<link rel="alternate" hreflang="${lang}" href="${origin + pagePath(page, lang)}">`).join("")}<link rel="alternate" hreflang="x-default" href="${origin + pagePath(page, "id")}">${page === "notFound" ? '<meta name="robots" content="noindex">' : ""}<meta property="og:type" content="${article ? "article" : "website"}"><meta property="og:site_name" content="Perkusi.com"><meta property="og:title" content="${text("meta." + page + ".title")}"><meta property="og:description" content="${text(socialKey)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="${instrument ? 1536 : 1200}"><meta property="og:image:height" content="${instrument ? 1024 : 630}"><meta property="og:locale" content="${locale === "id" ? "id_ID" : "en_US"}"><meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="stylesheet" href="/src/style.css">${page === "beatbox" ? '<link rel="stylesheet" href="/src/beatbox/style.css"><link rel="stylesheet" href="/src/project/style.css">' : ""}${page === "studio" ? '<link rel="stylesheet" href="/src/studio/style.css">' : ""}${page === "pads" ? '<link rel="stylesheet" href="/src/pads/style.css">' : ""}${isInstrumentPage(page) ? '<link rel="stylesheet" href="/src/instruments/style.css">' : ""}${schema}<script type="module" src="/src/main.js"></script></head><body data-page="${page}">${header}${content}${footer}</body></html>`;
+        "data-article-schema",
+      ) +
+      jsonLd(articleBreadcrumb(instrument, locale), "data-breadcrumb-schema");
+  }
+  const verification =
+    page === "home" && locale === "id"
+      ? '<meta name="google-site-verification" content="wY6uR6JfTINeoqcoI__5FTi8TptZKxd4r7R3NZs1RyI">'
+      : "";
+  const discovery =
+    page === "notFound"
+      ? '<meta name="robots" content="noindex">'
+      : `<link rel="canonical" href="${canonical}">${pageAlternates(page)
+          .map(
+            ([lang, url]) =>
+              `<link rel="alternate" hreflang="${lang}" href="${url}">`,
+          )
+          .join("")}<meta name="robots" content="max-image-preview:large">`;
+  return `<!doctype html><html lang="${locale}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#121513"><title>${text("meta." + page + ".title")}</title><meta name="description" content="${text(descriptionKey)}">${verification}${discovery}<meta property="og:type" content="${article ? "article" : "website"}"><meta property="og:site_name" content="Perkusi.com"><meta property="og:title" content="${text("meta." + page + ".title")}"><meta property="og:description" content="${text(socialKey)}"><meta property="og:url" content="${canonical}"><meta property="og:image" content="${socialImage}"><meta property="og:image:width" content="${instrument ? 1536 : 1200}"><meta property="og:image:height" content="${instrument ? 1024 : 630}"><meta property="og:locale" content="${locale === "id" ? "id_ID" : "en_US"}"><meta property="og:locale:alternate" content="${locale === "id" ? "en_US" : "id_ID"}"><meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="stylesheet" href="/src/style.css">${page === "beatbox" ? '<link rel="stylesheet" href="/src/beatbox/style.css"><link rel="stylesheet" href="/src/project/style.css">' : ""}${page === "studio" ? '<link rel="stylesheet" href="/src/studio/style.css">' : ""}${page === "pads" ? '<link rel="stylesheet" href="/src/pads/style.css">' : ""}${isInstrumentPage(page) ? '<link rel="stylesheet" href="/src/instruments/style.css">' : ""}${schema}<script type="module" src="/src/main.js"></script></head><body data-page="${page}">${header}${content}${footer}</body></html>`;
 }

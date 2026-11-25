@@ -8,7 +8,7 @@ test("shared brand keeps explicit Indonesian home and English home while Gamelan
     languageHref: (lang) => "/studio/?workspace=gamelan&lang=" + lang,
   });
   const en = renderSiteShell("studio", "en");
-  assert.match(id.brand, /href="\/\?lang=id"/);
+  assert.match(id.brand, /href="\/"/);
   assert.match(en.brand, /href="\/en\/"/);
   assert.match(
     id.header,

@@ -220,7 +220,7 @@ try {
           if (tool === "pads")
             assert.equal(
               await guide.locator('[data-route="studio"]').getAttribute("href"),
-              pagePath("studio", other) + (other === "id" ? "?lang=id" : ""),
+              pagePath("studio", other),
             );
           await page.locator(`[data-locale="${locale}"]`).click();
           await summary.focus();

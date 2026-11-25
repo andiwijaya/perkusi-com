@@ -6,7 +6,7 @@ import {
   resolveLocale,
   saveLocale,
 } from "../i18n/locale.js";
-import { navigationHref, pagePath } from "./routes.js";
+import { navigationHref, pagePath, siteOrigin } from "./routes.js";
 import { createSession } from "./session.js";
 import { trackEvent } from "../analytics.js";
 
@@ -59,9 +59,10 @@ export function initLocalization() {
       el.href = navigationHref(page, el.dataset.locale);
       el.setAttribute("aria-current", String(el.dataset.locale === locale));
     });
-    const canonical = "https://perkusi.com" + pagePath(page, locale);
+    const canonical = siteOrigin + pagePath(page, locale);
     document.title = t("meta." + page + ".title");
-    document.querySelector('link[rel="canonical"]').href = canonical;
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (canonicalLink) canonicalLink.href = canonical;
     document.querySelector('meta[name="description"]').content = t(
       "meta." + page + ".description",
     );
@@ -73,6 +74,8 @@ export function initLocalization() {
     document.querySelector('meta[property="og:url"]').content = canonical;
     document.querySelector('meta[property="og:locale"]').content =
       locale === "id" ? "id_ID" : "en_US";
+    document.querySelector('meta[property="og:locale:alternate"]').content =
+      locale === "id" ? "en_US" : "id_ID";
     document.dispatchEvent(
       new CustomEvent("perkusi:locale", { detail: { locale } }),
     );
@@ -86,7 +89,7 @@ export function initLocalization() {
     const locale = resolveLocale({
       pathname: url.pathname,
       explicitLocale,
-      storedLocale: preference(),
+      storedLocale: page === "notFound" ? preference() : null,
     });
     if (
       isLocale(explicitLocale) ||
@@ -98,6 +101,7 @@ export function initLocalization() {
     // A missing URL must remain a missing URL; never turn a 404 into a valid route.
     if (page !== "notFound") {
       url.pathname = pagePath(page, locale);
+      if (isLocale(queryLocale)) url.searchParams.delete("lang");
       history.replaceState(
         { ...history.state, perkusiLocale: locale },
         "",
@@ -122,8 +126,7 @@ export function initLocalization() {
       persist(locale);
       const current = new URL(location.href);
       current.searchParams.delete("lang");
-      if (locale === "id" || page === "notFound")
-        current.searchParams.set("lang", locale);
+      if (page === "notFound") current.searchParams.set("lang", locale);
       const pathname =
         page === "notFound" ? current.pathname : pagePath(page, locale);
       history.pushState(

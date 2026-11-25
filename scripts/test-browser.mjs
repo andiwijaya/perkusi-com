@@ -5,7 +5,13 @@ import { createRequire } from "node:module";
 import { preview } from "vite";
 import { messages } from "../src/i18n/messages.js";
 import { studioMessages } from "../src/studio/messages.js";
-import { navigationHref, pagePath } from "../src/app/routes.js";
+import {
+  navigationHref,
+  pageAlternates,
+  pageFromPath,
+  pagePath,
+  tutorialGuidePage,
+} from "../src/app/routes.js";
 
 const require = createRequire(import.meta.url);
 let playwright;
@@ -112,21 +118,23 @@ try {
     assert.equal(await page.locator("html").getAttribute("lang"), "id");
   });
   await check(
-    "saved EN overrides implicit root; explicit EN and query ID override storage",
+    "canonical ID and EN paths are stable, and legacy language queries still work",
     async () => {
       await page.evaluate(() => localStorage.setItem("perkusi.locale", "en"));
       await page.goto(base + "/");
       await settle();
-      assert.equal(await page.locator("html").getAttribute("lang"), "en");
-      assert.equal(new URL(page.url()).pathname, "/en/");
+      assert.equal(await page.locator("html").getAttribute("lang"), "id");
+      assert.equal(new URL(page.url()).pathname, "/");
       await page.evaluate(() => localStorage.setItem("perkusi.locale", "id"));
       await page.goto(base + "/en/beatbox/");
       await settle();
       assert.equal(await page.locator("html").getAttribute("lang"), "en");
-      await page.goto(base + "/en/beatbox/?lang=id");
+      await page.goto(base + "/en/beatbox/?lang=id&ref=release#bb-stage");
       await settle();
       assert.equal(await page.locator("html").getAttribute("lang"), "id");
       assert.equal(new URL(page.url()).pathname, "/beatbox/");
+      assert.equal(new URL(page.url()).search, "?ref=release");
+      assert.equal(new URL(page.url()).hash, "#bb-stage");
     },
   );
   await check(
@@ -265,7 +273,11 @@ try {
           "privacy",
           "notFound",
         ]) {
-          await page.goto(base + navigationHref(screen, locale));
+          await page.goto(
+            base +
+              navigationHref(screen, locale) +
+              (screen === "notFound" ? `?lang=${locale}` : ""),
+          );
           await settle();
           const hrefs = await page
             .locator("[data-route],[data-home-anchor]")
@@ -275,11 +287,10 @@ try {
             const url = new URL(href);
             if (url.hash && url.pathname === new URL(page.url()).pathname)
               continue;
+            assert.equal(url.search, "", href);
             assert.equal(
-              locale === "id"
-                ? url.searchParams.get("lang")
-                : url.pathname.startsWith("/en/"),
-              locale === "id" ? "id" : true,
+              url.pathname.startsWith("/en/"),
+              locale === "en",
               href,
             );
           }
@@ -447,11 +458,7 @@ try {
           for (const link of await hub.locator(".tutorial-hub-link").all()) {
             assert.equal(
               await link.getAttribute("href"),
-              navigationHref(
-                await link.getAttribute("data-route"),
-                other,
-                "tutorial",
-              ),
+              navigationHref(await link.getAttribute("data-route"), other),
             );
             assert.match(
               await link
@@ -466,7 +473,28 @@ try {
             fullPage: true,
           });
           for (const guide of ["pads", "studio", "beatbox"]) {
-            await hub.locator(`[data-route="${guide}"]`).press("Enter");
+            await hub
+              .locator(`[data-route="${tutorialGuidePage(guide)}"]`)
+              .press("Enter");
+            await page.waitForURL(
+              base + pagePath(tutorialGuidePage(guide), locale),
+            );
+            assert(
+              await page.locator(".tutorial-guide .tutorial-steps").isVisible(),
+            );
+            assert(
+              await page
+                .locator(".tutorial-guide .tutorial-search")
+                .isVisible(),
+            );
+            assert(
+              await page.evaluate(
+                () => document.documentElement.scrollWidth <= innerWidth,
+              ),
+            );
+            await page
+              .locator(`.tutorial-guide header [data-route="${guide}"]`)
+              .press("Enter");
             await page.waitForURL(
               base + navigationHref(guide, locale, "tutorial"),
             );
@@ -482,6 +510,10 @@ try {
             assert.equal(
               await page.locator("#tutorial .tutorial-search").isVisible(),
               true,
+            );
+            await page.goBack();
+            await page.waitForURL(
+              base + pagePath(tutorialGuidePage(guide), locale),
             );
             await page.goBack();
             await page.waitForURL(base + navigationHref("tutorials", locale));
@@ -757,17 +789,28 @@ try {
               false,
             );
             const link = staticPage.locator(
-              '.tutorial-hub [data-route="pads"]',
+              '.tutorial-hub [data-route="tutorial-pads"]',
             );
             assert.equal(
               await link.getAttribute("href"),
-              navigationHref("pads", locale, "tutorial"),
+              navigationHref("tutorial-pads", locale),
             );
             await link.click();
             await staticPage.waitForURL(
-              base + navigationHref("pads", locale, "tutorial"),
+              base + pagePath("tutorial-pads", locale),
             );
             const steps = staticPage.locator(".tutorial-steps");
+            assert(await steps.isVisible());
+            assert.equal(
+              await steps.locator("li[data-tutorial-topic]").count(),
+              5,
+            );
+            await staticPage
+              .locator('.tutorial-guide header [data-route="pads"]')
+              .click();
+            await staticPage.waitForURL(
+              base + navigationHref("pads", locale, "tutorial"),
+            );
             if (!(await steps.isVisible()))
               await staticPage.locator("#tutorial > summary").press("Enter");
             assert.equal(await steps.isVisible(), true);
@@ -798,13 +841,28 @@ try {
       const xml = await (
         await context.request.get(base + "/sitemap.xml")
       ).text();
-      for (const match of xml.matchAll(/<loc>([^<]+)<\/loc>/g))
-        assert.equal(
-          (
-            await context.request.get(base + new URL(match[1]).pathname)
-          ).status(),
-          200,
+      const entries = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)];
+      assert.equal(entries.length, 52);
+      for (const [, canonical] of entries) {
+        const pathname = new URL(canonical).pathname;
+        const response = await context.request.get(base + pathname, {
+          maxRedirects: 0,
+        });
+        assert.equal(response.status(), 200, pathname);
+        const html = await response.text();
+        assert(
+          html.includes(`<link rel="canonical" href="${canonical}">`),
+          pathname,
         );
+        for (const [lang, url] of pageAlternates(pageFromPath(pathname)))
+          assert(
+            html.includes(
+              `<link rel="alternate" hreflang="${lang}" href="${url}">`,
+            ),
+            pathname,
+          );
+        assert(!/noindex/i.test(response.headers()["x-robots-tag"] ?? ""));
+      }
       assert.deepEqual(
         await (await context.request.get(base + "/version.json")).json(),
         { commit: "local", branch: "local" },

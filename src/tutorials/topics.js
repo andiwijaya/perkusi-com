@@ -1,9 +1,13 @@
 import { screenshotFor } from "./screenshots.js";
 
 export const tutorialGuides = {
-  pads: { nameKey: "home.pads.title", steps: 5 },
-  studio: { nameKey: "home.card1.title", steps: 6 },
-  beatbox: { nameKey: "home.card3.title", steps: 5 },
+  pads: { nameKey: "home.pads.title", steps: 5, slug: "pad-station" },
+  studio: { nameKey: "home.card1.title", steps: 6, slug: "rhythm-studio" },
+  beatbox: {
+    nameKey: "home.card3.title",
+    steps: 5,
+    slug: "beatbox-playground",
+  },
 };
 
 export function tutorialTopics(tool) {

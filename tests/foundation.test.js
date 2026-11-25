@@ -13,8 +13,12 @@ import {
   navigationHref,
   pageFromPath,
   buildEntries,
+  indexablePages,
+  pageAlternates,
   pages,
+  siteOrigin,
 } from "../src/app/routes.js";
+import { renderSitemap } from "../scripts/seo-sitemap.mjs";
 import { renderDocument, escapeHtml } from "../src/app/document.js";
 import { createSession } from "../src/app/session.js";
 
@@ -116,13 +120,19 @@ test("missing EN uses id and reports the bug; unknown keys never disappear", () 
   assert.throws(() => t("unknown"), /Unknown translation/);
 });
 test("route entries cover static localized pages and legacy privacy aliases", () => {
-  assert.equal(Object.keys(buildEntries).length, 48);
+  assert.equal(Object.keys(buildEntries).length, 54);
   assert.equal(buildEntries.pads_id, "pad-station/index.html");
   assert.equal(buildEntries.pads_en, "en/pad-station/index.html");
   assert.equal(buildEntries.home_id, "index.html");
   assert.equal(buildEntries.beatbox_en, "en/beatbox/index.html");
   assert.equal(buildEntries.tutorials_id, "tutorial/index.html");
   assert.equal(buildEntries.tutorials_en, "en/tutorial/index.html");
+  assert.equal(
+    buildEntries["tutorial-pads_id"],
+    "tutorial/pad-station/index.html",
+  );
+  assert.equal(buildEntries.privacy_id, "privacy.html");
+  assert.equal(buildEntries.privacy_en, "en/privacy.html");
   for (const locale of ["id", "en"])
     for (const page of pages) {
       assert.equal(pageFromPath(pagePath(page, locale)), page);
@@ -135,7 +145,7 @@ test("route entries cover static localized pages and legacy privacy aliases", ()
   assert.equal(pageFromPath("/en/missing"), "notFound");
 });
 
-test("internal navigation carries active locale over an opposite saved preference", () => {
+test("internal navigation links point directly at the localized canonical with optional fragments", () => {
   for (const locale of ["id", "en"])
     for (const page of pages)
       for (const anchor of ["", "tools", "approach"]) {
@@ -143,14 +153,8 @@ test("internal navigation carries active locale over an opposite saved preferenc
           navigationHref(page, locale, anchor),
           "https://perkusi.com",
         );
-        assert.equal(
-          resolveLocale({
-            pathname: url.pathname,
-            explicitLocale: url.searchParams.get("lang"),
-            storedLocale: locale === "id" ? "en" : "id",
-          }),
-          locale,
-        );
+        assert.equal(url.pathname, pagePath(page, locale));
+        assert.equal(url.search, "");
         assert.equal(url.hash, anchor ? "#" + anchor : "");
         assert.equal(pagePath(page, locale).includes("?"), false);
       }
@@ -172,14 +176,23 @@ test("static header, footer, privacy and 404 navigation retain active locale", (
           resolveLocale({
             pathname: url.pathname,
             explicitLocale: url.searchParams.get("lang"),
-            storedLocale: locale === "id" ? "en" : "id",
           }),
           locale,
         );
       }
     }
 });
-test("static metadata is localized, canonical excludes query, 404 is noindex", () => {
+test("static metadata and sitemap agree on localized canonicals and alternate URLs", () => {
+  const titles = new Set();
+  const descriptions = new Set();
+  const sitemap = new Map(
+    [
+      ...renderSitemap().matchAll(
+        /<url>\s*<loc>([^<]+)<\/loc>([\s\S]*?)<\/url>/g,
+      ),
+    ].map(([, url, rest]) => [url, rest]),
+  );
+  assert.equal(sitemap.size, indexablePages.length * 2);
   for (const locale of ["id", "en"])
     for (const page of pages) {
       const html = renderDocument(page, locale);
@@ -190,17 +203,27 @@ test("static metadata is localized, canonical excludes query, 404 is noindex", (
             "</title>",
         ),
       );
-      assert(
-        html.includes(
-          'rel="canonical" href="https://perkusi.com' +
-            pagePath(page, locale) +
-            '"',
-        ),
-      );
-      assert.equal(
-        html.includes('name="robots" content="noindex"'),
-        page === "notFound",
-      );
+      const canonical = siteOrigin + pagePath(page, locale);
+      if (page === "notFound") {
+        assert(html.includes('name="robots" content="noindex"'));
+        assert(!html.includes('rel="canonical"'));
+        assert(!sitemap.has(canonical));
+        continue;
+      }
+      assert(html.includes(`rel="canonical" href="${canonical}"`));
+      assert(!html.includes('name="robots" content="noindex"'));
+      assert(sitemap.has(canonical), canonical);
+      for (const [lang, href] of pageAlternates(page)) {
+        const alternate = `rel="alternate" hreflang="${lang}" href="${href}"`;
+        assert(html.includes(`<link ${alternate}>`));
+        assert(sitemap.get(canonical).includes(`<xhtml:link ${alternate}/>`));
+      }
+      const title = messages[locale][`meta.${page}.title`];
+      const description = messages[locale][`meta.${page}.description`];
+      assert(!titles.has(title), title);
+      assert(!descriptions.has(description), description);
+      titles.add(title);
+      descriptions.add(description);
     }
 });
 test("playable Studio has honest localized metadata and initialization-guarded controls without autoplay", () => {
